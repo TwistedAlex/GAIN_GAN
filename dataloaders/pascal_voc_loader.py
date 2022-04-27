@@ -219,7 +219,8 @@ class PascalVOCLoader(data.Dataset):
                  root,
                  augmentations=None,
                  output_dim=224,
-                 mode='segmentation'):
+                 mode='segmentation',
+                 limitDataVolume = [True, 100]):
 
         # set mode='classification' to retain images with a single object
 
@@ -239,45 +240,57 @@ class PascalVOCLoader(data.Dataset):
             'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
             'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'
         ]
+        self.picked_categories = [
+            'aeroplane','bird'
+        ]
 
-        self.transf_shape = {
-            'image': [output_dim],
-            'truth': [output_dim]
-        }
-        self.transf_normalize = {
-            'mean': [0.485, 0.456, 0.406],
-            'std': [0.229, 0.224, 0.225]
-        }
+        # self.transf_shape = {
+        #     'image': [output_dim],
+        #     'truth': [output_dim]
+        # }
+        # self.transf_normalize = {
+        #     'mean': [0.485, 0.456, 0.406],
+        #     'std': [0.229, 0.224, 0.225]
+        # }
         # get all image file names
         self.im_path = pjoin(self.root, "JPEGImages", "*.jpg")
-        print("root"+ self.root)
         self.segm_path = pjoin(self.root, "SegmentationClass/pre_encoded")
-        self.all_files = sorted(glob.glob(pjoin(self.segm_path, '*.png')))
+        # file names in the folder "SegmentationClass/pre_encoded"
+        self.all_files = sorted(glob.glob(pjoin(self.segm_path, '*.png'))) # default '*.png' for whole VOC dataset, modified for manual crafted subset testing
         self.all_files = [
             os.path.splitext(os.path.split(f)[-1])[0] for f in self.all_files
         ]
-
         self.setup_annotations()
-
+        self.files_list = ['2007_000033.jpg','2007_000243.jpg','2007_000256.jpg','2007_000862.jpg','2007_001288.jpg','2007_001289.jpg','2007_001884.jpg','2007_002094.jpg','2007_002619.jpg','2007_003565.jpg','2007_003876.jpg','2007_004009.jpg','2007_004052.jpg','2007_004841.jpg','2007_005264.jpg','2007_006946.jpg','2007_007470.jpg','2007_007698.jpg','2007_008714.jpg','2007_008764.jpg','2007_009323.jpg','2007_009911.jpg','2008_000033.jpg','2008_000123.jpg','2008_000197.jpg','2008_000361.jpg','2008_000533.jpg','2008_000716.jpg','2008_000832.jpg','2008_001719.jpg','2008_001829.jpg','2008_002255.jpg','2008_002471.jpg','2008_002551.jpg','2008_003703.jpg','2008_003729.jpg','2008_004000.jpg','2008_004024.jpg','2008_004030.jpg','2008_004165.jpg','2008_004348.jpg','2008_004378.jpg','2008_004605.jpg','2008_004704.jpg','2008_004726.jpg','2008_004771.jpg','2008_004885.jpg','2008_004893.jpg','2008_004917.jpg','2008_005036.jpg','2008_005114.jpg','2008_005209.jpg','2008_005250.jpg','2008_005303.jpg','2008_005310.jpg','2008_005443.jpg','2008_005477.jpg','2008_005538.jpg','2008_005573.jpg','2008_005611.jpg','2008_005631.jpg','2008_005634.jpg','2008_005803.jpg','2008_005821.jpg','2008_005843.jpg','2008_005905.jpg','2008_005935.jpg','2008_006085.jpg','2008_006090.jpg','2008_006109.jpg','2008_006140.jpg','2008_006179.jpg','2008_006213.jpg','2008_006353.jpg','2008_006703.jpg','2008_007836.jpg','2008_008263.jpg','2008_008268.jpg','2009_000037.jpg','2009_000454.jpg']
         # Find images for classification (one object only)
         self.files_semantic = sorted(
             glob.glob(pjoin(self.root, 'ImageSets/Main/*_trainval.txt')))
+        # dict mapping file name to category
         self.file_to_cat = dict()
         for f, c in zip(self.files_semantic, self.categories):
+            # only pick files in desired categories
+            if limitDataVolume[0] and c not in self.picked_categories:
+                continue
+            # only pick first n images in the desired categories
             df = pd.read_csv(
                 f,
                 delim_whitespace=True,
                 header=None,
                 names=['filename', 'true'])
-            self.file_to_cat.update(
-                {f_: c
-                 for f_ in df[df['true'] == 1]['filename']})
+            # limit the number of images for each catergory
+            if limitDataVolume[0]:
+                self.file_to_cat.update(
+                    {f_: c
+                     for f_ in df[df['true'] == 1][0:limitDataVolume[1]]['filename']})
+            else:
+                self.file_to_cat.update(
+                    {f_: c
+                     for f_ in df[df['true'] == 1]['filename']})
 
         if (mode == 'classification'):
             self.all_files = [
                 f for f in self.all_files if (f in self.file_to_cat.keys())
             ]
-
         self.tf = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
@@ -311,9 +324,11 @@ class PascalVOCLoader(data.Dataset):
         return len(self.all_files)
 
     def __getitem__(self, index):
-
+        # print(self.all_files)
         truth_path = self.all_files[index]
+        # truth_im_path = self.all_im_files[index]
         im_name = os.path.splitext(os.path.split(truth_path)[-1])[0]
+        # im_mask_name = os.path.splitext(os.path.split(truth_path)[-1])[0]
         im_path = pjoin(self.root, "JPEGImages", im_name + ".jpg")
 
         e_supvision_path = pjoin(self.root, "Supervision", im_name + ".png")
@@ -322,9 +337,10 @@ class PascalVOCLoader(data.Dataset):
             e_supvision_mask = Image.open(pjoin(e_supvision_path))
             np_mask = np.asarray(e_supvision_mask)
             tensor_mask = torch.tensor(np_mask)
-            mask_flag = 0
+            mask_flag = True
         else:
-            mask_flag = 1
+            mask_flag = False
+            e_supvision_mask = torch.tensor(-1)
             tensor_mask = torch.tensor(-1)
         # path = pjoin(self.root, 'SegmentationClass', 'masks')
         masks_paths = sorted(glob.glob(pjoin(self.root, 'SegmentationClass',
@@ -337,7 +353,7 @@ class PascalVOCLoader(data.Dataset):
         im = np.asarray(im)
         truth = np.asarray(segm)
         truths = [(truth == l).astype(int) for l in np.unique(truth)[1:]]
-
+        # pixel values in truth array skipping pixel value 0(black color): value - 1 == pixel value mapping to its corresponding category
         classes = [self.categories[l] for l in np.unique(truth)[1:] - 1]
         class_onehot = np.array(
             [[1 if (c == class_) else 0 for c in self.categories]
@@ -353,8 +369,9 @@ class PascalVOCLoader(data.Dataset):
             'label/name': classes,
             'label/idx': class_idx,
             'label/onehot': class_onehot,
-            'e_supvision_tensor': tensor_mask,
-            'mask_flag': mask_flag
+            'e_supvision': e_supvision_mask,
+            'mask_flag': mask_flag,
+            'filename': truth_path
         }
 
 
@@ -534,6 +551,7 @@ class PascalVOCLoader(data.Dataset):
                 truth_path = f
                 segm = Image.open(pjoin(self.segm_path, truth_path + ".png"))
                 truth = np.asarray(segm)
+                # skip the black pixel value 0, truths store the unique pixel value for each segmentation region
                 truths = [(truth == l).astype(int) for l in np.unique(truth)[1:]]
                 shape = np.array(truth.shape)
                 for i, t in enumerate(truths):

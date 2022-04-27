@@ -130,10 +130,10 @@ def main(args):
     writer.add_text('Start', 'start')
     
     print('Started')
-
-
+    print(chkpnt_epoch)
+    print(epochs)
     for epoch in range(chkpnt_epoch, epochs):
-
+        print("enter epoch")
 
 
         total_train_single_accuracy = 0
@@ -158,11 +158,12 @@ def main(args):
             epoch_train_total_loss = 0
 
             # Sampling training batch
+            print("before sampling")
             for sample in rds.datasets['rnd_train']:
                 # TODO:
                 augmented_masks = sample[3]
                 mask_flag = sample[4]
-
+                print("enter sampling")
 
                 # Get batch and augmented batch for the 1st img in the 1st array of sample
                 augmented_batch = []
@@ -215,17 +216,24 @@ def main(args):
                 #  (trainable attention map - extraSupervision),
                 #  trainable attention map A, logits_am is I^{*}
                 # ToTensor()(x).cuda()
-                augmented_masks = [ x for x in augmented_masks]
+
                 # augmented_masks = torch.cat(augmented_masks, dim=0)
                 # train_dataset -> medt_loader.datasets['train']
-                e_loss = 0
+                e_loss = 0.0
                 if mask_flag[0]:
+                    print("***********External supervision added***********")
+                    print(sample[5])
+                    augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
                     squared_diff = torch.pow(scaled_ac.squeeze() - augmented_masks[0], 2)
                     flattened_squared_diff = squared_diff.view(1, -1)
                     flattned_sum = flattened_squared_diff.sum(dim=1)
                     flatten_size = flattened_squared_diff.size(1)
                     e_loss = (flattned_sum / flatten_size).sum() / 1
                     total_loss = cl_loss * cl_factor + am_loss * am_factor + e_loss * e_factor
+
+                    epoch_train_e_loss += (e_loss * e_factor) # detach().cpu().item()
+
+
                 # g = make_dot(am_loss, dict(gain.named_parameters()), show_attrs = True, show_saved = True)
                 # g.save('grad_viz', train_path)
 
@@ -236,12 +244,12 @@ def main(args):
                 epoch_train_am_loss += (am_loss * am_factor).detach().cpu().item()
                 epoch_train_cl_loss += (cl_loss * cl_factor).detach().cpu().item()
                 # TODO:
-                epoch_train_e_loss += (e_loss * e_factor).detach().cpu().item()
-                epoch_train_total_loss += total_loss.detach().cpu().item()
 
+                epoch_train_total_loss += total_loss.detach().cpu().item()
+                writer.add_scalar('Per_Step/train/e_loss', (e_loss * e_factor), i)
                 writer.add_scalar('Per_Step/train/cl_loss', (cl_loss * cl_factor).detach().cpu().item(), i)
                 writer.add_scalar('Per_Step/train/am_loss', (am_loss * am_factor).detach().cpu().item(), i)
-                TODO: writer.add_scalar('Per_Step/train/e_loss', (e_loss * e_factor).detach().cpu().item(), i)
+                # TODO:
                 writer.add_scalar('Per_Step/train/total_loss', total_loss.detach().cpu().item(), i)
                 
                 
@@ -410,8 +418,8 @@ def main(args):
         num_test_samples = len(rds.datasets['seq_test'])*batch_size
         print("finished epoch number:")
         print(epoch)
-
-
+        print(num_train_samples)
+        print(batch_size)
         if (test_first and epoch > 0) or test_first == False:
             writer.add_scalar('Loss/train/cl_total_loss', epoch_train_cl_loss / (num_train_samples*batch_size), epoch)
             writer.add_scalar('Loss/train/am_tota_loss', epoch_train_am_loss / num_train_samples, epoch)

@@ -13,7 +13,7 @@ def my_collate(batch):
     max_len = max(batch, key=lambda p: p['image'].shape[0])['image'].shape[0]
     max_width = max(batch, key=lambda p: p['image'].shape[1])['image'].shape[1]
     labels = [sample['label/idx'] for sample in batch]
-    supervisions = [sample['e_supvision_tensor'] for sample in batch]
+    supervisions = [sample['e_supvision'] for sample in batch]
     mask_flags = [sample['mask_flag'] for sample in batch]
     padded = []
     for img in images:
@@ -25,7 +25,7 @@ def my_collate(batch):
 
 
     labels_ohe = [sum(sample['label/onehot']).to(device) for sample in batch]
-    return padded_images, labels_ohe, labels, supervisions, mask_flags
+    return padded_images, labels_ohe, labels, supervisions, mask_flags, [sample['filename'] for sample in batch]
 
 
 class RawDataset:
@@ -52,7 +52,8 @@ class RawDataset:
             root_dir,
             augmentations,
             output_dim=224,
-            mode='classification')
+            mode='classification',
+            limitDataVolume=[True, 100]) # set limitDataVolume[0] = False if don't want to pick specific classes and volume
 
         # Creating data indices for training and validation splits:
         dataset_size = len(self.dataset)
