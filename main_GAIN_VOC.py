@@ -34,7 +34,7 @@ parser.add_argument('--workers_num', type=int, help='number of threads for data 
 parser.add_argument('--test_first', type=int, help='0 for not testing before training in the beginning, 1 otherwise', default=0)
 parser.add_argument('--cl_loss_factor', type=float, help='a parameter for the classification loss magnitude, constant 1 in the paper', default=1)
 parser.add_argument('--am_loss_factor', type=float, help='a parameter for the AM (Attention-Mining) loss magnitude, alpha in the paper', default=1)
-TODO: parser.add_argument('--e_loss_factor', type=float, help='a parameter for the extra supervision loss magnitude, omega in the paper', default=1)
+parser.add_argument('--e_loss_factor', type=float, help='a parameter for the extra supervision loss magnitude, omega in the paper', default=1)
 parser.add_argument('--nepoch', type=int, help='number of epochs to train', default=50)
 parser.add_argument('--nepoch_am', type=int, default=1, help='number of epochs to train without am loss')
 parser.add_argument('--nepoch_ex', type=int, default=1, help='number of epochs to train without ex loss')
@@ -130,11 +130,8 @@ def main(args):
     writer.add_text('Start', 'start')
     
     print('Started')
-    print(chkpnt_epoch)
-    print(epochs)
     for epoch in range(chkpnt_epoch, epochs):
         print("enter epoch")
-
 
         total_train_single_accuracy = 0
         total_test_single_accuracy = 0
@@ -158,12 +155,10 @@ def main(args):
             epoch_train_total_loss = 0
 
             # Sampling training batch
-            print("before sampling")
             for sample in rds.datasets['rnd_train']:
                 # TODO:
                 augmented_masks = sample[3]
                 mask_flag = sample[4]
-                print("enter sampling")
 
                 # Get batch and augmented batch for the 1st img in the 1st array of sample
                 augmented_batch = []
@@ -271,7 +266,8 @@ def main(args):
 
                     acc = (y_pred == gt).sum()
                     total_train_single_accuracy += acc.detach().cpu()
-
+                    if acc.detach().cpu() > 1:
+                        print("Invalid acc")
 
                 # Multi label evaluation
                 #_, y_pred_multi = logits_cl.detach().topk(num_of_labels)
@@ -416,10 +412,10 @@ def main(args):
             j += 1
 
         num_test_samples = len(rds.datasets['seq_test'])*batch_size
-        print("finished epoch number:")
-        print(epoch)
-        print(num_train_samples)
-        print(batch_size)
+        # print("finished epoch number:")
+        # print(epoch)
+        # print(num_train_samples)
+        # print(batch_size)
         if (test_first and epoch > 0) or test_first == False:
             writer.add_scalar('Loss/train/cl_total_loss', epoch_train_cl_loss / (num_train_samples*batch_size), epoch)
             writer.add_scalar('Loss/train/am_tota_loss', epoch_train_am_loss / num_train_samples, epoch)

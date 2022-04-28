@@ -328,13 +328,22 @@ class PascalVOCLoader(data.Dataset):
         truth_path = self.all_files[index]
         # truth_im_path = self.all_im_files[index]
         im_name = os.path.splitext(os.path.split(truth_path)[-1])[0]
+        # TODO: im_names_array = im_name.split(str="_", num=2)
         # im_mask_name = os.path.splitext(os.path.split(truth_path)[-1])[0]
         im_path = pjoin(self.root, "JPEGImages", im_name + ".jpg")
 
         e_supvision_path = pjoin(self.root, "Supervision", im_name + ".png")
+        # TODO: mask_flag = False
+        # TODO: e_supvision_path = pjoin(self.root, "Supervision")
         all_supvision_files = os.listdir(pjoin(self.root, "Supervision", ""))
+        # TODO: all_unique_supvision_file_names = [file_name.split(str="_", num=2)[0] for file_name in all_supvision_files]
+        # TODO: all_unique_supvision_file_names = (list(set(all_unique_supvision_file_names))) # remove duplicates
+        # TODO: e_supvision_masks_list = []
+        # TODO: for im_name in im_names_array:
+        # TODO:      if (im_name[0] + '.png') in all_unique_supvision_file_names:
         if (im_name + '.png') in all_supvision_files:
             e_supvision_mask = Image.open(pjoin(e_supvision_path))
+            # TODO: e_supvision_masks_list.append(Image.open(pjoin(e_supvision_path, im_name + ".png")))
             np_mask = np.asarray(e_supvision_mask)
             tensor_mask = torch.tensor(np_mask)
             mask_flag = True
@@ -369,7 +378,7 @@ class PascalVOCLoader(data.Dataset):
             'label/name': classes,
             'label/idx': class_idx,
             'label/onehot': class_onehot,
-            'e_supvision': e_supvision_mask,
+            'e_supvision': e_supvision_mask, # e_supvision_masks_list
             'mask_flag': mask_flag,
             'filename': truth_path
         }
