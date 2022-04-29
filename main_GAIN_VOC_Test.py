@@ -99,10 +99,10 @@ def main(args):
     img = torch.tensor(img)
     im = torch.zeros((img.shape[0], img.shape[1])).unsqueeze(2).repeat([1, 1, 3])
     im[0:img.size()[0], 0:img.size()[1]] = img
-    im = im.type(torch.ByteTensor)
+    im = im.type(torch.ByteTensor).to(device)
 
     # get sample[2]: labels->sample['label/idx']->labels
-    segm_path = pjoin(args.dataset_path, "SegmentationClass/pre_encoded")
+    segm_path = pjoin(dataset_path, "SegmentationClass/pre_encoded")
     segm = Image.open(pjoin(segm_path, test_img + ".png"))
     truth = np.asarray(segm)
     # pixel values in truth array skipping pixel value 0(black color): value - 1 == pixel value mapping to its corresponding category
@@ -114,6 +114,7 @@ def main(args):
     labels = class_idx
 
     # get sample[1]: labels_ohe -> sample['label/onehot'] np array image->sample1
+    class_onehot = torch.from_numpy(class_onehot).type(torch.float)
     sample1 = sum(class_onehot).to(device)
 
     # Single Image Testing
@@ -126,7 +127,7 @@ def main(args):
     am_scores = nn.Softmax(dim=1)(logits_am)
     batch_am_lables = []
     for k in range(len(batch)):
-        num_of_labels = len(labels[k])
+        num_of_labels = len(labels)
         _, am_labels = am_scores[k].topk(num_of_labels)
         batch_am_lables.append(am_labels)
     num_of_labels = len(labels)
@@ -138,9 +139,9 @@ def main(args):
     viz = torch.from_numpy(visualization).unsqueeze(0).to(device)
     augmented = torch.tensor(one_input_image).unsqueeze(0).to(device)
     masked_im = denorm(one_masked_image, mean, std)
-    masked_im = (masked_im.squeeze().permute([1, 2, 0])
-                 .cpu().detach().numpy() * 255).round() \
-        .astype(np.uint8)
+    masked_im = (
+            masked_im.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+        np.uint8)
     orig = im.unsqueeze(0)
     masked_im = torch.from_numpy(masked_im).unsqueeze(0).to(device)
     orig_viz = torch.cat((orig, augmented, viz, masked_im), 0)
@@ -148,31 +149,32 @@ def main(args):
     # ground truth
     gt = [categories[x] for x in labels]
     orig = im.unsqueeze(0)
-    orig_viz = torch.cat((orig, augmented, viz, masked_image), 0)
+    orig_viz = torch.cat((orig, augmented, viz, masked_im), 0)
     grid = torchvision.utils.make_grid(orig_viz.permute([0, 3, 1, 2]))
     writer.add_image(tag='Test_Heatmaps/image_' + '_' + '_'.join(gt),
-                     img_tensor=grid,
+                     img_tensor=grid,global_step=0,
                      dataformats='CHW')
     y_scores = nn.Softmax()(logits_cl[0].detach())
     _, predicted_categories = y_scores.topk(num_of_labels)
     predicted_cl = [(categories[x], format(y_scores.view(-1)[x], '.4f')) for x in
                     predicted_categories.view(-1)]
-    labels_cl = [(categories[x], format(y_scores.view(-1)[x], '.4f')) for x in labels[t]]
+    labels_cl = [(categories[x], format(y_scores.view(-1)[x], '.4f')) for x in labels]
     import itertools
     predicted_cl = list(itertools.chain(*predicted_cl))
     labels_cl = list(itertools.chain(*labels_cl))
+    print(labels_cl)
     cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
 
     predicted_am = [(categories[x], format(am_scores[0].view(-1)[x], '.4f')) for x in
                     batch_am_lables[0].view(-1)]
-    labels_am = [(categories[x], format(am_scores.view(-1)[x], '.4f')) for x in labels[t]]
+    labels_am = [(categories[x], format(am_scores.view(-1)[x], '.4f')) for x in labels]
     import itertools
     predicted_am = list(itertools.chain(*predicted_am))
     labels_am = list(itertools.chain(*labels_am))
     am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
 
     writer.add_text('Test_Heatmaps_Description/image_' + '_' + '_'.join(gt),
-                    cl_text + am_text)
+                    cl_text + am_text,global_step=0)
 
 if __name__ == '__main__':
     args = parser.parse_args()
