@@ -43,6 +43,7 @@ parser.add_argument('--npretrain', type=int, help='number of epochs to pretrain 
 parser.add_argument('--record_itr_train', type=int, help='each which number of iterations to log images in training mode', default=1000)
 parser.add_argument('--record_itr_test', type=int, help='each which number of iterations to log images in test mode', default=100)
 parser.add_argument('--nrecord', type=int, help='how much images of a batch to record', default=1)
+parser.add_argument('--pickedCategories', type=list, help='a list of category number to train and test on')
 
 parser.add_argument('--grads_off', type=int, default=0, help='mode: \
                 with gradients (as in the paper) or without \
@@ -265,12 +266,23 @@ def main(args):
                     gt = torch.tensor(sorted(sample[2][k]), device=device)
 
                     acc = (y_pred == gt).sum()
-                    total_train_single_accuracy += acc.detach().cpu()
-                    if acc.detach().cpu() > 1:
-                        print("Invalid acc")
-                        print(acc.detach().cpu())
-                        print(gt)
-                        print(y_pred)
+                    correct_label_counter = 0
+                    total_picked_gt_label = 0
+                    if args.pickedCategories:
+                        for gt_label in gt:
+                            if gt_label in args.pickedCategories:
+                                total_picked_gt_label += 1
+                            if gt_label in y_pred and gt_label in args.pickedCategories:
+                                correct_label_counter += 1
+                        total_train_single_accuracy += (correct_label_counter / correct_label_counter)
+                    else:
+                        acc = acc.detach().cpu()/len(gt)
+                        total_train_single_accuracy += acc
+                        if acc.detach().cpu() > 1:
+                            print("Invalid acc")
+                            print(acc.detach().cpu())
+                            # print(gt)
+                            # print(y_pred)
 
                 # Multi label evaluation
                 #_, y_pred_multi = logits_cl.detach().topk(num_of_labels)
