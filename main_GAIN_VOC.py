@@ -269,6 +269,8 @@ def main(args):
                     if acc.detach().cpu() > 1:
                         print("Invalid acc")
                         print(acc.detach().cpu())
+                        print(gt)
+                        print(y_pred)
 
                 # Multi label evaluation
                 #_, y_pred_multi = logits_cl.detach().topk(num_of_labels)
