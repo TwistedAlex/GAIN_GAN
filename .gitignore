@@ -5,3 +5,8 @@
 /.idea
 dataloaders/__pycache__/*
 GAIN_notebook_4collab.ipynb
+saveHistory/
+main_toFreq.py
+main_VOC_multilabel_heatmaps_singlebatch.py
+main_MedT.py
+FFQH-dataset/
