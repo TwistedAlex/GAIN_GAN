@@ -3,3 +3,5 @@
 /venv/
 /VOC-dataset/
 /.idea
+dataloaders/__pycache__/*
+GAIN_notebook_4collab.ipynb
