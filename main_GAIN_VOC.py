@@ -268,6 +268,7 @@ def main(args):
                     total_train_single_accuracy += acc.detach().cpu()
                     if acc.detach().cpu() > 1:
                         print("Invalid acc")
+                        print(acc.detach().cpu())
 
                 # Multi label evaluation
                 #_, y_pred_multi = logits_cl.detach().topk(num_of_labels)
