@@ -158,7 +158,7 @@ class batch_GAIN_VOC(nn.Module):
         Ac = torch.mul(fl, weights).sum(dim=1, keepdim=True)
         Ac = F.relu(Ac)
         # Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear', align_corners=False)
-        Ac = F.upsample_bilinear(Ac, size=images.size()[2:])
+        Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear')
         heatmap = Ac
 
         Ac_min, _ = Ac.view(len(images), -1).min(dim=1)
@@ -168,7 +168,7 @@ class batch_GAIN_VOC(nn.Module):
         scaled_ac = (Ac - Ac_min.view(-1, 1, 1, 1)) / \
                     (Ac_max.view(-1, 1, 1, 1) - Ac_min.view(-1, 1, 1, 1)
                      + eps.view(1, 1, 1, 1))
-        mask = F.sigmoid(self.omega * (scaled_ac - self.sigma))
+        mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
         masked_image = images - images * mask
         
         #masked_image.register_hook(lambda grad: grad * self.grad_magnitude)

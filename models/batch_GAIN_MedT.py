@@ -144,7 +144,7 @@ class batch_GAIN_MedT(nn.Module):
         Ac = torch.mul(fl, weights).sum(dim=1, keepdim=True)
         Ac = F.relu(Ac)
         # Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear', align_corners=False)
-        Ac = F.upsample_bilinear(Ac, size=images.size()[2:])
+        Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear')
 
         Ac_min, _ = Ac.view(len(images), -1).min(dim=1)
         Ac_max, _ = Ac.view(len(images), -1).max(dim=1)
@@ -153,7 +153,7 @@ class batch_GAIN_MedT(nn.Module):
         scaled_ac = (Ac - Ac_min.view(-1, 1, 1, 1)) / \
                     (Ac_max.view(-1, 1, 1, 1) - Ac_min.view(-1, 1, 1, 1)
                      + eps.view(1, 1, 1, 1))
-        mask = F.sigmoid(self.omega * (scaled_ac - self.sigma))
+        mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
 
         masked_image = images - images * mask + mask * self.fill_color
 
