@@ -43,7 +43,6 @@ parser.add_argument('--npretrain', type=int, help='number of epochs to pretrain 
 parser.add_argument('--record_itr_train', type=int, help='each which number of iterations to log images in training mode', default=1000)
 parser.add_argument('--record_itr_test', type=int, help='each which number of iterations to log images in test mode', default=100)
 parser.add_argument('--nrecord', type=int, help='how much images of a batch to record', default=1)
-parser.add_argument('--pickedCategories', type=list, help='a list of category number to train and test on')
 
 parser.add_argument('--grads_off', type=int, default=0, help='mode: \
                 with gradients (as in the paper) or without \
@@ -62,7 +61,7 @@ parser.add_argument('--grads_magnitude', type=int, default=1,
 def main(args):
     categories = cfg.CATEGORIES
     num_classes = len(categories)
-
+    picked_categories = ['aeroplane']
     device = torch.device(args.device)
     model = vgg19(pretrained=True).train().to(device)
 
@@ -268,13 +267,19 @@ def main(args):
                     acc = (y_pred == gt).sum()
                     correct_label_counter = 0
                     total_picked_gt_label = 0
-                    if args.pickedCategories:
+                    if picked_categories:
                         for gt_label in gt:
-                            if gt_label in args.pickedCategories:
+                            if gt_label in picked_categories:
                                 total_picked_gt_label += 1
-                            if gt_label in y_pred and gt_label in args.pickedCategories:
+                            if gt_label in y_pred and gt_label in picked_categories:
                                 correct_label_counter += 1
-                        total_train_single_accuracy += (correct_label_counter / correct_label_counter)
+                        if total_picked_gt_label == 0:
+                            if correct_label_counter != 0:
+                                pass
+                            else:
+                                total_train_single_accuracy += 1
+                        else:
+                            total_train_single_accuracy += (correct_label_counter / total_picked_gt_label)
                     else:
                         acc = acc.detach().cpu()/len(gt)
                         total_train_single_accuracy += acc
@@ -370,6 +375,8 @@ def main(args):
 
 
             # Single label evaluation
+
+
             for k in range(len(batch)):
                 num_of_labels = len(sample[2][k])
                 _, y_pred = logits_cl[k].detach().topk(k=num_of_labels)
@@ -378,6 +385,28 @@ def main(args):
 
                 acc = (y_pred == gt).sum()
                 total_test_single_accuracy += acc.detach().cpu()
+
+                correct_label_counter = 0
+                total_picked_gt_label = 0
+                if picked_categories:
+                    for gt_label in gt:
+                        if gt_label in picked_categories:
+                            total_picked_gt_label += 1
+                        if gt_label in y_pred and gt_label in picked_categories:
+                            correct_label_counter += 1
+                    if total_picked_gt_label == 0:
+                        if correct_label_counter != 0:
+                            pass
+                        else:
+                            total_test_single_accuracy += 1
+                    else:
+                        total_test_single_accuracy += (correct_label_counter / total_picked_gt_label)
+                else:
+                    acc = acc.detach().cpu() / len(gt)
+                    total_test_single_accuracy += acc
+                    if acc.detach().cpu() > 1:
+                        print("Invalid acc")
+                        print(acc.detach().cpu())
 
             if j % args.record_itr_test == 0:
                 for t in range(args.nrecord):

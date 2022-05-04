@@ -241,7 +241,7 @@ class PascalVOCLoader(data.Dataset):
             'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'
         ]
         self.picked_categories = [
-            'aeroplane','bird'
+            'aeroplane',
         ]
 
         # self.transf_shape = {
