@@ -363,11 +363,11 @@ class PascalVOCLoader(data.Dataset):
         truth = np.asarray(segm)
         truths = [(truth == l).astype(int) for l in np.unique(truth)[1:]]
         # pixel values in truth array skipping pixel value 0(black color): value - 1 == pixel value mapping to its corresponding category
-        classes = [self.categories[l] for l in np.unique(truth)[1:] - 1]
+        classes = [self.categories[l] for l in np.unique(truth)[1:] - 1] # the list of the categories name in the image, l represents the index
         class_onehot = np.array(
             [[1 if (c == class_) else 0 for c in self.categories]
              for class_ in classes])
-        class_idx = [np.nonzero(c_onehot)[0][0] for c_onehot in class_onehot]
+        class_idx = [np.nonzero(c_onehot)[0][0] for c_onehot in class_onehot] #
         class_onehot = [torch.from_numpy(c_onehot).type(torch.float)
                         for c_onehot in class_onehot]
 

@@ -61,7 +61,7 @@ parser.add_argument('--grads_magnitude', type=int, default=1,
 def main(args):
     categories = cfg.CATEGORIES
     num_classes = len(categories)
-    picked_categories = ['aeroplane']
+    picked_categories = ['aeroplane'] # TODO: assign index of the category rather than the name of the category
     device = torch.device(args.device)
     model = vgg19(pretrained=True).train().to(device)
 
@@ -269,17 +269,23 @@ def main(args):
                     correct_label_counter = 0
                     total_picked_gt_label = 0
                     if picked_categories:
+                        gt_label = [x for x in gt if x in picked_categories]
                         for gt_label in gt:
                             if gt_label in picked_categories:
                                 total_picked_gt_label += 1
                             if gt_label in y_pred and gt_label in picked_categories:
                                 correct_label_counter += 1
                         if total_picked_gt_label == 0:
+                            print("train: divided by 0")
+                            print(correct_label_counter)
+                            print(correct_label_counter != 0)
                             if correct_label_counter != 0:
                                 pass
                             else:
                                 total_train_single_accuracy += 1
                         else:
+                            print("train: acc")
+                            print((correct_label_counter / total_picked_gt_label))
                             total_train_single_accuracy += (correct_label_counter / total_picked_gt_label)
                     else:
                         acc = acc.detach().cpu()/len(gt)
@@ -383,7 +389,8 @@ def main(args):
                 _, y_pred = logits_cl[k].detach().topk(k=num_of_labels)
                 y_pred = y_pred.view(-1)
                 gt = torch.tensor(sorted(sample[2][k]), device=device)
-
+                print(gt)
+                exit(0)
                 acc = (y_pred == gt).sum()
                 total_test_single_accuracy += acc.detach().cpu()
 
@@ -396,11 +403,16 @@ def main(args):
                         if gt_label in y_pred and gt_label in picked_categories:
                             correct_label_counter += 1
                     if total_picked_gt_label == 0:
+                        print("train: divided by 0")
+                        print(correct_label_counter)
+                        print(correct_label_counter != 0)
                         if correct_label_counter != 0:
                             pass
                         else:
                             total_test_single_accuracy += 1
                     else:
+                        print("train: acc")
+                        print((correct_label_counter / total_picked_gt_label))
                         total_test_single_accuracy += (correct_label_counter / total_picked_gt_label)
                 else:
                     acc = acc.detach().cpu() / len(gt)
