@@ -275,11 +275,16 @@ def main(args):
                             if gt_label in y_pred and gt_label in picked_categories:
                                 correct_label_counter += 1
                         if total_picked_gt_label == 0:
+                            print("train: divided by 0")
+                            print(correct_label_counter)
+                            print(correct_label_counter != 0)
                             if correct_label_counter != 0:
                                 pass
                             else:
                                 total_train_single_accuracy += 1
                         else:
+                            print("train: acc")
+                            print((correct_label_counter / total_picked_gt_label))
                             total_train_single_accuracy += (correct_label_counter / total_picked_gt_label)
                     else:
                         acc = acc.detach().cpu()/len(gt)
@@ -396,11 +401,16 @@ def main(args):
                         if gt_label in y_pred and gt_label in picked_categories:
                             correct_label_counter += 1
                     if total_picked_gt_label == 0:
+                        print("train: divided by 0")
+                        print(correct_label_counter)
+                        print(correct_label_counter != 0)
                         if correct_label_counter != 0:
                             pass
                         else:
                             total_test_single_accuracy += 1
                     else:
+                        print("train: acc")
+                        print((correct_label_counter / total_picked_gt_label))
                         total_test_single_accuracy += (correct_label_counter / total_picked_gt_label)
                 else:
                     acc = acc.detach().cpu() / len(gt)
