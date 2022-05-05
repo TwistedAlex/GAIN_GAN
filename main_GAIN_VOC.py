@@ -264,26 +264,20 @@ def main(args):
                     _, y_pred = logits_cl[k].detach().topk(k=num_of_labels)
                     y_pred = y_pred.view(-1)
                     gt = torch.tensor(sorted(sample[2][k]), device=device)
-                    print(gt)
-                    print(y_pred)
                     acc = (y_pred == gt).sum()
                     correct_label_counter = 0
                     total_picked_gt_label = 0
                     if picked_categories:
                         print(picked_categories)
                         for gt_label in gt:
-                            print(gt_label)
-                            print(gt_label in picked_categories)
-                            print(gt_label in y_pred and gt_label in picked_categories)
-                            exit(0)
                             if gt_label in picked_categories:
                                 total_picked_gt_label += 1
                             if gt_label in y_pred and gt_label in picked_categories:
                                 correct_label_counter += 1
                         if total_picked_gt_label == 0:
-                            print("train: divided by 0")
-                            print(correct_label_counter)
-                            print(correct_label_counter != 0)
+                            # print("train: divided by 0")
+                            # print(correct_label_counter)
+                            # print(correct_label_counter != 0)
                             if correct_label_counter != 0:
                                 pass
                             else:
