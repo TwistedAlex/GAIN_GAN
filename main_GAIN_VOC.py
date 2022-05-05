@@ -214,7 +214,7 @@ def main(args):
 
                 # augmented_masks = torch.cat(augmented_masks, dim=0)
                 # train_dataset -> medt_loader.datasets['train']
-                e_loss = 0.0
+                e_loss = 0
                 print(mask_flag[0])
                 if mask_flag[0]:
                     print("***********External supervision added***********")
@@ -264,11 +264,11 @@ def main(args):
                     _, y_pred = logits_cl[k].detach().topk(k=num_of_labels)
                     y_pred = y_pred.view(-1)
                     gt = torch.tensor(sorted(sample[2][k]), device=device)
-                    acc = (y_pred == gt).sum()
+
                     correct_label_counter = 0
                     total_picked_gt_label = 0
                     if picked_categories:
-                        print(picked_categories)
+                        # print(picked_categories)
                         for gt_label in gt:
                             if gt_label in picked_categories:
                                 total_picked_gt_label += 1
@@ -279,7 +279,7 @@ def main(args):
                             # print(correct_label_counter)
                             # print(correct_label_counter != 0)
                             if correct_label_counter != 0:
-                                pass
+                                total_train_single_accuracy += 0
                             else:
                                 total_train_single_accuracy += 1
                         else:
@@ -388,8 +388,6 @@ def main(args):
                 _, y_pred = logits_cl[k].detach().topk(k=num_of_labels)
                 y_pred = y_pred.view(-1)
                 gt = torch.tensor(sorted(sample[2][k]), device=device)
-                acc = (y_pred == gt).sum()
-                total_test_single_accuracy += acc.detach().cpu()
 
                 correct_label_counter = 0
                 total_picked_gt_label = 0
@@ -404,7 +402,7 @@ def main(args):
                         print(correct_label_counter)
                         print(correct_label_counter != 0)
                         if correct_label_counter != 0:
-                            pass
+                            total_train_single_accuracy += 0
                         else:
                             total_test_single_accuracy += 1
                     else:
