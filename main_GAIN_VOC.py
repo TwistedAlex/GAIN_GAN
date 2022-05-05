@@ -268,7 +268,7 @@ def main(args):
                     correct_label_counter = 0
                     total_picked_gt_label = 0
                     if picked_categories:
-                        print(picked_categories)
+                        # print(picked_categories)
                         for gt_label in gt:
                             if gt_label in picked_categories:
                                 total_picked_gt_label += 1
@@ -279,7 +279,7 @@ def main(args):
                             # print(correct_label_counter)
                             # print(correct_label_counter != 0)
                             if correct_label_counter != 0:
-                                pass
+                                total_train_single_accuracy += 0
                             else:
                                 total_train_single_accuracy += 1
                         else:
@@ -404,7 +404,7 @@ def main(args):
                         print(correct_label_counter)
                         print(correct_label_counter != 0)
                         if correct_label_counter != 0:
-                            pass
+                            total_train_single_accuracy += 0
                         else:
                             total_test_single_accuracy += 1
                     else:
