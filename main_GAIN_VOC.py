@@ -264,7 +264,9 @@ def main(args):
                     _, y_pred = logits_cl[k].detach().topk(k=num_of_labels)
                     y_pred = y_pred.view(-1)
                     gt = torch.tensor(sorted(sample[2][k]), device=device)
-
+                    print(gt)
+                    print(y_pred)
+                    exit(0)
                     acc = (y_pred == gt).sum()
                     correct_label_counter = 0
                     total_picked_gt_label = 0
@@ -389,8 +391,6 @@ def main(args):
                 _, y_pred = logits_cl[k].detach().topk(k=num_of_labels)
                 y_pred = y_pred.view(-1)
                 gt = torch.tensor(sorted(sample[2][k]), device=device)
-                print(gt)
-                exit(0)
                 acc = (y_pred == gt).sum()
                 total_test_single_accuracy += acc.detach().cpu()
 
