@@ -61,7 +61,7 @@ parser.add_argument('--grads_magnitude', type=int, default=1,
 def main(args):
     categories = cfg.CATEGORIES
     num_classes = len(categories)
-    picked_categories = ['aeroplane'] # TODO: assign index of the category rather than the name of the category
+    picked_categories = [0] # TODO: assign index of the category rather than the name of the category
     device = torch.device(args.device)
     model = vgg19(pretrained=True).train().to(device)
 
@@ -266,13 +266,16 @@ def main(args):
                     gt = torch.tensor(sorted(sample[2][k]), device=device)
                     print(gt)
                     print(y_pred)
-                    exit(0)
                     acc = (y_pred == gt).sum()
                     correct_label_counter = 0
                     total_picked_gt_label = 0
                     if picked_categories:
-                        gt_label = [x for x in gt if x in picked_categories]
+                        print(picked_categories)
                         for gt_label in gt:
+                            print(gt_label)
+                            print(gt_label in picked_categories)
+                            print(gt_label in y_pred and gt_label in picked_categories)
+                            exit(0)
                             if gt_label in picked_categories:
                                 total_picked_gt_label += 1
                             if gt_label in y_pred and gt_label in picked_categories:
