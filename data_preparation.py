@@ -14,17 +14,17 @@ def shell(commands, warn=True):
     if warn and exit_status != None:
         print(f"Completed with errors. Exit status: {exit_status}\n")
     return exit_status
-list_commands = ['cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/00000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/01000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/02000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/03000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/04000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/05000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/06000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/07000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/08000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/09000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
-                 'cp -rf /server_data/iamge-research/20220505_ffhq_11k/image_1024x1024/10000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/validation/Pos/'
+list_commands = ['cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/00000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/01000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/02000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/03000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/04000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/05000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/06000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/07000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/08000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/09000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/training/Pos/',
+                 'cp -rf /server_data/image-research/20220505_ffhq_11k/image_1024x1024/10000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT_1kT/validation/Pos/'
                  ]
 for com in list_commands:
 
