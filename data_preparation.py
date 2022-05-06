@@ -27,17 +27,17 @@ def shell(commands, warn=True):
 #                  'cp -rf /server_data/image-research/20220505_ffhq_11K/images1024x1024/10000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/validation/Pos/'
 #                  ]
 list_commands = ['gdown https://drive.google.com/drive/folders/1-5oQoEdAecNTFr8zLk5sUUvrEUN4WHXa -O /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/ --folder',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/000000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/001000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/002000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/003000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/004000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/005000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/006000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/007000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/008000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/009000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
-                 'cp -rf /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/010000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/validation/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/000000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/001000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/002000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/003000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/004000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/005000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/006000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/007000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/008000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/009000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
+                 'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/010000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/validation/Neg/'
                  ]
 
 for com in list_commands:
