@@ -1,3 +1,5 @@
+deepfake_data/
+logs_deepfake/
 /logs/
 /.ipynb_checkpoints/
 /venv/
