@@ -34,18 +34,18 @@ class FreezedBnModel(nn.Module):
             layer.bias.requires_grad = is_train
 
 
-class batch_GAIN_MedT(nn.Module):
+class batch_GAIN_Deepfake(nn.Module):
     def __init__(self, model, grad_layer, num_classes, fill_color,
                  am_pretraining_epochs=1, ex_pretraining_epochs=1,
                  test_first_before_train=False, grad_magnitude=1):
-        super(batch_GAIN_MedT, self).__init__()
+        super(batch_GAIN_Deepfake, self).__init__()
 
         self.model = model
 
         #using freezed BN model configuration on the second path in AM training to not influence the statistics
         self.freezed_bn_model = FreezedBnModel(model)
 
-        # print(self.model)
+        print(self.model)
         self.grad_layer = grad_layer
 
         self.num_classes = num_classes

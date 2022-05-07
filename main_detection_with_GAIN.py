@@ -16,7 +16,7 @@ from torchvision.transforms import Resize, Normalize, ToTensor
 from dataloaders.MedTData import MedT_Loader
 from metrics.metrics import calc_sensitivity
 
-from models.batch_GAIN_MedT import batch_GAIN_MedT
+from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
 from utils.image import show_cam_on_image, denorm, MedT_preprocess_image_v4
 
 
@@ -516,13 +516,14 @@ def main(args):
     num_classes = len(categories)
     device = torch.device('cuda:'+str(args.deviceID))
     model = resnet50(pretrained=False).train().to(device)
-
+    # source code of resnet50: https://pytorch.org/vision/stable/_modules/torchvision/models/resnet.html#resnet50
     # change the last layer for finetuning
-    classifier = model.classifier
-    num_ftrs = classifier[-1].in_features
-    new_classifier = torch.nn.Sequential(*(list(model.classifier.children())[:-1]),
-                                         nn.Linear(num_ftrs, num_classes).to(device))
-    model.classifier = new_classifier
+
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Sequential(
+        nn.Linear(num_ftrs, num_classes)
+    )
+
     model.train()
     # target_layer = model.features[-1]
 
@@ -545,7 +546,7 @@ def main(args):
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     norm = Normalize(mean=mean, std=std)
     fill_color = norm(torch.tensor(args.fill_color).view(1,3,1,1)).cuda()
-    model = batch_GAIN_MedT(model=model, grad_layer=args.grad_layer, num_classes=num_classes,
+    model = batch_GAIN_Deepfake(model=model, grad_layer=args.grad_layer, num_classes=num_classes,
                          am_pretraining_epochs=args.nepoch_am,
                          ex_pretraining_epochs=args.nepoch_ex,
                          fill_color=fill_color,
