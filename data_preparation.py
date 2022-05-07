@@ -26,7 +26,8 @@ def shell(commands, warn=True):
 #                  'cp -rf /server_data/image-research/20220505_ffhq_11K/images1024x1024/09000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Pos/',
 #                  'cp -rf /server_data/image-research/20220505_ffhq_11K/images1024x1024/10000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/validation/Pos/'
 #                  ]
-list_commands = ['gdown https://drive.google.com/drive/folders/1-5oQoEdAecNTFr8zLk5sUUvrEUN4WHXa -O /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/ --folder',
+# 'gdown https://drive.google.com/drive/folders/1-5oQoEdAecNTFr8zLk5sUUvrEUN4WHXa -O /home/shuoli/attention_env/GAIN_GAN/deepfake_data/stylegan2/ --folder',
+list_commands = [
                  'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/000000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
                  'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/001000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
                  'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/002000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
