@@ -170,7 +170,7 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
                                total_train_single_accuracy, test_before_train,
                                train_total_pos_correct, train_total_pos_seen,
                                train_total_neg_correct, train_total_neg_seen,
-                               train_differences):
+                               train_differences, have_mask_indices):
     print("pos = {} neg = {}".format(count_pos, count_neg))
     if (test_before_train and epoch > 0) or test_before_train == False:
         print('Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss
@@ -187,7 +187,7 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
         writer.add_scalar('Loss/train/am_total_loss', epoch_train_am_loss /
                           am_count, epoch)
         writer.add_scalar('IOU/train/average_IOU_per_sample', epoch_IOU /
-                          IOU_count, epoch)
+                          IOU_count if IOU_count != 0 else 0, epoch)
         writer.add_scalar('Accuracy/train/cl_accuracy',
                           total_train_single_accuracy / (num_train_samples *
                                                          batchsize), epoch)
@@ -463,7 +463,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         epoch_train_total_loss, args.batchsize, epoch_IOU, IOU_count,
         train_labels, total_train_single_accuracy, args.test_before_train,
         train_total_pos_correct, train_total_pos_seen,
-        train_total_neg_correct, train_total_neg_seen, train_differences)
+        train_total_neg_correct, train_total_neg_seen, train_differences, have_mask_indices)
 
 
 
