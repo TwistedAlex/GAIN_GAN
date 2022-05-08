@@ -6,6 +6,10 @@ logs_deepfake/
 /VOC-dataset/
 /.idea
 dataloaders/__pycache__/*
+configs/__pycache__/
+models/__pycache__/
+metrics/__pycache__/
+utils/__pycache__/
 GAIN_notebook_4collab.ipynb
 saveHistory/
 main_toFreq.py
