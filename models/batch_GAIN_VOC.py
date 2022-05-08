@@ -94,15 +94,20 @@ class batch_GAIN_VOC(nn.Module):
             self.backward_features = grad_output[0]
 
         gradient_layer_found = False
+        print("print named modules")
         for idx, m in self.model.named_modules():
+            print("idx")
+            print(idx)
+            print("m")
+            print(m)
             if idx == grad_layer:
                 m.register_forward_hook(forward_hook)
                 m.register_backward_hook(backward_hook)
                 print("Register forward hook !")
                 print("Register backward hook !")
                 gradient_layer_found = True
-                break
-
+                # break
+        exit(0)
         # for our own sanity, confirm its existence
         if not gradient_layer_found:
             raise AttributeError('Gradient layer %s not found in the internal model' % grad_layer)
