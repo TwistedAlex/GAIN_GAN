@@ -6,7 +6,7 @@ import os
 def save_roc_curve(labels, predictions, epoch_num, path):
 
     # calculate the fpr and tpr for all thresholds of the classification
-    fpr, tpr, threshold = roc_curve(labels, predictions)
+    fpr, tpr, auc, threshold = roc_curve(labels, predictions)
     roc_auc = metrics.auc(fpr, tpr)
 
     plt.title('Receiver Operating Characteristic')
