@@ -101,8 +101,8 @@ class batch_GAIN_VOC(nn.Module):
                 print("Register forward hook !")
                 print("Register backward hook !")
                 gradient_layer_found = True
-                break
-
+                # break
+        exit(0)
         # for our own sanity, confirm its existence
         if not gradient_layer_found:
             raise AttributeError('Gradient layer %s not found in the internal model' % grad_layer)
