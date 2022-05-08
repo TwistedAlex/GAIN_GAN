@@ -546,7 +546,7 @@ def main(args):
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     norm = Normalize(mean=mean, std=std)
     fill_color = norm(torch.tensor(args.fill_color).view(1,3,1,1)).cuda()
-    grad_layer = ["layer4", "layer3", "layer2", "layer1", "maxpool", "relu", "bn1", "conv1"]
+    grad_layer = ["layer4"] #, "layer3", "layer2", "layer1", "maxpool", "relu", "bn1", "conv1"
     model = batch_GAIN_Deepfake(model=model, grad_layer=grad_layer, num_classes=num_classes,
                          am_pretraining_epochs=args.nepoch_am,
                          ex_pretraining_epochs=args.nepoch_ex,
