@@ -58,7 +58,7 @@ class batch_GAIN_Deepfake(nn.Module):
         self.backward_features = None
 
         # Register hooks
-        self._register_hooks(grad_layer)
+        # self._register_hooks(grad_layer)
 
         # sigma, omega for making the soft-mask
         self.sigma = 0.6
