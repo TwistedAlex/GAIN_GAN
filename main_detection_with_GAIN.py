@@ -60,8 +60,8 @@ def monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences,
     all_sens, auc = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
     writer.add_scalar('ROC/test/ROC_0.1', all_sens[0], epoch)
     writer.add_scalar('ROC/test/ROC_0.05', all_sens[1], epoch)
-    writer.add_scalar('ROC/test/ROC_0.3', all_sens[2], epoch)
-    writer.add_scalar('ROC/test/ROC_0.5', all_sens[3], epoch)
+    # writer.add_scalar('ROC/test/ROC_0.3', all_sens[2], epoch)
+    # writer.add_scalar('ROC/test/ROC_0.5', all_sens[3], epoch)
     writer.add_scalar('ROC/test/AUC', auc, epoch)
 
 def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
@@ -200,8 +200,8 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
         all_sens, auc = calc_sensitivity(train_labels, train_differences)
         writer.add_scalar('ROC/train/ROC_0.1', all_sens[0], epoch)
         writer.add_scalar('ROC/train/ROC_0.05', all_sens[1], epoch)
-        writer.add_scalar('ROC/train/ROC_0.3', all_sens[2], epoch)
-        writer.add_scalar('ROC/train/ROC_0.5', all_sens[3], epoch)
+        # writer.add_scalar('ROC/train/ROC_0.3', all_sens[2], epoch)
+        # writer.add_scalar('ROC/train/ROC_0.5', all_sens[3], epoch)
         writer.add_scalar('ROC/train/AUC', auc, epoch)
 
 
