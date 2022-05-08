@@ -93,16 +93,14 @@ class batch_GAIN_Deepfake(nn.Module):
             print(idx)
             print("m")
             print(m)
-            if idx == "layer1":
-                exit(0)
-            if idx == self.grad_layer:
-                m.register_forward_hook(forward_hook)
-                m.register_backward_hook(backward_hook)
-                print("Register forward hook !")
-                print("Register backward hook !")
-                gradient_layer_found = True
-                break
-
+            # if idx == self.grad_layer:
+            #     m.register_forward_hook(forward_hook)
+            #     m.register_backward_hook(backward_hook)
+            #     print("Register forward hook !")
+            #     print("Register backward hook !")
+            #     gradient_layer_found = True
+            #     break
+        exit(0)
         # for our own sanity, confirm its existence
         if not gradient_layer_found:
             raise AttributeError('Gradient layer %s not found in the internal model' % grad_layer)
