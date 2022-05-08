@@ -521,7 +521,7 @@ def main(args):
 
     num_ftrs = model.fc.in_features
     model.fc = nn.Sequential(
-        nn.Linear(num_ftrs, num_classes)
+        nn.Linear(num_ftrs, num_classes).to(device)
     )
 
     model.train()
