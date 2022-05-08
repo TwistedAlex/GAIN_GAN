@@ -326,6 +326,57 @@ def MedT_preprocess_image_v4(img , train , mask=-1, mean=None, std=None) -> torc
     return preprocessing(img).unsqueeze(0), None, augmented_mask
 
 
+def Deepfake_preprocess_image(img , train , mask=-1, mean=None, std=None) -> torch.Tensor:
+    if std is None:
+        std = [0.5, 0.5, 0.5]
+    if mean is None:
+        mean = [0.5, 0.5, 0.5]
+
+    augmented_mask = np.zeros(1)+(-1)
+
+    if train == True:
+        augment = Compose([
+            RandomResizedCrop(224, scale=(0.88, 1.0), ratio=(0.999, 1.001)),
+            RandomHorizontalFlip(),
+            RandomRot90()
+        ])
+        normilize_augment = Compose([
+            ToTensor(),
+            AddGaussianNoise(),
+
+        ])
+        normilize = Normalize(mean=mean, std=std)
+
+        img_mask = img
+        if mask.numel() > 1:
+            img_mask = torch.cat((img, mask), dim=0)
+        augmented_image_mask = augment(img_mask)
+        augmented_image = augmented_image_mask
+        if mask.numel() > 1:
+            augmented_image = augmented_image_mask[0:3, :, :]
+            augmented_mask = np.array(augmented_image_mask.permute([1,2,0]))[:, :, 3]
+
+        augmented_image = augmented_image.permute([1,2,0])
+        normilized_and_augmented = normilize_augment(np.array(augmented_image))
+        preprocced = normilize(normilized_and_augmented).unsqueeze(0)
+        #aug = normilized_and_augmented.clone()
+        #mn = aug.min()
+        #mx = aug.max()
+        #aug -= mn.view(1,1,1)
+        #aug /= mx.view(1,1,1)
+        #aug = (aug*255).ceil().int().permute([1,2,0])
+
+        return preprocced, augmented_image, augmented_mask
+
+    preprocessing = Compose([
+        Image.fromarray,
+        Resize(size=224),
+        ToTensor(),
+        Normalize(mean=mean, std=std)
+    ])
+
+    return preprocessing(img).unsqueeze(0), None, augmented_mask
+
 def deprocess_image(img):
     """ see https://github.com/jacobgil/keras-grad-cam/blob/master/grad-cam.py#L65 """
     img = img - np.min(img)

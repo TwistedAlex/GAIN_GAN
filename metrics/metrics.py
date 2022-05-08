@@ -1,21 +1,43 @@
 import numpy as np
+import sklearn.metrics as metrics
+import matplotlib.pyplot as plt
+import os
+
+def save_roc_curve(labels, predictions, epoch_num, path):
+
+    # calculate the fpr and tpr for all thresholds of the classification
+    fpr, tpr, threshold = roc_curve(labels, predictions)
+    roc_auc = metrics.auc(fpr, tpr)
+
+    plt.title('Receiver Operating Characteristic')
+    plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
+    plt.legend(loc='lower right')
+    plt.plot([0, 1], [0, 1], 'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.savefig(os.path.join(path, "roc_curve_{}.png").format(epoch_num))
+
 
 def calc_sensitivity(labels, predictions, false_alarm_points=None, return_thresholds_for_fa=False):
     if false_alarm_points is None:
-        false_alarm_points = [.1 / 100, .05 / 100]
+        false_alarm_points = [.1 / 100, .05 / 100, .3 / 100, .5 / 100]
 
     fpr, tpr, auc, thresholds = roc_curve(labels, predictions)
     all_sens = []
     all_thresholds = []
     for fa in false_alarm_points:
+        # output the false positive value when true positive rate = false_alarm_point
         sensitivity_at_fa = np.interp(x=fa, xp=fpr, fp=tpr)
+        # output the true positive value when false positive rate = false_alarm_point
         th_at_fa = np.interp(x=fa, xp=fpr, fp=thresholds)
         all_sens += [sensitivity_at_fa]
         all_thresholds += [th_at_fa]
 
     if return_thresholds_for_fa:
         return all_sens, all_thresholds
-    return all_sens, auc
+    return all_sens, auc, fpr, tpr
 
 
 def roc_curve(labels, preds, thresholds_count=10000):

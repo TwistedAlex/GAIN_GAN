@@ -1,28 +1,18 @@
-
 import pathlib
+import os
 import math
-
 import argparse
 import torch
-
-from torch import nn
-
-from torchvision.models import resnet50
 import numpy as np
-
+from torch import nn
+from torchvision.models import resnet50
 from torchvision.transforms import Resize, Normalize, ToTensor
-
-
-from dataloaders.MedTData import MedT_Loader
-from metrics.metrics import calc_sensitivity
-
+from dataloaders.deepfake_data import Deepfake_Loader
+from metrics.metrics import calc_sensitivity, save_roc_curve
 from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
-from utils.image import show_cam_on_image, denorm, MedT_preprocess_image_v4
-
-
+from utils.image import show_cam_on_image, denorm, Deepfake_preprocess_image
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
-
 from configs.MDTconfig import cfg
 
 def my_collate(batch):
@@ -40,7 +30,7 @@ def my_collate(batch):
 
 def monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences,
                        epoch_test_am_loss, test_total_pos_correct, epoch,
-                       total_test_single_accuracy, test_total_neg_correct):
+                       total_test_single_accuracy, test_total_neg_correct, path):
     num_test_samples = len(test_dataset)
     print('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
 
@@ -57,12 +47,14 @@ def monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences,
     test_labels = torch.zeros(num_test_samples)
     test_labels[0:len(ones)] = ones
     test_labels = test_labels.int()
-    all_sens, auc = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
+    all_sens, auc, fpr, tpr = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
     writer.add_scalar('ROC/test/ROC_0.1', all_sens[0], epoch)
     writer.add_scalar('ROC/test/ROC_0.05', all_sens[1], epoch)
-    # writer.add_scalar('ROC/test/ROC_0.3', all_sens[2], epoch)
-    # writer.add_scalar('ROC/test/ROC_0.5', all_sens[3], epoch)
+    writer.add_scalar('ROC/test/ROC_0.3', all_sens[2], epoch)
+    writer.add_scalar('ROC/test/ROC_0.5', all_sens[3], epoch)
     writer.add_scalar('ROC/test/AUC', auc, epoch)
+    save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
+
 
 def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
                        label_idx_list, logits_cl, am_scores, am_labels, writer,
@@ -106,7 +98,7 @@ def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
                         global_step=epoch)
 
-def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch):
+def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, output_path):
 
     model.eval()
 
@@ -158,7 +150,7 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch):
 
     monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences,
                        epoch_test_am_loss, test_total_pos_correct, epoch,
-                       total_test_single_accuracy, test_total_neg_correct)
+                       total_test_single_accuracy, test_total_neg_correct, output_path)
 
 
 
@@ -197,11 +189,11 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
         writer.add_scalar('Accuracy/train/cl_accuracy_only_neg',
                           train_total_neg_correct / train_total_neg_seen,
                           epoch)
-        all_sens, auc = calc_sensitivity(train_labels, train_differences)
+        all_sens, auc, _, _ = calc_sensitivity(train_labels, train_differences)
         writer.add_scalar('ROC/train/ROC_0.1', all_sens[0], epoch)
         writer.add_scalar('ROC/train/ROC_0.05', all_sens[1], epoch)
-        # writer.add_scalar('ROC/train/ROC_0.3', all_sens[2], epoch)
-        # writer.add_scalar('ROC/train/ROC_0.5', all_sens[3], epoch)
+        writer.add_scalar('ROC/train/ROC_0.3', all_sens[2], epoch)
+        writer.add_scalar('ROC/train/ROC_0.5', all_sens[3], epoch)
         writer.add_scalar('ROC/train/AUC', auc, epoch)
 
 
@@ -532,10 +524,10 @@ def main(args):
 
     batch_size = args.batchsize
     epoch_size = args.nepoch
-    medt_loader = MedT_Loader(args.input_dir,[1-args.batch_pos_dist, args.batch_pos_dist],
+    deepfake_loader = Deepfake_Loader(args.input_dir,[1-args.batch_pos_dist, args.batch_pos_dist],
                               batch_size=batch_size, steps_per_epoch=epoch_size,
                               masks_to_use=args.masks_to_use, mean=mean, std=std,
-                              transform=MedT_preprocess_image_v4,
+                              transform=Deepfake_preprocess_image,
                               collate_fn=my_collate)
 
     #if True test epoch will run first
@@ -579,7 +571,7 @@ def main(args):
     pos_to_write = args.pos_to_write_train
     neg_to_write = args.neg_to_write_train
     pos_idx = list(range(pos_to_write))
-    pos_count = medt_loader.get_train_pos_count()
+    pos_count = deepfake_loader.get_train_pos_count()
     neg_idx = list(range(pos_count, pos_count+neg_to_write))
     idx = pos_idx+neg_idx
     counter = dict({x: 0 for x in idx})
@@ -595,11 +587,12 @@ def main(args):
     for epoch in range(chkpnt_epoch, epochs):
         if not test_first_before_train or \
                 (test_first_before_train and epoch != 0):
-            train(args, cfg, model, device, medt_loader.datasets['train'],
-                  medt_loader.train_dataset, optimizer, writer, epoch)
-
-        test(args, cfg, model, device, medt_loader.datasets['test'],
-                  medt_loader.test_dataset, writer, epoch)
+            train(args, cfg, model, device, deepfake_loader.datasets['train'],
+                  deepfake_loader.train_dataset, optimizer, writer, epoch)
+        roc_log_path = os.path.join(args.output_dir, "roc_log")
+        pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
+        test(args, cfg, model, device, deepfake_loader.datasets['test'],
+                  deepfake_loader.test_dataset, writer, epoch, roc_log_path)
 
         print("finished epoch number:")
         print(epoch)
