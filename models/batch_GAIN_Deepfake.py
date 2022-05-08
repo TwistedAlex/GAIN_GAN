@@ -45,7 +45,7 @@ class batch_GAIN_Deepfake(nn.Module):
         #using freezed BN model configuration on the second path in AM training to not influence the statistics
         self.freezed_bn_model = FreezedBnModel(model)
 
-        print(self.model)
+        # print(self.model)
         self.grad_layer = grad_layer
 
         self.num_classes = num_classes
