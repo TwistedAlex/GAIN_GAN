@@ -1,4 +1,5 @@
 import pathlib
+import PIL.Image
 import os
 import math
 import argparse
@@ -15,6 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from configs.MDTconfig import cfg
 
+
 def my_collate(batch):
     orig_imgs, preprocessed_imgs, agumented_imgs, masks, preprocessed_masks,\
                     used_masks, labels, indices = zip(*batch)
@@ -28,9 +30,10 @@ def my_collate(batch):
                 'labels': labels, 'idx': indices}
     return res_dict
 
+
 def monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences,
                        epoch_test_am_loss, test_total_pos_correct, epoch,
-                       total_test_single_accuracy, test_total_neg_correct, path):
+                       total_test_single_accuracy, test_total_neg_correct, last_epoch, path):
     num_test_samples = len(test_dataset)
     print('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
 
@@ -47,16 +50,95 @@ def monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences,
     test_labels = torch.zeros(num_test_samples)
     test_labels[0:len(ones)] = ones
     test_labels = test_labels.int()
+    # all_sens, auc, fpr, tpr = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
+    # writer.add_scalar('ROC/test/ROC_0.1', all_sens[0], epoch)
+    # writer.add_scalar('ROC/test/ROC_0.05', all_sens[1], epoch)
+    # writer.add_scalar('ROC/test/ROC_0.3', all_sens[2], epoch)
+    # writer.add_scalar('ROC/test/ROC_0.5', all_sens[3], epoch)
+    # writer.add_scalar('ROC/test/AUC', auc, epoch)
+    if epoch == last_epoch:
+        save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
+
+
+def monitor_validation_epoch(writer, test_dataset, args, pos_count, test_differences,
+                       epoch_test_am_loss, test_total_pos_correct, epoch,
+                       total_test_single_accuracy, test_total_neg_correct, last_epoch, path):
+    num_test_samples = len(test_dataset)
+    print('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
+
+    writer.add_scalar('Loss/validation/am_total_loss', epoch_test_am_loss / (pos_count / args.batchsize), epoch)
+
+    writer.add_scalar('Accuracy/validation/cl_accuracy_only_pos',
+                      test_total_pos_correct / pos_count, epoch)
+    writer.add_scalar('Accuracy/validation/cl_accuracy_only_neg',
+                      test_total_neg_correct / (num_test_samples - pos_count), epoch)
+
+    writer.add_scalar('Accuracy/validation/cl_accuracy', total_test_single_accuracy / num_test_samples, epoch)
+
+    ones = torch.ones(pos_count)
+    test_labels = torch.zeros(num_test_samples)
+    test_labels[0:len(ones)] = ones
+    test_labels = test_labels.int()
     all_sens, auc, fpr, tpr = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
-    writer.add_scalar('ROC/test/ROC_0.1', all_sens[0], epoch)
-    writer.add_scalar('ROC/test/ROC_0.05', all_sens[1], epoch)
-    writer.add_scalar('ROC/test/ROC_0.3', all_sens[2], epoch)
-    writer.add_scalar('ROC/test/ROC_0.5', all_sens[3], epoch)
-    writer.add_scalar('ROC/test/AUC', auc, epoch)
-    save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
+    writer.add_scalar('ROC/validation/ROC_0.1', all_sens[0], epoch)
+    writer.add_scalar('ROC/validation/ROC_0.05', all_sens[1], epoch)
+    writer.add_scalar('ROC/validation/ROC_0.3', all_sens[2], epoch)
+    writer.add_scalar('ROC/validation/ROC_0.5', all_sens[3], epoch)
+    writer.add_scalar('ROC/validation/AUC', auc, epoch)
+    if epoch == last_epoch:
+        save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
 
 
 def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
+                       label_idx_list, logits_cl, am_scores, am_labels, writer,
+                       epoch, cfg, path):
+    if (j < args.pos_to_write_test and j % t == 0) or (
+            j > args.pos_to_write_test and j % (args.pos_to_write_test * 3) == 0):
+        htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
+        resize = Resize(size=224)
+        orig = sample['orig_images'][0].permute([2, 0, 1])
+        orig = resize(orig).permute([1, 2, 0])
+        np_orig = orig.cpu().detach().numpy()
+        visualization, heatmap = show_cam_on_image(np_orig, htm, True)
+        viz = torch.from_numpy(visualization).unsqueeze(0)
+        orig = orig.unsqueeze(0)
+        masked_image = denorm(masked_images[0].detach().squeeze(),
+                              test_dataset.mean, test_dataset.std)
+        masked_image = (masked_image.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+            np.uint8)
+        masked_image = torch.from_numpy(masked_image).unsqueeze(0)
+        orig_viz = torch.cat((orig, viz, masked_image), 0)
+        gt = [cfg['categories'][x] for x in label_idx_list][0]
+        # writer.add_images(tag='Test_Heatmaps/image_' + str(j) + '_' + gt,
+        #                   img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
+        y_scores = nn.Softmax(dim=1)(logits_cl.detach())
+        predicted_categories = y_scores[0].unsqueeze(0).argmax(dim=1) # 'Neg', 'Pos': 0, 1
+        predicted_cl = [(cfg['categories'][x], format(y_scores[0].view(-1)[x], '.4f')) for x in
+                        predicted_categories.view(-1)]
+        labels_cl = [(cfg['categories'][x], format(y_scores[0].view(-1)[x], '.4f')) for x in [(label_idx_list[0])]]
+        import itertools
+        predicted_cl = list(itertools.chain(*predicted_cl))
+        labels_cl = list(itertools.chain(*labels_cl))
+        cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
+
+        predicted_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in am_labels[0].view(-1)]
+        labels_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in [label_idx_list[0]]]
+        import itertools
+        predicted_am = list(itertools.chain(*predicted_am))
+        labels_am = list(itertools.chain(*labels_am))
+        am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
+        if gt in ['Neg']:
+            PIL.Image.fromarray(orig_viz.cpu().numpy(), 'RGB').save(
+                path + "/Neg/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
+        else:
+            PIL.Image.fromarray(orig_viz.cpu().numpy(), 'RGB').save(
+                path + "/Pos/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
+
+        # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
+        #                 global_step=epoch)
+
+
+def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
                        label_idx_list, logits_cl, am_scores, am_labels, writer,
                        epoch, cfg):
     if (j < args.pos_to_write_test and j % t == 0) or (
@@ -76,7 +158,7 @@ def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         masked_image = torch.from_numpy(masked_image).unsqueeze(0)
         orig_viz = torch.cat((orig, viz, masked_image), 0)
         gt = [cfg['categories'][x] for x in label_idx_list][0]
-        writer.add_images(tag='Test_Heatmaps/image_' + str(j) + '_' + gt,
+        writer.add_images(tag='Validation_Heatmaps/image_' + str(j) + '_' + gt,
                           img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
         y_scores = nn.Softmax(dim=1)(logits_cl.detach())
         predicted_categories = y_scores[0].unsqueeze(0).argmax(dim=1)
@@ -95,10 +177,66 @@ def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         labels_am = list(itertools.chain(*labels_am))
         am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
 
-        writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
+        writer.add_text('Validation_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
                         global_step=epoch)
 
-def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, output_path):
+
+def train_validate(args, cfg, model, device, validation_loader, validation_dataset, writer, epoch, last_epoch, output_path):
+
+    model.eval()
+
+    j = 0
+    validation_total_pos_correct, validation_total_neg_correct = 0, 0
+    epoch_validation_am_loss, total_validation_single_accuracy = 0, 0
+    validation_differences = np.zeros(len(validation_dataset))
+
+    for sample in validation_loader:
+        label_idx_list = sample['labels']
+        batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
+        batch = batch.to(device)
+        labels = torch.Tensor(label_idx_list).to(device).long()
+
+        logits_cl, logits_am, heatmaps, masks, masked_images = model(batch, labels)
+
+        # Single label evaluation
+        y_pred = logits_cl.detach().argmax(dim=1)
+        y_pred = y_pred.view(-1)
+        gt = labels.view(-1)
+        acc = (y_pred == gt).sum()
+        total_validation_single_accuracy += acc.detach().cpu()
+
+        pos_correct = (y_pred == gt).logical_and(gt == 1).sum()
+        neg_correct = (y_pred == gt).logical_and(gt == 0).sum()
+        validation_total_neg_correct += neg_correct
+        validation_total_pos_correct += pos_correct
+
+        difference = (logits_cl[:, 1] - logits_cl[:, 0]).cpu().detach().numpy()
+        validation_differences[j * args.batchsize: j * args.batchsize + len(difference)] = difference
+
+        am_scores = nn.Softmax(dim=1)(logits_am)
+        am_labels = am_scores.argmax(dim=1)
+
+        pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
+        cur_pos_num = len(pos_indices)
+        # The code to replace to train on positives and negatives
+        if cur_pos_num > 1:
+            am_labels_scores = am_scores[pos_indices, torch.ones(cur_pos_num).long()]
+            am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
+            epoch_validation_am_loss += (am_loss * args.am_weight).detach().cpu().item()
+
+        pos_count = validation_dataset.positive_len()
+        t = math.ceil(pos_count / (args.batchsize * args.pos_to_write_test))
+        monitor_validation_viz(j, t, heatmaps, sample, masked_images, validation_dataset,
+                       label_idx_list, logits_cl, am_scores, am_labels, writer,
+                       epoch, cfg)
+        j += 1
+
+    monitor_validation_epoch(writer, validation_dataset, args, pos_count, validation_differences,
+                       epoch_validation_am_loss, validation_total_pos_correct, epoch,
+                       total_validation_single_accuracy, validation_total_neg_correct, last_epoch, output_path)
+
+
+def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, last_epoch, output_path):
 
     model.eval()
 
@@ -142,17 +280,21 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, out
             epoch_test_am_loss += (am_loss * args.am_weight).detach().cpu().item()
 
         pos_count = test_dataset.positive_len()
+
+        output_path_heatmap = os.path.join(output_path, "/test_heatmap/")
+        pathlib.Path(output_path_heatmap + "Pos").mkdir(parents=True, exist_ok=True)
+        pathlib.Path(output_path_heatmap + "Neg").mkdir(parents=True, exist_ok=True)
+
         t = math.ceil(pos_count / (args.batchsize * args.pos_to_write_test))
+
         monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
                        label_idx_list, logits_cl, am_scores, am_labels, writer,
-                       epoch, cfg)
+                       epoch, cfg, output_path_heatmap)
         j += 1
 
     monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences,
                        epoch_test_am_loss, test_total_pos_correct, epoch,
-                       total_test_single_accuracy, test_total_neg_correct, output_path)
-
-
+                       total_test_single_accuracy, test_total_neg_correct, last_epoch, output_path)
 
 
 def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
@@ -591,9 +733,11 @@ def main(args):
                   deepfake_loader.train_dataset, optimizer, writer, epoch)
         roc_log_path = os.path.join(args.output_dir, "roc_log")
         pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
-        test(args, cfg, model, device, deepfake_loader.datasets['test'],
-                  deepfake_loader.test_dataset, writer, epoch, roc_log_path)
-
+        train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
+                  deepfake_loader.test_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path)
+        if epoch == epochs - 1:
+            test(args, cfg, model, device, deepfake_loader.datasets['test'],
+                       deepfake_loader.test_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path)
         print("finished epoch number:")
         print(epoch)
 

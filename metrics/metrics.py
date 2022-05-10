@@ -18,6 +18,7 @@ def save_roc_curve(labels, predictions, epoch_num, path):
     plt.ylabel('True Positive Rate')
     plt.xlabel('False Positive Rate')
     plt.savefig(os.path.join(path, "roc_curve_{}.png").format(epoch_num))
+    plt.cla()
 
 
 def calc_sensitivity(labels, predictions, false_alarm_points=None, return_thresholds_for_fa=False):

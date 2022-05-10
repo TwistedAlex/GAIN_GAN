@@ -102,10 +102,7 @@ class Deepfake_Train_Data(data.Dataset):
         return self.masks_indices
 
 
-
-
-
-class Deepfake_Test_Data(data.Dataset):
+class Deepfake_Validation_Data(data.Dataset):
     def __init__(self, mean, std, transform, root_dir='validation', loader=load_func):
         self.pos_root_dir = root_dir+'Pos/'
         self.neg_root_dir = root_dir + 'Neg/'
@@ -139,6 +136,38 @@ class Deepfake_Test_Data(data.Dataset):
         return self.pos_num_of_samples
 
 
+class Deepfake_Test_Data(data.Dataset):
+    def __init__(self, mean, std, transform, root_dir='test', loader=load_func):
+        self.pos_root_dir = root_dir+'Pos/'
+        self.neg_root_dir = root_dir + 'Neg/'
+        self.all_files = os.listdir(self.pos_root_dir) + \
+                         os.listdir(self.neg_root_dir)
+        self.pos_num_of_samples = len(os.listdir(self.pos_root_dir))
+        self.loader = loader
+        self.mean = mean
+        self.std = std
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.all_files)
+
+    def __getitem__(self, index):
+        if index < self.pos_num_of_samples:
+            res = list(self.loader(self.pos_root_dir,
+                                   self.all_files[index], None))
+        else:
+            res = list(self.loader(self.neg_root_dir,
+                                   self.all_files[index], None))
+        preprocessed, augmented, _ = \
+            self.transform(img=res[0].squeeze().numpy(),
+                           train=False, mean=self.mean, std=self.std)
+        res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + [np.array(-1)] +\
+              [False] + [res[2]]
+        res.append(index)
+        return res
+
+    def positive_len(self):
+        return self.pos_num_of_samples
 
 
 class Deepfake_Loader():
@@ -150,13 +179,17 @@ class Deepfake_Loader():
                                              masks_to_use=masks_to_use,
                                              mean=mean, std=std,
                                              transform=transform)
-        self.test_dataset = Deepfake_Test_Data(root_dir=root_dir + 'validation/',
+        self.validation_dataset = Deepfake_Validation_Data(root_dir=root_dir + 'validation/',
                                            mean=mean, std=std,
                                            transform=transform)
 
+        self.test_dataset = Deepfake_Test_Data(root_dir=root_dir + 'test/',
+                                               mean=mean, std=std,
+                                               transform=transform)
+
         #train_sampler = RandomSampler(self.train_dataset, num_samples=maxint,
         #                              replacement=True)
-        test_sampler = SequentialSampler(self.test_dataset)
+        test_sampler = SequentialSampler(self.validation_dataset)
 
         train_as_test_sampler = SequentialSampler(self.train_dataset)
 
@@ -177,8 +210,15 @@ class Deepfake_Loader():
                     steps_per_epoch=steps_per_epoch, num_workers=num_workers,
                     collate_fn=collate_fn)
 
+        validation_loader = torch.utils.data.DataLoader(
+            self.validation_dataset,
+            num_workers=num_workers,
+            batch_size=batch_size,
+            sampler=test_sampler,
+            collate_fn=collate_fn)
+
         test_loader = torch.utils.data.DataLoader(
-            self.test_dataset,
+            self.validation_dataset,
             num_workers=num_workers,
             batch_size=batch_size,
             sampler=test_sampler,
@@ -190,13 +230,13 @@ class Deepfake_Loader():
             batch_size=batch_size,
             sampler=train_as_test_sampler)
 
-        self.datasets = {'train': train_loader, 'test': test_loader,
+        self.datasets = {'train': train_loader, 'validation': validation_loader, 'test': test_loader, 
                          'train_as_test': train_as_test_loader }
 
     def get_test_pos_count(self, train_as_test=False):
         if train_as_test:
             return self.train_dataset.pos_num_of_samples
-        return self.test_dataset.pos_num_of_samples
+        return self.validation_dataset.pos_num_of_samples
 
     def get_train_pos_count(self):
         return self.train_dataset.pos_num_of_samples
