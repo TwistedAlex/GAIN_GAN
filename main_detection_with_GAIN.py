@@ -162,6 +162,11 @@ def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
             np.uint8)
         masked_image = torch.from_numpy(masked_image).unsqueeze(0)
         orig_viz = torch.cat((orig, viz, masked_image), 0)
+        print("**********size of img output heatmap****************")
+        print(masked_image.size())
+        print(viz.size())
+        print(orig.size())
+        print(orig_viz.size())
         gt = [cfg['categories'][x] for x in label_idx_list][0]
         writer.add_images(tag='Validation_Heatmaps/image_' + str(j) + '_' + gt,
                           img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)

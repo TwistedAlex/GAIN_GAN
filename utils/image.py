@@ -386,7 +386,7 @@ def deprocess_image(img):
 
     return np.uint8(img * 255)
 
-
+    # gray scale array to 3 channels RGB array; combine two array as 0-255 3channel RGB array
 def show_cam_on_image(img: np.ndarray, mask: np.ndarray, without_norm : bool) -> np.ndarray:
     heatmap = cv2.applyColorMap(np.uint8(mask), cv2.COLORMAP_JET)
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
