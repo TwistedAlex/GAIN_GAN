@@ -647,6 +647,7 @@ def main(args):
         'Neg', 'Pos'
     ]
 
+    pathlib.Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     num_classes = len(categories)
     device = torch.device('cuda:'+str(args.deviceID))
     model = resnet50(pretrained=False).train().to(device)

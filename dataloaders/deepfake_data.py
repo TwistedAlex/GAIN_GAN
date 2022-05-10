@@ -183,7 +183,7 @@ class Deepfake_Loader():
                                            mean=mean, std=std,
                                            transform=transform)
 
-        self.test_dataset = Deepfake_Test_Data(root_dir=root_dir + 'test/',
+        self.test_dataset = Deepfake_Test_Data(root_dir=root_dir + 'testing/',
                                                mean=mean, std=std,
                                                transform=transform)
 
