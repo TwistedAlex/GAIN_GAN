@@ -167,6 +167,7 @@ def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         print(viz.size())
         print(orig.size())
         print(orig_viz.size())
+        exit(0)
         gt = [cfg['categories'][x] for x in label_idx_list][0]
         writer.add_images(tag='Validation_Heatmaps/image_' + str(j) + '_' + gt,
                           img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
