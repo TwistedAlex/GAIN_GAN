@@ -112,7 +112,7 @@ def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         masked_image = (masked_image.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
             np.uint8)
         masked_image = torch.from_numpy(masked_image).unsqueeze(0)
-        orig_viz = torch.cat((orig, viz, masked_image), 0)
+        orig_viz = torch.cat((orig, viz, masked_image), 1)
         gt = [cfg['categories'][x] for x in label_idx_list][0]
         # writer.add_images(tag='Test_Heatmaps/image_' + str(j) + '_' + gt,
         #                   img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
@@ -133,10 +133,10 @@ def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         labels_am = list(itertools.chain(*labels_am))
         am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
         if gt in ['Neg']:
-            PIL.Image.fromarray(orig_viz.cpu().numpy(), 'RGB').save(
+            PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
                 path + "/Neg/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
         else:
-            PIL.Image.fromarray(orig_viz.cpu().numpy(), 'RGB').save(
+            PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
                 path + "/Pos/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
 
         # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
@@ -161,13 +161,7 @@ def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         masked_image = (masked_image.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
             np.uint8)
         masked_image = torch.from_numpy(masked_image).unsqueeze(0)
-        orig_viz = torch.cat((orig, viz, masked_image), 1)
-        print("**********size of img output heatmap****************")
-        print(masked_image.size())
-        print(viz.size())
-        print(orig.size())
-        print(orig_viz.size())
-        exit(0)
+        orig_viz = torch.cat((orig, viz, masked_image), 0)
         gt = [cfg['categories'][x] for x in label_idx_list][0]
         writer.add_images(tag='Validation_Heatmaps/image_' + str(j) + '_' + gt,
                           img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
