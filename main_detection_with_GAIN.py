@@ -112,7 +112,7 @@ def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         masked_image = (masked_image.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
             np.uint8)
         masked_image = torch.from_numpy(masked_image).unsqueeze(0)
-        orig_viz = torch.cat((orig, viz, masked_image), 0)
+        orig_viz = torch.cat((orig, viz, masked_image), 1)
         gt = [cfg['categories'][x] for x in label_idx_list][0]
         # writer.add_images(tag='Test_Heatmaps/image_' + str(j) + '_' + gt,
         #                   img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
