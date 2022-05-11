@@ -36,17 +36,17 @@ def monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences,
                        total_test_single_accuracy, test_total_neg_correct, last_epoch, path):
     num_test_samples = len(test_dataset)
     print('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
-    writer.add_text('Test/Accuracy/cl_accuracy_{:.3f}'.format(total_test_single_accuracy / num_test_samples),
+    writer.add_text('Test/Accuracy/cl_accuracy', 'Accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples),
                     global_step=epoch)
     writer.add_scalar('Loss/test/am_total_loss', epoch_test_am_loss / (pos_count / args.batchsize), epoch)
 
     writer.add_scalar('Accuracy/test/cl_accuracy_only_pos',
                       test_total_pos_correct / pos_count, epoch)
-    writer.add_text('Test/Accuracy/cl_accuracy_only_pos{:.3f}'.format(test_total_pos_correct / pos_count),
+    writer.add_text('Test/Accuracy/cl_accuracy_only_pos', 'Accuracy: {:.3f}'.format(test_total_pos_correct / pos_count),
                     global_step=epoch)
     writer.add_scalar('Accuracy/test/cl_accuracy_only_neg',
                       test_total_neg_correct / (num_test_samples - pos_count), epoch)
-    writer.add_text('Test/Accuracy/cl_accuracy_only_neg{:.3f}'.format(test_total_neg_correct / (num_test_samples - pos_count)),
+    writer.add_text('Test/Accuracy/cl_accuracy_only_neg', 'Accuracy: {:.3f}'.format(test_total_neg_correct / (num_test_samples - pos_count)),
                     global_step=epoch)
     writer.add_scalar('Accuracy/test/cl_accuracy', total_test_single_accuracy / num_test_samples, epoch)
 
