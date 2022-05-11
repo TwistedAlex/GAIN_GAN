@@ -86,6 +86,7 @@ def main(args):
 
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
+
     batch_size = args.batchsize
     epoch_size = args.nepoch
     roc_log_path = os.path.join(args.output_dir, "roc_log_2f_psi_1")
@@ -99,6 +100,16 @@ def main(args):
                                       masks_to_use=args.masks_to_use, mean=mean, std=std,
                                       transform=Deepfake_preprocess_image,
                                       collate_fn=my_collate)
+    fill_color = [0.4948,0.3301,0.16]
+    norm = Normalize(mean=mean, std=std)
+    fill_color = norm(torch.tensor(args.fill_color).view(1, 3, 1, 1)).cuda()
+    grad_layer = ["layer4"]
+    model = batch_GAIN_Deepfake(model=model, grad_layer=grad_layer, num_classes=num_classes,
+                                am_pretraining_epochs=args.nepoch_am,
+                                ex_pretraining_epochs=args.nepoch_ex,
+                                fill_color=fill_color,
+                                test_first_before_train=1,
+                                grad_magnitude=args.grad_magnitude)
 
     test(args, cfg, model, device, deepfake_loader.datasets['test'],
          deepfake_loader.test_dataset, writer, 0, 0, roc_log_path)
