@@ -60,7 +60,7 @@ parser.add_argument('--am_on_all', default=0, type=int, help='train am on positi
 
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
 parser.add_argument('--output_dir', help='path to the outputdir', type=str)
-parser.add_argument('--checkpoint_name', help='checkpoint name', type=str)
+parser.add_argument('--checkpoint_file_path_load', help='checkpoint name', type=str)
 
 def main(args):
     categories = [
