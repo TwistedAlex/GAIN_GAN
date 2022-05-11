@@ -1,5 +1,5 @@
 from configs.MDTconfig import cfg
-from dataloaders.deepfake_data import Deepfake_Loader
+from dataloaders.deepfake_data import DeepfakeLoader
 from datetime import datetime
 from metrics.metrics import calc_sensitivity, save_roc_curve
 from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
@@ -91,11 +91,11 @@ def main(args):
     writer = SummaryWriter(args.output_dir + args.log_name + '_stylegan2_f_psi_1_000000_test' +
                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
-    deepfake_loader = Deepfake_Loader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
-                                      batch_size=batch_size, steps_per_epoch=epoch_size,
-                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
-                                      transform=Deepfake_preprocess_image,
-                                      collate_fn=my_collate)
+    deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
+                                     batch_size=batch_size, steps_per_epoch=epoch_size,
+                                     masks_to_use=args.masks_to_use, mean=mean, std=std,
+                                     transform=Deepfake_preprocess_image,
+                                     collate_fn=my_collate)
     fill_color = [0.4948,0.3301,0.16]
     norm = Normalize(mean=mean, std=std)
     fill_color = norm(torch.tensor(args.fill_color).view(1, 3, 1, 1)).cuda()

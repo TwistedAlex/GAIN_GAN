@@ -5,6 +5,7 @@ import torch
 import os
 import numpy as np
 
+
 def build_balanced_dataloader(dataset, labels, collate_fn, target_weight=None, batch_size=1, steps_per_epoch=500, num_workers=1):
     assert len(dataset) == len(labels)
     labels = np.asarray(labels)
@@ -47,7 +48,7 @@ def load_func(path, file, all_files):
     return tensor_image, torch.tensor(-1), label
 
 
-class Deepfake_Train_Data(data.Dataset):
+class DeepfakeTrainData(data.Dataset):
     def __init__(self, masks_to_use, mean, std, transform, root_dir='train', loader=load_func):
         self.pos_root_dir = root_dir+'Pos/'
         self.neg_root_dir = root_dir + 'Neg/'
@@ -102,7 +103,7 @@ class Deepfake_Train_Data(data.Dataset):
         return self.masks_indices
 
 
-class Deepfake_Validation_Data(data.Dataset):
+class DeepfakeValidationData(data.Dataset):
     def __init__(self, mean, std, transform, root_dir='validation', loader=load_func):
         self.pos_root_dir = root_dir+'Pos/'
         self.neg_root_dir = root_dir + 'Neg/'
@@ -136,7 +137,7 @@ class Deepfake_Validation_Data(data.Dataset):
         return self.pos_num_of_samples
 
 
-class Deepfake_Test_Data(data.Dataset):
+class DeepfakeTestData(data.Dataset):
     def __init__(self, mean, std, transform, root_dir='test', loader=load_func):
         self.pos_root_dir = root_dir+'Pos/'
         self.neg_root_dir = root_dir + 'Neg/'
@@ -170,26 +171,28 @@ class Deepfake_Test_Data(data.Dataset):
         return self.pos_num_of_samples
 
 
-class Deepfake_Loader():
+class DeepfakeLoader():
     def __init__(self, root_dir, target_weight, masks_to_use, mean, std,
                  transform, collate_fn, batch_size=1, steps_per_epoch=6000,
                  num_workers=3):
 
-        self.train_dataset = Deepfake_Train_Data(root_dir=root_dir+'training/',
-                                             masks_to_use=masks_to_use,
-                                             mean=mean, std=std,
-                                             transform=transform)
-        self.validation_dataset = Deepfake_Validation_Data(root_dir=root_dir + 'validation/',
-                                           mean=mean, std=std,
-                                           transform=transform)
-
-        self.test_dataset = Deepfake_Test_Data(root_dir=root_dir + 'testing/',
+        self.train_dataset = DeepfakeTrainData(root_dir=root_dir + 'training/',
+                                               masks_to_use=masks_to_use,
                                                mean=mean, std=std,
                                                transform=transform)
+        self.validation_dataset = DeepfakeValidationData(root_dir=root_dir + 'validation/',
+                                                         mean=mean, std=std,
+                                                         transform=transform)
+
+        self.test_dataset = DeepfakeTestData(root_dir=root_dir + 'testing/',
+                                             mean=mean, std=std,
+                                             transform=transform)
 
         #train_sampler = RandomSampler(self.train_dataset, num_samples=maxint,
         #                              replacement=True)
         test_sampler = SequentialSampler(self.validation_dataset)
+
+        validation_sampler = SequentialSampler(self.test_dataset)
 
         train_as_test_sampler = SequentialSampler(self.train_dataset)
 
@@ -214,7 +217,7 @@ class Deepfake_Loader():
             self.validation_dataset,
             num_workers=num_workers,
             batch_size=batch_size,
-            sampler=test_sampler,
+            sampler=validation_sampler,
             collate_fn=collate_fn)
 
         test_loader = torch.utils.data.DataLoader(
@@ -240,3 +243,23 @@ class Deepfake_Loader():
 
     def get_train_pos_count(self):
         return self.train_dataset.pos_num_of_samples
+
+
+class DeepfakeTestingOnlyLoader():
+    def __init__(self, root_dir, target_weight, masks_to_use, mean, std,
+                 transform, collate_fn, batch_size=1, steps_per_epoch=6000,
+                 num_workers=3):
+        self.test_dataset = DeepfakeTestData(root_dir=root_dir + 'testing/',
+                                             mean=mean, std=std,
+                                             transform=transform)
+
+        test_sampler = SequentialSampler(self.validation_dataset)
+
+        test_loader = torch.utils.data.DataLoader(
+            self.validation_dataset,
+            num_workers=num_workers,
+            batch_size=batch_size,
+            sampler=test_sampler,
+            collate_fn=collate_fn)
+
+        self.datasets = {'test': test_loader}

@@ -8,7 +8,7 @@ import numpy as np
 from torch import nn
 from torchvision.models import resnet50
 from torchvision.transforms import Resize, Normalize, ToTensor
-from dataloaders.deepfake_data import Deepfake_Loader
+from dataloaders.deepfake_data import DeepfakeLoader
 from metrics.metrics import calc_sensitivity, save_roc_curve
 from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
 from utils.image import show_cam_on_image, denorm, Deepfake_preprocess_image
@@ -672,11 +672,11 @@ def main(args):
 
     batch_size = args.batchsize
     epoch_size = args.nepoch
-    deepfake_loader = Deepfake_Loader(args.input_dir,[1-args.batch_pos_dist, args.batch_pos_dist],
-                              batch_size=batch_size, steps_per_epoch=epoch_size,
-                              masks_to_use=args.masks_to_use, mean=mean, std=std,
-                              transform=Deepfake_preprocess_image,
-                              collate_fn=my_collate)
+    deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
+                                     batch_size=batch_size, steps_per_epoch=epoch_size,
+                                     masks_to_use=args.masks_to_use, mean=mean, std=std,
+                                     transform=Deepfake_preprocess_image,
+                                     collate_fn=my_collate)
 
     #if True test epoch will run first
     test_first_before_train = bool(args.test_before_train)
