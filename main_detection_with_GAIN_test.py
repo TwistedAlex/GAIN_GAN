@@ -79,10 +79,6 @@ def main(args):
         nn.Linear(num_ftrs, num_classes).to(device)
     )
     model.train()
-    checkpoint = torch.load(args.checkpoint_file_path_load)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
@@ -110,6 +106,11 @@ def main(args):
                                 fill_color=fill_color,
                                 test_first_before_train=1,
                                 grad_magnitude=args.grad_magnitude)
+
+    checkpoint = torch.load(args.checkpoint_file_path_load)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     test(args, cfg, model, device, deepfake_loader.datasets['test'],
          deepfake_loader.test_dataset, writer, 0, 0, roc_log_path)
