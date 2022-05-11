@@ -78,8 +78,11 @@ def main(args):
     model.fc = nn.Sequential(
         nn.Linear(num_ftrs, num_classes).to(device)
     )
+    model.train()
     checkpoint = torch.load(args.checkpoint_file_path_load)
     model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
