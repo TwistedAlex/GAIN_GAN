@@ -1,7 +1,9 @@
-import numpy as np
-import sklearn.metrics as metrics
+from datetime import datetime
 import matplotlib.pyplot as plt
+import numpy as np
 import os
+import sklearn.metrics as metrics
+
 
 def save_roc_curve(labels, predictions, epoch_num, path):
 
@@ -17,7 +19,7 @@ def save_roc_curve(labels, predictions, epoch_num, path):
     plt.ylim([0, 1])
     plt.ylabel('True Positive Rate')
     plt.xlabel('False Positive Rate')
-    plt.savefig(os.path.join(path, "roc_curve_{}.png").format(epoch_num))
+    plt.savefig(os.path.join(path, "roc_curve_{}".format(epoch_num) + '_'+ datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".png"))
     plt.cla()
 
 

@@ -90,8 +90,8 @@ def monitor_validation_epoch(writer, test_dataset, args, pos_count, test_differe
     writer.add_scalar('ROC/validation/ROC_0.3', all_sens[2], epoch)
     writer.add_scalar('ROC/validation/ROC_0.5', all_sens[3], epoch)
     writer.add_scalar('ROC/validation/AUC', auc, epoch)
-    if epoch == last_epoch:
-        save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
+    # if epoch == last_epoch:
+    #     save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
 
 
 def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
@@ -132,12 +132,13 @@ def monitor_test_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         predicted_am = list(itertools.chain(*predicted_am))
         labels_am = list(itertools.chain(*labels_am))
         am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
-        if gt in ['Neg']:
-            PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-                path + "/Neg/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
-        else:
-            PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-                path + "/Pos/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
+        for gt_label in gt:
+            if gt_label in ['Neg']:
+                PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
+                    path + "/Neg/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
+            else:
+                PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
+                    path + "/Pos/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
 
         # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
         #                 global_step=epoch)
@@ -242,7 +243,7 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
 
 
 def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, last_epoch, output_path):
-
+    print("******** Test ********")
     model.eval()
 
     j = 0
@@ -644,7 +645,7 @@ parser.add_argument('--am_on_all', default=0, type=int, help='train am on positi
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
 parser.add_argument('--output_dir', help='path to the outputdir', type=str)
 parser.add_argument('--checkpoint_name', help='checkpoint name', type=str)
-
+parser.add_argument('--checkpoint_file_path_load', type=str, default='', help='a full path including the name of the checkpoint_file to load from, empty otherwise')
 
 
 def main(args):
@@ -695,16 +696,16 @@ def main(args):
                          grad_magnitude=args.grad_magnitude)
 
     chkpnt_epoch = 0
-
-    #checkpoint = torch.load('C:\Users\Student1\PycharmProjects\GCAM\checkpoints\batch_GAIN\with_am_no_ex_1_')
-    #model.load_state_dict(checkpoint['model_state_dict'])
-    #optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #chkpnt_epoch = checkpoint['epoch']+1
-    #gain.cur_epoch = chkpnt_epoch
-    #if gain.cur_epoch > gain.am_pretraining_epochs:
-    #    gain.enable_am = True
-    #if gain.cur_epoch > gain.ex_pretraining_epochs:
-    #    gain.enable_ex = True
+    # if len(args.checkpoint_file_path_load) > 0:
+    #     checkpoint = torch.load('C:\Users\Student1\PycharmProjects\GCAM\checkpoints\batch_GAIN\with_am_no_ex_1_')
+    #     model.load_state_dict(checkpoint['model_state_dict'])
+    #     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    #     chkpnt_epoch = checkpoint['epoch']+1
+    #     gain.cur_epoch = chkpnt_epoch
+    #     if gain.cur_epoch > gain.am_pretraining_epochs:
+    #        gain.enable_am = True
+    #     if gain.cur_epoch > gain.ex_pretraining_epochs:
+    #        gain.enable_ex = True
 
     writer = SummaryWriter(args.output_dir + args.log_name +'_'+
                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
@@ -741,7 +742,8 @@ def main(args):
         pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
         train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
                   deepfake_loader.test_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path)
-        if epoch == epochs - 1:
+        if epoch == (epochs - 1):
+            print("********Testing module starts********")
             test(args, cfg, model, device, deepfake_loader.datasets['test'],
                        deepfake_loader.test_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path)
         print("finished epoch number:")
