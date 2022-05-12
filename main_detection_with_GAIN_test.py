@@ -110,15 +110,14 @@ def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
     predicted_am = list(itertools.chain(*predicted_am))
     labels_am = list(itertools.chain(*labels_am))
     am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
-    print(gt)
-    exit(0)
-    for gt_label in gt:
-        if gt_label in ['Neg']:
-            PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-                path + "/Neg/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
-        else:
-            PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-                path + "/Pos/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
+    if gt in ['Neg']:
+        print("**save heatmap**: "+gt)
+        PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
+            path + "/Neg/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
+    else:
+        print("**save heatmap**: " + gt)
+        PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
+            path + "/Pos/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
 
     # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
     #                 global_step=epoch)
@@ -137,6 +136,7 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, las
 
     # iterate all samples in test_loader
     for sample in test_loader:
+        print("image number: "+str(j))
         label_idx_list = sample['labels']  # size bach_size list of label idx of the samples in this
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()  # dim=0 stores the res in the 1st dimension
         batch = batch.to(device)  # a list of images
