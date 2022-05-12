@@ -110,25 +110,28 @@ def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
     predicted_am = list(itertools.chain(*predicted_am))
     labels_am = list(itertools.chain(*labels_am))
     am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
+
     if gt in ['Neg']:
         print("**save heatmap**: "+gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Neg/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
+            path + "/Neg/{:.3f}".format(y_scores[0].unsqueeze(0)[0]) + '.png')
     else:
         print("**save heatmap**: " + gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Pos/" + str(y_scores[0].unsqueeze(0)[0]) + '.png')
+            path + "/Pos/{:.3f}".format(y_scores[0].unsqueeze(0)[0]) + '.png')
 
     # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
     #                 global_step=epoch)
 
 
-def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, last_epoch, output_path):
+def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, output_path):
     print("******** Test ********")
     model.eval()
     output_path_heatmap = os.path.join(output_path, "/test_heatmap/")
-    pathlib.Path(output_path_heatmap + "Pos").mkdir(parents=True, exist_ok=True)
-    pathlib.Path(output_path_heatmap + "Neg").mkdir(parents=True, exist_ok=True)
+    output_path_heatmap_pos = os.path.join(output_path_heatmap, "/Pos/")
+    output_path_heatmap_neg = os.path.join(output_path_heatmap, "/Neg/")
+    pathlib.Path(output_path_heatmap_pos).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_neg).mkdir(parents=True, exist_ok=True)
     j = 0
     test_total_pos_correct, test_total_neg_correct = 0, 0
     total_test_single_accuracy = 0
