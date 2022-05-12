@@ -131,7 +131,8 @@ def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
 def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, output_path):
     print("******** Test ********")
     model.eval()
-    output_path_heatmap = os.path.join(output_path, "/test_heatmap/")
+    output_path_heatmap = output_path+"/test_heatmap/"
+    print(output_path_heatmap)
     output_path_heatmap_pos = os.path.join(output_path_heatmap, "/Pos/")
     output_path_heatmap_neg = os.path.join(output_path_heatmap, "/Neg/")
     print(output_path_heatmap_pos)
