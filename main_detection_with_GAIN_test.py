@@ -269,7 +269,7 @@ def main(args):
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     test(args, cfg, model, device, deepfake_loader.datasets['test'],
-         deepfake_loader.test_dataset, writer, 0, 0, roc_log_path)
+         deepfake_loader.test_dataset, writer, 0, 0, args.output_dir)
 
 
 if __name__ == '__main__':
