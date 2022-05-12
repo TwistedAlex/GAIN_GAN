@@ -73,7 +73,7 @@ def monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences, 
     save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
 
 
-def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
+def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
                      label_idx_list, logits_cl, am_scores, am_labels, writer,
                      epoch, cfg, path):
 
@@ -119,11 +119,11 @@ def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
     if gt in ['Neg']:
         print("**save heatmap**: "+gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Neg/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0]) + '.png')
+            path + "/Neg/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0]) + '_' + str(index_img) + '_gt_'+ gt + '.png')
     else:
         print("**save heatmap**: " + gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu()) + '.png')
+            path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu())+ '_' + str(index_img) + '_gt_'+ gt + '.png')
 
     # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
     #                 global_step=epoch)
@@ -179,7 +179,7 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, out
         am_labels = am_scores.argmax(dim=1)
         pos_count = test_dataset.positive_len()
 
-        viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
+        viz_test_heatmap(j, heatmaps, sample, masked_images, test_dataset,
                          label_idx_list, logits_cl, am_scores, am_labels, writer,
                          epoch, cfg, output_path_heatmap)
         j += 1
