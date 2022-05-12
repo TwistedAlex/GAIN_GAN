@@ -24,8 +24,8 @@ def save_roc_curve(labels, predictions, epoch_num, path):
 
 
 def save_roc_curve_with_threshold(labels, predictions, epoch_num, path, fpr_threshold = 0.1):
-    np.save(path+"/labels", labels.cpu().detach().numpy())
-    np.save(path+"/predictions", predictions.cpu().detach().numpy())
+    np.save(path+"/labels", labels)
+    np.save(path+"/predictions", predictions)
     # calculate the fpr and tpr for all thresholds of the classification
     fpr, tpr, auc, threshold = roc_curve(labels, predictions)
     index_fpr_threshold = 0
