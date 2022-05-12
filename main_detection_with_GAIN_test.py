@@ -111,7 +111,9 @@ def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
     labels_am = list(itertools.chain(*labels_am))
     am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
     print("**       save heatmap         **")
+    print(y_scores[0].unsqueeze(0).cpu())
     print(y_scores[0].unsqueeze(0)[0].cpu())
+    print('pic: {:.3f}'.format(y_scores[0].unsqueeze(0)[0][0].cpu()))
     print(type(y_scores[0].unsqueeze(0)[0].cpu()))
     print('pic: {:.3f}'.format(y_scores[0].unsqueeze(0)[0].cpu()))
 
