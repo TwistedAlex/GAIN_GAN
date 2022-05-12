@@ -110,6 +110,8 @@ def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
     predicted_am = list(itertools.chain(*predicted_am))
     labels_am = list(itertools.chain(*labels_am))
     am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
+    print(gt)
+    exit(0)
     for gt_label in gt:
         if gt_label in ['Neg']:
             PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
@@ -236,13 +238,13 @@ def main(args):
 
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
+    cfg = {'categories': categories}
 
     batch_size = args.batchsize
     epoch_size = args.nepoch
-    roc_log_path = os.path.join(args.output_dir, "roc_log_2f_psi_1")
-    pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(args.output_dir).mkdir(parents=True, exist_ok=True)
 
-    writer = SummaryWriter(args.output_dir + args.log_name + '_stylegan2_f_psi_1_000000_test' +
+    writer = SummaryWriter(args.output_dir + args.log_name +
                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
     deepfake_loader = DeepfakeTestingOnlyLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
