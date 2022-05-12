@@ -110,15 +110,20 @@ def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
     predicted_am = list(itertools.chain(*predicted_am))
     labels_am = list(itertools.chain(*labels_am))
     am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
+    # print("**       save heatmap         **")
+    # print(y_scores[0].unsqueeze(0).cpu())
+    # print(y_scores[0].unsqueeze(0)[0].cpu())
+    # print('pic: {:.7f}'.format(y_scores[0].unsqueeze(0)[0][0].cpu()))
+
 
     if gt in ['Neg']:
         print("**save heatmap**: "+gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Neg/{:.3f}".format(y_scores[0][0].unsqueeze(0)[0][0]) + '.png')
+            path + "/Neg/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0]) + '.png')
     else:
         print("**save heatmap**: " + gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Pos/{:.3f}".format(y_scores[0][0].unsqueeze(0)[0][0].cpu()) + '.png')
+            path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu()) + '.png')
 
     # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
     #                 global_step=epoch)
