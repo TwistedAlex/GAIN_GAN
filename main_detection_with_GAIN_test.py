@@ -141,8 +141,8 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, las
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()  # dim=0 stores the res in the 1st dimension
         if len(batch.size()) == 3:
             batch = []
-            batch.append(sample['preprocessed_images'].type(torch.ByteTensor))
-            batch = torch.stack(batch, dim=0).to(device)
+            batch.append(torch.stack(sample['preprocessed_images'], dim=0).squeeze())
+            batch = torch.stack(batch, dim=0)
         batch = batch.to(device)  # a list of images
         labels = torch.Tensor(label_idx_list).to(device).long()  # a list of label idx
         # output of the model based on the input images and labels
