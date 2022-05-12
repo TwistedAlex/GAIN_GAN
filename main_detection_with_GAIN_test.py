@@ -1,7 +1,7 @@
 from configs.MDTconfig import cfg
 from dataloaders.deepfake_data import DeepfakeTestingOnlyLoader
 from datetime import datetime
-from metrics.metrics import calc_sensitivity, save_roc_curve
+from metrics.metrics import calc_sensitivity, save_roc_curve, save_roc_curve_with_threshold
 from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
@@ -72,6 +72,7 @@ def monitor_test_epoch(writer, test_dataset, args, pos_count, test_differences, 
     writer.add_scalar('ROC/test/AUC', auc, epoch)
 
     save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
+    save_roc_curve_with_threshold(test_labels.cpu().numpy(), test_differences, epoch, path)
 
 
 def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
@@ -118,11 +119,11 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
 
 
     if gt in ['Neg']:
-        print("**save heatmap**: "+gt)
+        # print("**save heatmap**: "+gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
             path + "/Neg/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0]) + '_' + str(index_img) + '_gt_'+ gt + '.png')
     else:
-        print("**save heatmap**: " + gt)
+        # print("**save heatmap**: " + gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
             path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu())+ '_' + str(index_img) + '_gt_'+ gt + '.png')
 
@@ -147,7 +148,7 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, out
 
     # iterate all samples in test_loader
     for sample in test_loader:
-        print("image number: "+str(j))
+        # print("image number: "+str(j))
         label_idx_list = sample['labels']  # size bach_size list of label idx of the samples in this
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()  # dim=0 stores the res in the 1st dimension
         if len(batch.size()) == 3:

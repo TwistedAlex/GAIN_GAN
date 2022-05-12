@@ -23,6 +23,32 @@ def save_roc_curve(labels, predictions, epoch_num, path):
     plt.cla()
 
 
+def save_roc_curve_with_threshold(labels, predictions, epoch_num, path, fpr_threshold = 0.1):
+
+    # calculate the fpr and tpr for all thresholds of the classification
+    fpr, tpr, auc, threshold = roc_curve(labels, predictions)
+    index_fpr_threshold = 0
+    for fpr_item in fpr:
+        if fpr_item <= fpr_threshold:
+            index_fpr_threshold += 1
+    fpr = fpr[:index_fpr_threshold]
+    tpr = tpr[:index_fpr_threshold]
+    roc_auc = metrics.auc(fpr, tpr)
+
+    max_xy = max(fpr[-1], tpr[-1])
+
+    plt.title('Receiver Operating Characteristic')
+    plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
+    plt.legend(loc='lower right')
+    plt.plot([0, max_xy], [0, max_xy], 'r--')
+    plt.xlim([0, max_xy])
+    plt.ylim([0, max_xy])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.savefig(os.path.join(path, "roc_curve_with_threshold_{}".format(epoch_num) + '_'+ datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".png"))
+    plt.cla()
+
+
 def calc_sensitivity(labels, predictions, false_alarm_points=None, return_thresholds_for_fa=False):
     if false_alarm_points is None:
         false_alarm_points = [.1 / 100, .05 / 100, .3 / 100, .5 / 100]
