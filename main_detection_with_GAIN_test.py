@@ -134,6 +134,7 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, out
     output_path_heatmap = os.path.join(output_path, "/test_heatmap/")
     output_path_heatmap_pos = os.path.join(output_path_heatmap, "/Pos/")
     output_path_heatmap_neg = os.path.join(output_path_heatmap, "/Neg/")
+    print(output_path_heatmap_pos)
     pathlib.Path(output_path_heatmap_pos).mkdir(parents=True, exist_ok=True)
     pathlib.Path(output_path_heatmap_neg).mkdir(parents=True, exist_ok=True)
     j = 0
