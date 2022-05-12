@@ -113,18 +113,18 @@ def viz_test_heatmap(heatmaps, sample, masked_images, test_dataset,
     print("**       save heatmap         **")
     print(y_scores[0].unsqueeze(0).cpu())
     print(y_scores[0].unsqueeze(0)[0].cpu())
-    print('pic: {:.3f}'.format(y_scores[0].unsqueeze(0)[0][0].cpu()))
+    print('pic: {:.7f}'.format(y_scores[0].unsqueeze(0)[0][0].cpu()))
     print(type(y_scores[0].unsqueeze(0)[0].cpu()))
-    print('pic: {:.3f}'.format(y_scores[0].unsqueeze(0)[0].cpu()))
+    print('pic: {:.7f}'.format(y_scores[0].unsqueeze(0)[0].cpu()))
 
     if gt in ['Neg']:
         print("**save heatmap**: "+gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Neg/{:.3f}".format(y_scores[0].unsqueeze(0)[0]) + '.png')
+            path + "/Neg/{:.3f}".format(y_scores[0][0].unsqueeze(0)[0]) + '.png')
     else:
         print("**save heatmap**: " + gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Pos/{:.3f}".format(y_scores[0].unsqueeze(0)[0].cpu()) + '.png')
+            path + "/Pos/{:.3f}".format(y_scores[0][0].unsqueeze(0)[0].cpu()) + '.png')
 
     # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
     #                 global_step=epoch)
@@ -135,8 +135,8 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, out
     model.eval()
     output_path_heatmap = output_path+"/test_heatmap/"
     print(output_path_heatmap)
-    output_path_heatmap_pos = os.path.join(output_path_heatmap, "/Pos/")
-    output_path_heatmap_neg = os.path.join(output_path_heatmap, "/Neg/")
+    output_path_heatmap_pos = output_path_heatmap+"/Pos/"
+    output_path_heatmap_neg = output_path_heatmap+"/Neg/"
     print(output_path_heatmap_pos)
     pathlib.Path(output_path_heatmap_pos).mkdir(parents=True, exist_ok=True)
     pathlib.Path(output_path_heatmap_neg).mkdir(parents=True, exist_ok=True)
