@@ -1,25 +1,17 @@
 from configs.MDTconfig import cfg
-from dataloaders.deepfake_data import DeepfakeLoader
+from dataloaders.deepfake_data import DeepfakeTestingOnlyLoader
 from datetime import datetime
-from metrics.metrics import calc_sensitivity, save_roc_curve
 from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.models import resnet50
-from torchvision.transforms import Resize, Normalize, ToTensor
-from utils.image import show_cam_on_image, denorm, Deepfake_preprocess_image
-import PIL.Image
+from torchvision.transforms import Normalize
+from utils.image import Deepfake_preprocess_image
 import argparse
-import math
 from main_detection_with_GAIN import (
     my_collate,
-    monitor_test_epoch,
-    monitor_test_viz,
     test,
-    handle_AM_loss,
-    handle_EX_loss,
 )
-import numpy as np
 import os
 import pathlib
 import torch
@@ -91,7 +83,7 @@ def main(args):
     writer = SummaryWriter(args.output_dir + args.log_name + '_stylegan2_f_psi_1_000000_test' +
                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
-    deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
+    deepfake_loader = DeepfakeTestingOnlyLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                      batch_size=batch_size, steps_per_epoch=epoch_size,
                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
                                      transform=Deepfake_preprocess_image,

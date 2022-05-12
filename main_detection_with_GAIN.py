@@ -741,7 +741,7 @@ def main(args):
         roc_log_path = os.path.join(args.output_dir, "roc_log")
         pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
         train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
-                  deepfake_loader.test_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path)
+                  deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path)
         if epoch == (epochs - 1):
             print("********Testing module starts********")
             test(args, cfg, model, device, deepfake_loader.datasets['test'],

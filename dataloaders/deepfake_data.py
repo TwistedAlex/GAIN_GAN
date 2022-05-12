@@ -190,9 +190,9 @@ class DeepfakeLoader():
 
         #train_sampler = RandomSampler(self.train_dataset, num_samples=maxint,
         #                              replacement=True)
-        test_sampler = SequentialSampler(self.validation_dataset)
+        test_sampler = SequentialSampler(self.test_dataset)
 
-        validation_sampler = SequentialSampler(self.test_dataset)
+        validation_sampler = SequentialSampler(self.validation_dataset)
 
         train_as_test_sampler = SequentialSampler(self.train_dataset)
 
@@ -253,10 +253,10 @@ class DeepfakeTestingOnlyLoader():
                                              mean=mean, std=std,
                                              transform=transform)
 
-        test_sampler = SequentialSampler(self.validation_dataset)
+        test_sampler = SequentialSampler(self.test_dataset)
 
         test_loader = torch.utils.data.DataLoader(
-            self.validation_dataset,
+            self.test_dataset,
             num_workers=num_workers,
             batch_size=batch_size,
             sampler=test_sampler,
