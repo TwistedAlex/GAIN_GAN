@@ -139,6 +139,9 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, las
         print("image number: "+str(j))
         label_idx_list = sample['labels']  # size bach_size list of label idx of the samples in this
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()  # dim=0 stores the res in the 1st dimension
+        if len(batch.size()) == 3:
+            batch = []
+            batch.append(sample['preprocessed_images'])
         batch = batch.to(device)  # a list of images
         labels = torch.Tensor(label_idx_list).to(device).long()  # a list of label idx
         # output of the model based on the input images and labels
