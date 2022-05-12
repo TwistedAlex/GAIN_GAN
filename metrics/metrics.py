@@ -24,18 +24,23 @@ def save_roc_curve(labels, predictions, epoch_num, path):
 
 
 def save_roc_curve_with_threshold(labels, predictions, epoch_num, path, fpr_threshold = 0.1):
-
+    np.save(path+"/labels", labels.cpu().detach().numpy())
+    np.save(path+"/predictions", predictions.cpu().detach().numpy())
     # calculate the fpr and tpr for all thresholds of the classification
     fpr, tpr, auc, threshold = roc_curve(labels, predictions)
     index_fpr_threshold = 0
+    count = 0
     for fpr_item in fpr:
+        print("**** count: " + str(count))
+        count += 1
         if fpr_item <= fpr_threshold:
+            print("**** fpr_threshold: " + str(index_fpr_threshold))
             index_fpr_threshold += 1
-    fpr = fpr[:index_fpr_threshold]
-    tpr = tpr[:index_fpr_threshold]
+    fpr = fpr[-index_fpr_threshold:]
+    tpr = tpr[-index_fpr_threshold:]
     roc_auc = metrics.auc(fpr, tpr)
 
-    max_xy = max(fpr[-1], tpr[-1])
+    max_xy = max(fpr[-index_fpr_threshold], tpr[-index_fpr_threshold])
 
     plt.title('Receiver Operating Characteristic')
     plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
