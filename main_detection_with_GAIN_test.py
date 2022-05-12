@@ -146,8 +146,7 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, las
         batch = batch.to(device)  # a list of images
         labels = torch.Tensor(label_idx_list).to(device).long()  # a list of label idx
         # output of the model based on the input images and labels
-        print(batch.size())
-        exit(0)
+
         logits_cl, logits_am, heatmaps, masks, masked_images = model(batch, labels)
 
         # Single label evaluation
