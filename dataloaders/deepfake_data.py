@@ -221,7 +221,7 @@ class DeepfakeLoader():
             collate_fn=collate_fn)
 
         test_loader = torch.utils.data.DataLoader(
-            self.validation_dataset,
+            self.test_dataset,
             num_workers=num_workers,
             batch_size=batch_size,
             sampler=test_sampler,
