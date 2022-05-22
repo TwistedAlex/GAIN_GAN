@@ -48,15 +48,54 @@ def load_func(path, file, all_files):
     return tensor_image, torch.tensor(-1), label
 
 
+def load_tuple_func(path, file, all_files):
+    label = 0 if 'Neg' in path else 1
+    path_to_file = os.path.join(path, file)
+    p_image = PIL.Image.open(path_to_file)
+    np_image = np.asarray(p_image)
+    tensor_image = torch.tensor(np_image)
+    img_name, format = str(file).split('.')
+    mask_file = img_name+'m'+'.'+format
+    if all_files is not None and label == 1 and mask_file in all_files:
+        path_to_mask = os.path.join(path, mask_file)
+        p_mask = PIL.Image.open(path_to_mask)
+        np_mask = np.asarray(p_mask)
+        tensor_mask = torch.tensor(np_mask)
+        return tensor_image, tensor_mask, label
+    return tensor_image, torch.tensor(-1), label
+
+# return a list of (path, filename) tuple under softlinks
+def get_files_under_folder(dir):
+    path_file_tuple_under_folder = []
+    files_under_folder = []
+    list_softlinks = os.listdir(dir)
+    for softlink in list_softlinks:
+        if '.png' in softlink:
+            path_file_tuple_under_folder += (dir, softlink)
+            files_under_folder.append(softlink)
+        if os.path.islink(softlink):
+            abs_path_softlink = os.readlink(softlink)
+            files = os.listdir(abs_path_softlink)
+            for file in files:
+                path_file_tuple_under_folder += (abs_path_softlink, file)
+                files_under_folder.append(file)
+
+    return path_file_tuple_under_folder, files_under_folder
+
+
 class DeepfakeTrainData(data.Dataset):
     def __init__(self, masks_to_use, mean, std, transform, root_dir='train', loader=load_func):
         self.pos_root_dir = root_dir+'Pos/'
         self.neg_root_dir = root_dir + 'Neg/'
         all_neg_files = os.listdir(self.neg_root_dir)
         all_pos_files = os.listdir(self.pos_root_dir)
+
+        # all_neg_files_tupes, all_neg_files = get_files_under_folder(self.neg_root_dir)
+        # all_pos_files_tupes, all_pos_files = get_files_under_folder(self.pos_root_dir)
+
         pos_cl_images = [file for file in all_pos_files if 'm' not in file]
         self.masks_indices = [idx for idx,pos in enumerate(pos_cl_images) if pos.split('.')[0]+'m'+'.png' in all_pos_files]
-        self.all_files = all_pos_files+all_neg_files
+        self.all_files = all_pos_files + all_neg_files
         self.all_cl_images = pos_cl_images+all_neg_files
         self.pos_num_of_samples = len(pos_cl_images)
         self.loader = loader

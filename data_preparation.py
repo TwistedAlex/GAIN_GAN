@@ -14,6 +14,13 @@ def shell(commands, warn=True):
     if warn and exit_status != None:
         print(f"Completed with errors. Exit status: {exit_status}\n")
     return exit_status
+
+
+def bulk_create_softlinks(abs_source, dest):
+    cur_command = 'cp -rs ' +  abs_source + ' ' + dest
+    shell(cur_command)
+
+
 # list_commands = ['cp -rf /server_data/image-research/20220505_ffhq_11K/images1024x1024/00000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Pos/',
 #                  'cp -rf /server_data/image-research/20220505_ffhq_11K/images1024x1024/01000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Pos/',
 #                  'cp -rf /server_data/image-research/20220505_ffhq_11K/images1024x1024/02000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Pos/',
@@ -40,6 +47,8 @@ list_commands = [
                  'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/009000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Neg/',
                  'mv -f /home/shuoli/attention_env/drive-download-20220506T181844Z/010000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/validation/Neg/'
                  ]
+
+
 
 for com in list_commands:
 
