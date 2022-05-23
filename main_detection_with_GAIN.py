@@ -632,7 +632,7 @@ parser.add_argument('--grad_layer', help='path to the input idr', type=str, defa
 parser.add_argument('--grad_magnitude', help='grad magnitude of second path', type=int, default=1)
 parser.add_argument('--cl_weight', default=1, type=int, help='classification loss weight')
 parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
-parser.add_argument('--ex_weight', default=1, type=int, help='extra-supervision loss weight')
+parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
 
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
