@@ -16,3 +16,4 @@ main_toFreq.py
 main_VOC_multilabel_heatmaps_singlebatch.py
 main_MedT.py
 FFQH-dataset/
+__pycache__
