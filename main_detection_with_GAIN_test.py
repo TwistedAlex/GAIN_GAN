@@ -190,6 +190,39 @@ def test(args, cfg, model, device, test_loader, test_dataset, writer, epoch, out
                        total_test_single_accuracy, test_total_neg_correct, output_path)
 
 
+def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap):
+    input_path_heatmap_pos = input_path_heatmap + "/Pos/"
+    input_path_heatmap_neg = input_path_heatmap + "/Neg/"
+    heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output/" + args.log_name + "/"
+    output_path_heatmap_pos_cl = heatmap_home_dir + "/Pos_Fake_0/" + "/50_closest/"
+    output_path_heatmap_pos_fa = heatmap_home_dir + "/Pos_Fake_0/" + "/50_farthest/"
+    output_path_heatmap_neg_cl = heatmap_home_dir + "/Neg_Real_1/" + "/50_closest/"
+    output_path_heatmap_neg_fa = heatmap_home_dir + "/Neg_Real_1/" + "/50_farthest/"
+    pathlib.Path(output_path_heatmap_pos_cl).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_pos_fa).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_neg_cl).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_neg_fa).mkdir(parents=True, exist_ok=True)
+
+    pos_heatmaps = os.listdir(input_path_heatmap_pos)
+    neg_heatmaps = os.listdir(input_path_heatmap_neg)
+    pos_heatmaps.sort()
+    neg_heatmaps.sort()
+
+    for file in pos_heatmaps[0:50]:
+        command = 'cp ' + input_path_heatmap_pos + file + ' ' + output_path_heatmap_pos_cl
+        os.system(command)
+    for file in pos_heatmaps[-50:]:
+        command = 'cp ' + input_path_heatmap_pos + file + ' ' + output_path_heatmap_pos_fa
+        os.system(command)
+
+    for file in neg_heatmaps[0:50]:
+        command = 'cp ' + input_path_heatmap_neg + file + ' ' + output_path_heatmap_neg_fa
+        os.system(command)
+    for file in neg_heatmaps[-50:]:
+        command = 'cp ' + input_path_heatmap_pos + file + ' ' + output_path_heatmap_neg_cl
+        os.system(command)
+
+
 parser = argparse.ArgumentParser(description='PyTorch GAIN Training')
 parser.add_argument('--batchsize', type=int, default=cfg.BATCHSIZE, help='batch size')
 parser.add_argument('--total_epochs', type=int, default=35, help='total number of epoch to train')
@@ -236,6 +269,7 @@ parser.add_argument('--checkpoint_file_path_load', help='checkpoint name', type=
 
 
 def main(args):
+    heatmap_home_dir = "/server_data/image-research/"
     categories = [
         'Neg', 'Pos'
     ]
@@ -287,6 +321,9 @@ def main(args):
 
     test(args, cfg, model, device, deepfake_loader.datasets['test'],
          deepfake_loader.test_dataset, writer, 0, args.output_dir)
+
+    input_path_heatmap = args.output_dir + "/test_heatmap/"
+    select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap)
 
 
 if __name__ == '__main__':
