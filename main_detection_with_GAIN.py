@@ -752,7 +752,13 @@ def main(args):
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
          }, chkpt_path + args.checkpoint_name+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-
+        if args.customize_num_masks:
+            print('*****customize_num_masks*****')
+            deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
+                                             batch_size=batch_size, steps_per_epoch=epoch_size,
+                                             masks_to_use=args.masks_to_use, mean=mean, std=std,
+                                             transform=Deepfake_preprocess_image,
+                                             collate_fn=my_collate, customize_num_masks=args.customize_num_masks)
 
 
 if __name__ == '__main__':
