@@ -4,7 +4,7 @@ import PIL.Image
 import torch
 import os
 import numpy as np
-
+import random
 
 def build_balanced_dataloader(dataset, labels, collate_fn, target_weight=None, batch_size=1, steps_per_epoch=500, num_workers=1):
     assert len(dataset) == len(labels)
@@ -84,7 +84,7 @@ def get_files_under_folder(dir):
 
 
 class DeepfakeTrainData(data.Dataset):
-    def __init__(self, masks_to_use, mean, std, transform, root_dir='train', loader=load_func):
+    def __init__(self, masks_to_use, mean, std, transform, batch_size, steps_per_epoch, target_weight, customize_num_masks, root_dir='train', loader=load_func):
         self.pos_root_dir = root_dir+'Pos/'
         self.neg_root_dir = root_dir + 'Neg/'
         all_neg_files = os.listdir(self.neg_root_dir)
@@ -94,6 +94,24 @@ class DeepfakeTrainData(data.Dataset):
         # all_pos_files_tupes, all_pos_files = get_files_under_folder(self.pos_root_dir)
 
         pos_cl_images = [file for file in all_pos_files if 'm' not in file]
+
+        # target_weight[1] -> positive ratio
+
+        # if customize the num of masks to be picked in each epoch
+        if customize_num_masks:
+            mask_images = [(file[:-5] + 'png') for file in all_pos_files if 'm' in file]
+            pos_cl_images_without_masks = [file for file in pos_cl_images if file not in mask_images]
+            total_num_images = batch_size * steps_per_epoch
+            total_num_masks = len(mask_images)
+            total_num_pos_cl = (int)(total_num_images * target_weight[1])
+            total_num_neg_files = total_num_images - total_num_pos_cl
+            picked_mask_images = random.sample(mask_images, (total_num_masks // 2))
+            all_pos_files = random.sample(pos_cl_images_without_masks, total_num_pos_cl - total_num_masks // 2)
+            all_neg_files = random.sample(all_neg_files, total_num_neg_files)
+            pos_cl_images = picked_mask_images + all_pos_files
+            picked_cl_with_masks = [(file[:-3] + 'm.png') for file in picked_mask_images]
+            all_pos_files = pos_cl_images + picked_cl_with_masks
+
         self.masks_indices = [idx for idx,pos in enumerate(pos_cl_images) if pos.split('.')[0]+'m'+'.png' in all_pos_files]
         self.all_files = all_pos_files + all_neg_files
         self.all_cl_images = pos_cl_images+all_neg_files
@@ -212,13 +230,13 @@ class DeepfakeTestData(data.Dataset):
 
 class DeepfakeLoader():
     def __init__(self, root_dir, target_weight, masks_to_use, mean, std,
-                 transform, collate_fn, batch_size=1, steps_per_epoch=6000,
+                 transform, collate_fn, customize_num_masks, batch_size=1, steps_per_epoch=6000,
                  num_workers=3):
 
         self.train_dataset = DeepfakeTrainData(root_dir=root_dir + 'training/',
                                                masks_to_use=masks_to_use,
                                                mean=mean, std=std,
-                                               transform=transform)
+                                               transform=transform, batch_size=batch_size, steps_per_epoch=steps_per_epoch, target_weight=target_weight, customize_num_masks=customize_num_masks)
         self.validation_dataset = DeepfakeValidationData(root_dir=root_dir + 'validation/',
                                                          mean=mean, std=std,
                                                          transform=transform)

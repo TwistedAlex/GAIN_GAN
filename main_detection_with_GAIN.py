@@ -634,7 +634,7 @@ parser.add_argument('--cl_weight', default=1, type=int, help='classification los
 parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
 parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
-
+parser.add_argument('--customize_num_masks', '-r', action='store_true', help='resume from checkpoint')
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
 parser.add_argument('--output_dir', help='path to the outputdir', type=str)
 parser.add_argument('--checkpoint_name', help='checkpoint name', type=str)
@@ -670,7 +670,7 @@ def main(args):
                                      batch_size=batch_size, steps_per_epoch=epoch_size,
                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
                                      transform=Deepfake_preprocess_image,
-                                     collate_fn=my_collate)
+                                     collate_fn=my_collate, customize_num_masks=args.customize_num_masks)
 
     #if True test epoch will run first
     test_first_before_train = bool(args.test_before_train)
