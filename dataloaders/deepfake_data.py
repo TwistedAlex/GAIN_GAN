@@ -99,7 +99,7 @@ class DeepfakeTrainData(data.Dataset):
 
         # if customize the num of masks to be picked in each epoch
         if customize_num_masks:
-            mask_images = [(file[:-5] + 'png') for file in all_pos_files if 'm' in file]
+            mask_images = [(file[:-5] + '.png') for file in all_pos_files if 'm' in file]
             pos_cl_images_without_masks = [file for file in pos_cl_images if file not in mask_images]
             total_num_images = batch_size * steps_per_epoch
             total_num_masks = len(mask_images)
@@ -109,7 +109,7 @@ class DeepfakeTrainData(data.Dataset):
             all_pos_files = random.sample(pos_cl_images_without_masks, total_num_pos_cl - total_num_masks // 2)
             all_neg_files = random.sample(all_neg_files, total_num_neg_files)
             pos_cl_images = picked_mask_images + all_pos_files
-            picked_cl_with_masks = [(file[:-3] + 'm.png') for file in picked_mask_images]
+            picked_cl_with_masks = [(file[:-4] + 'm.png') for file in picked_mask_images]
             all_pos_files = pos_cl_images + picked_cl_with_masks
 
         self.masks_indices = [idx for idx,pos in enumerate(pos_cl_images) if pos.split('.')[0]+'m'+'.png' in all_pos_files]

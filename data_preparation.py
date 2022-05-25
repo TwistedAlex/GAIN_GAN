@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 
 def shell(commands, warn=True):
@@ -20,6 +21,29 @@ def bulk_create_softlinks(abs_source, dest):
     cur_command = 'cp -rs ' +  abs_source + ' ' + dest
     shell(cur_command)
 
+def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name):
+    input_path_heatmap_pos = input_path_heatmap + "/Pos/"
+    input_path_heatmap_neg = input_path_heatmap + "/Neg/"
+    heatmap_home_dir = heatmap_home_dir + "heatmap_output/" + log_name + "/"
+    output_path_heatmap_pos_cl = heatmap_home_dir + "/Pos_Fake_0/" + "/50_closest/"
+    output_path_heatmap_pos_fa = heatmap_home_dir + "/Pos_Fake_0/" + "/50_farthest/"
+    output_path_heatmap_neg_cl = heatmap_home_dir + "/Neg_Real_1/" + "/50_closest/"
+    output_path_heatmap_neg_fa = heatmap_home_dir + "/Neg_Real_1/" + "/50_farthest/"
+    pathlib.Path(output_path_heatmap_pos_cl).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_pos_fa).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_neg_cl).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_neg_fa).mkdir(parents=True, exist_ok=True)
+
+    pos_heatmaps = os.listdir(input_path_heatmap_pos)
+    neg_heatmaps = os.listdir(input_path_heatmap_neg)
+    pos_heatmaps.sort()
+    neg_heatmaps.sort()
+
+    all_pos_files = os.listdir("/home/shuoli.../")
+    mask_images = [file for file in all_pos_files if 'm' in file]
+    for file in mask_images:
+        command = 'mv ' + input_path_heatmap_pos + file + ' ' + input_path_heatmap_pos + file[:-6] + 'm.png'
+        os.system(command)
 
 # list_commands = ['cp -rf /server_data/image-research/20220505_ffhq_11K/images1024x1024/00000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Pos/',
 #                  'cp -rf /server_data/image-research/20220505_ffhq_11K/images1024x1024/01000/* /home/shuoli/attention_env/GAIN_GAN/deepfake_data/data_s2_20kT/training/Pos/',
