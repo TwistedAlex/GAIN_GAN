@@ -582,6 +582,8 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
           writer, epoch, logger):
     #switching model to train mode
+    print('*****Training Begin*****')
+    logger.info('*****Training Begin*****')
     model.train()
     #initializing all required variables
     count_pos, count_neg, dif_i, epoch_IOU, am_count = 0, 0, 0, 0, 0
@@ -598,6 +600,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     #data loading loop
     for sample in train_loader:
         #preparing all required data
+        print("sampling")
         label_idx_list = sample['labels']
         augmented_batch = sample['augmented_images']
         augmented_masks = sample['used_masks']
@@ -774,12 +777,15 @@ def main(args):
 
     batch_size = args.batchsize
     epoch_size = args.nepoch
+    print('loader creating...')
+    logger.info('loader creating...')
     deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                      batch_size=batch_size, steps_per_epoch=epoch_size,
                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
                                      transform=Deepfake_preprocess_image,
                                      collate_fn=my_collate, customize_num_masks=args.customize_num_masks)
-
+    print('loader created')
+    logger.info('loader created')
     #if True test epoch will run first
     test_first_before_train = bool(args.test_before_train)
 
@@ -789,13 +795,16 @@ def main(args):
     norm = Normalize(mean=mean, std=std)
     fill_color = norm(torch.tensor(args.fill_color).view(1,3,1,1)).cuda()
     grad_layer = ["layer4"] #, "layer3", "layer2", "layer1", "maxpool", "relu", "bn1", "conv1"
+    print('model creating...')
+    logger.info('model creating...')
     model = batch_GAIN_Deepfake(model=model, grad_layer=grad_layer, num_classes=num_classes,
                          am_pretraining_epochs=args.nepoch_am,
                          ex_pretraining_epochs=args.nepoch_ex,
                          fill_color=fill_color,
                          test_first_before_train=test_first_before_train,
                          grad_magnitude=args.grad_magnitude)
-
+    print('mode created')
+    logger.info('model created')
     chkpnt_epoch = 0
     # if len(args.checkpoint_file_path_load) > 0:
     #     checkpoint = torch.load('C:\Users\Student1\PycharmProjects\GCAM\checkpoints\batch_GAIN\with_am_no_ex_1_')
