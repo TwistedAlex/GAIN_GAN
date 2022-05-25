@@ -28,6 +28,33 @@ def roc_curve(labels, preds, thresholds_count=10000):
     false_positive_rate, true_positive_rate = np.asarray(false_positive_rate), np.asarray(true_positive_rate)
     return false_positive_rate, true_positive_rate, auc, thresholds
 
+
+def output_single_roc(stats_path_list, title_list, lim_offset, save_dir, mode=False):
+
+    if mode :
+        file_suffix = "\\roc_curve_with_threshold_"
+        plt.title('PSI 1 Receiver Operating Characteristic')
+    else:
+        file_suffix = "\\roc_curve_"
+        plt.title('PSI 0.5 Receiver Operating Characteristic')
+    for i in range(len(stats_path_list)):
+        labels = np.load(stats_path_list[i] + "\\labels.npy")  # psi 1
+        predictions = np.load(stats_path_list[i] + "\\predictions.npy")
+        fpr, tpr, auc, threshold = roc_curve(labels, predictions)
+        roc_auc = metrics.auc(fpr, tpr)
+        plt.plot(fpr, tpr, 'b', label=f'{title_list[i]} = %0.2f' % roc_auc)
+        plt.legend(loc='lower right')
+        # plt.plot([0, 1], [0, 1], 'r--')
+        plt.xlim([0, lim_offset])
+        plt.ylim([(1 - lim_offset), 1])
+        plt.ylabel('True Positive Rate')
+        plt.xlabel('False Positive Rate')
+        plt.grid(True)
+        print(save_dir+file_suffix + datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".png")
+    plt.savefig(save_dir+file_suffix + datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".png")
+    plt.cla()
+
+
 def output_multiple_roc(stats_path_list, title_list, lim_offset, save_dir, mode=False):
 
     if mode :
@@ -68,10 +95,15 @@ def main():
                   "with_500_ex_AUC",
                   "with_500_ex_1.5_exweight_AUC",
                   "with_1k_ex_1.5_exweight_AUC"]
+    title_list = [
+                  "with_1k_ex_1.5_exweight_AUC"]
     save_dir = "E:/ResearchData/heatmap_output/"
 
-    output_multiple_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
-    output_multiple_roc(psi_1_list, title_list, lim_offset=1, save_dir=save_dir)
+    psi_05_list = ["E:\\ResearchData\\heatmap_output\\\ex_1k_exweight_1.5_PSI_0.5\\"]
+
+    output_single_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
+    # output_multiple_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
+    # output_multiple_roc(psi_1_list, title_list, lim_offset=1, save_dir=save_dir)
 
 if __name__ == '__main__':
     main()
