@@ -6,7 +6,7 @@ import os
 import numpy as np
 import random
 
-def build_balanced_dataloader(dataset, labels, collate_fn, target_weight=None, batch_size=1, steps_per_epoch=500, num_workers=1):
+def build_balanced_dataloader(dataset, labels, collate_fn, target_weight=None, batch_size=1, steps_per_epoch=500, num_workers=0):
     assert len(dataset) == len(labels)
     labels = np.asarray(labels)
     ulabels, label_count = np.unique(labels, return_counts=True)
@@ -41,7 +41,7 @@ def load_func(path, file, all_files):
     mask_file = img_name+'m'+'.'+format
     if all_files is not None and label == 1 and mask_file in all_files:
         path_to_mask = os.path.join(path, mask_file)
-        p_mask = PIL.Image.open(path_to_mask)
+        p_mask = PIL.Image.open(path_to_mask).convert('RGB')
         np_mask = np.asarray(p_mask)
         tensor_mask = torch.tensor(np_mask)
         return tensor_image, tensor_mask, label
@@ -232,7 +232,7 @@ class DeepfakeTestData(data.Dataset):
 class DeepfakeLoader():
     def __init__(self, root_dir, target_weight, masks_to_use, mean, std,
                  transform, collate_fn, customize_num_masks, batch_size=1, steps_per_epoch=6000,
-                 num_workers=3):
+                 num_workers=0):
 
         self.train_dataset = DeepfakeTrainData(root_dir=root_dir + 'training/',
                                                masks_to_use=masks_to_use,
@@ -306,7 +306,7 @@ class DeepfakeLoader():
 class DeepfakeTestingOnlyLoader():
     def __init__(self, root_dir, target_weight, masks_to_use, mean, std,
                  transform, collate_fn, batch_size=1, steps_per_epoch=6000,
-                 num_workers=3):
+                 num_workers=0):
         self.test_dataset = DeepfakeTestData(root_dir=root_dir + 'testing/',
                                              mean=mean, std=std,
                                              transform=transform)
