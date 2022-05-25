@@ -598,9 +598,10 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     #defining classification loss function
     cl_loss_fn = torch.nn.BCEWithLogitsLoss()
     #data loading loop
+    print("sampling")
     for sample in train_loader:
         #preparing all required data
-        print("sampling")
+        print("sampled")
         label_idx_list = sample['labels']
         augmented_batch = sample['augmented_images']
         augmented_masks = sample['used_masks']
