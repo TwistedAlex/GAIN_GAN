@@ -489,7 +489,7 @@ def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
             np.uint8)
         masked_img = torch.from_numpy(masked_img).unsqueeze(0)
         if gt[idx] == 1 and sample['orig_masks'][idx].numel() != 1:
-            orig_mask = sample['orig_masks'][idx].unsqueeze(2).repeat([1, 1, 3]).permute([2, 0, 1])
+            orig_mask = sample['orig_masks'][idx].permute([2, 0, 1])
             orig_mask = resize(orig_mask).permute([1, 2, 0])
             orig_mask[orig_mask == 255] = 30
             orig_masked = orig + orig_mask.unsqueeze(0)
