@@ -644,9 +644,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         all_masks = train_dataset.get_masks_indices()
         have_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in all_masks]
-        epoch_IOU, IOU_count = monitor_IOU(
-            have_mask_indices, all_augmented_masks, masks, epoch_IOU,
-            IOU_count, writer, cfg)
+        # epoch_IOU, IOU_count = monitor_IOU(
+        #     have_mask_indices, all_augmented_masks, masks, epoch_IOU,
+        #     IOU_count, writer, cfg)
 
         #Ex loss computation and monitoring
         print(f"masks picked: {len(train_dataset.used_masks)}")
