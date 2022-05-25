@@ -114,6 +114,12 @@ class DeepfakeTrainData(data.Dataset):
             picked_cl_with_masks = [(file[:-4] + 'm.png') for file in picked_mask_images]
             all_pos_files = pos_cl_images + picked_cl_with_masks
 
+        # dummy masks creation:
+        path_to_file = os.path.join(self.pos_root_dir, pos_cl_images[0])
+        p_image = PIL.Image.open(path_to_file)
+        np_image = np.asarray(p_image)
+
+        tensor_image = torch.tensor(np_image)
         self.masks_indices = [idx for idx,pos in enumerate(pos_cl_images) if pos.split('.')[0]+'m'+'.png' in all_pos_files]
         self.all_files = all_pos_files + all_neg_files
         self.all_cl_images = pos_cl_images+all_neg_files
@@ -124,6 +130,7 @@ class DeepfakeTrainData(data.Dataset):
         self.mean = mean
         self.std = std
         self.transform = transform
+        self.dummy_mask = torch.tensor(np.zeros_like(np_image))
 
 
     def __len__(self):
@@ -134,10 +141,16 @@ class DeepfakeTrainData(data.Dataset):
             res = list(self.loader(self.pos_root_dir,
                                    self.all_cl_images[index], self.all_files))
             # original: mask=res[1].unsqueeze(0)
-            preprocessed, augmented, augmented_mask = \
-                self.transform(img=res[0].squeeze().permute([2, 0, 1]),
-                                         mask=res[1].squeeze().permute([2, 0, 1]), train=True,
-                                         mean=self.mean, std=self.std)
+            if res[1].numel() > 1:
+                preprocessed, augmented, augmented_mask = \
+                    self.transform(img=res[0].squeeze().permute([2, 0, 1]),
+                                   mask=res[1].squeeze().permute([2, 0, 1]), train=True,
+                                   mean=self.mean, std=self.std)
+            else:
+                preprocessed, augmented, augmented_mask = \
+                    self.transform(img=res[0].squeeze().permute([2, 0, 1]),
+                                             mask=self.dummy_mask, train=True,
+                                             mean=self.mean, std=self.std)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
                       [augmented_mask]+[True] + [res[2]]
@@ -149,7 +162,7 @@ class DeepfakeTrainData(data.Dataset):
                                    self.all_cl_images[index], None))
             preprocessed, augmented, augmented_mask = \
                 self.transform(img=res[0].squeeze().permute([2, 0, 1]),
-                                         mask=res[1].squeeze().permute([2, 0, 1]), train=True,
+                                         mask=self.dummy_mask, train=True,
                                          mean=self.mean, std=self.std)
             res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + \
                   [np.array(-1)] + [False] + [res[2]]
