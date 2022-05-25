@@ -131,9 +131,10 @@ class DeepfakeTrainData(data.Dataset):
         if index < self.pos_num_of_samples:
             res = list(self.loader(self.pos_root_dir,
                                    self.all_cl_images[index], self.all_files))
+            # original: mask=res[1].unsqueeze(0)
             preprocessed, augmented, augmented_mask = \
                 self.transform(img=res[0].squeeze().permute([2, 0, 1]),
-                                         mask=res[1].unsqueeze(0), train=True,
+                                         mask=res[1].squeeze().permute([2, 0, 1]), train=True,
                                          mean=self.mean, std=self.std)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
@@ -146,7 +147,7 @@ class DeepfakeTrainData(data.Dataset):
                                    self.all_cl_images[index], None))
             preprocessed, augmented, augmented_mask = \
                 self.transform(img=res[0].squeeze().permute([2, 0, 1]),
-                                         mask=res[1].unsqueeze(0), train=True,
+                                         mask=res[1].squeeze().permute([2, 0, 1]), train=True,
                                          mean=self.mean, std=self.std)
             res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + \
                   [np.array(-1)] + [False] + [res[2]]
