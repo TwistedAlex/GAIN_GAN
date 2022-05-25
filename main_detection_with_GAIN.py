@@ -196,10 +196,10 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
                        total_test_single_accuracy, test_total_neg_correct, output_path, mode, logger)
 
 
-def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name):
+def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode):
     input_path_heatmap_pos = input_path_heatmap + "/Pos/"
     input_path_heatmap_neg = input_path_heatmap + "/Neg/"
-    heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output/" + log_name + "/"
+    heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output_" + log_name + "/" + mode
     output_path_heatmap_pos_cl = heatmap_home_dir + "/Pos_Fake_0/" + "/50_closest/"
     output_path_heatmap_pos_fa = heatmap_home_dir + "/Pos_Fake_0/" + "/50_farthest/"
     output_path_heatmap_neg_cl = heatmap_home_dir + "/Neg_Real_1/" + "/50_closest/"
@@ -598,10 +598,11 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     #defining classification loss function
     cl_loss_fn = torch.nn.BCEWithLogitsLoss()
     #data loading loop
-    print("sampling")
+    print(f"masks picked: {len(train_dataset.used_masks)}")
+    logger.info(f"masks picked: {len(train_dataset.used_masks)}")
+
     for sample in train_loader:
         #preparing all required data
-        print("sampled")
         label_idx_list = sample['labels']
         augmented_batch = sample['augmented_images']
         augmented_masks = sample['used_masks']
@@ -649,8 +650,6 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #     IOU_count, writer, cfg)
 
         #Ex loss computation and monitoring
-        print(f"masks picked: {len(train_dataset.used_masks)}")
-        logger.info(f"masks picked: {len(train_dataset.used_masks)}")
         used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in train_dataset.used_masks]
         total_loss = handle_EX_loss(model, used_mask_indices, augmented_masks,
@@ -742,9 +741,7 @@ def main(args):
     test_psi1_nepoch = 2000
     heatmap_home_dir = "/server_data/image-research/"
     psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_0.5/"
-    psi_05_log_name = "test_" + args.log_name + "_PSI_0.5"
     psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_1/"
-    psi_1_log_name = "test_" + args.log_name + "_PSI_1"
     psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
     psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
     psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
@@ -861,7 +858,7 @@ def main(args):
             test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
                 deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "PSI_0.5", logger)
 
-            select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, psi_05_log_name)
+            select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi_0.5")
             # test psi 1 dataset
             deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                                         batch_size=test_psi1_batchsize, steps_per_epoch=test_psi1_nepoch,
@@ -871,7 +868,7 @@ def main(args):
             test(cfg, model, device, deepfake_psi1_loader.datasets['test'],
                 deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "PSI_1", logger)
 
-            select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, psi_1_log_name)
+            select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "psi_1")
 
         print("finished epoch number:")
         logger.info("finished epoch number:")
