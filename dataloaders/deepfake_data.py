@@ -39,6 +39,8 @@ def load_func(path, file, all_files):
     tensor_image = torch.tensor(np_image)
     img_name, format = str(file).split('.')
     mask_file = img_name+'m'+'.'+format
+    print(mask_file)
+    print("***************************")
     if all_files is not None and label == 1 and mask_file in all_files:
         path_to_mask = os.path.join(path, mask_file)
         p_mask = PIL.Image.open(path_to_mask).convert('RGB')
