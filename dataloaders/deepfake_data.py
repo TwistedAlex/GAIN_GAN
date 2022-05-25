@@ -41,10 +41,11 @@ def load_func(path, file, all_files):
     mask_file = img_name+'m'+'.'+format
     if all_files is not None and label == 1 and mask_file in all_files:
         path_to_mask = os.path.join(path, mask_file)
-        p_mask = PIL.Image.open(path_to_mask)
+        p_mask = PIL.Image.open(path_to_mask).convert('RGB')
         np_mask = np.asarray(p_mask)
         tensor_mask = torch.tensor(np_mask)
         return tensor_image, tensor_mask, label
+    exit(0)
     return tensor_image, torch.tensor(-1), label
 
 
