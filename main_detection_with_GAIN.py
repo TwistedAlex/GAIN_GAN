@@ -375,11 +375,11 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
         logger.info(
             'Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss
                                                            / am_count))
-        print('Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss
-                                                           / (num_train_samples * batchsize)))
-        logger.info(
-            'Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss
-                                                           / (num_train_samples * batchsize)))
+        # print('Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss
+        #                                                    / (num_train_samples * batchsize)))
+        # logger.info(
+        #     'Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss
+        #                                                    / (num_train_samples * batchsize)))
         print('Average epoch train cl loss: {:.3f}'.format(
             epoch_train_cl_loss / (num_train_samples * batchsize)))
         logger.info('Average epoch train cl loss: {:.3f}'.format(
@@ -397,8 +397,8 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
                           (num_train_samples * batchsize), epoch)
         writer.add_scalar('Loss/train/am_total_loss', epoch_train_am_loss /
                           am_count, epoch)
-        writer.add_scalar('Loss/train/ex_total_loss', epoch_train_ex_loss /
-                          (num_train_samples * batchsize), epoch)
+        # writer.add_scalar('Loss/train/ex_total_loss', epoch_train_ex_loss /
+        #                   (num_train_samples * batchsize), epoch)
         writer.add_scalar('IOU/train/average_IOU_per_sample', epoch_IOU /
                           IOU_count if IOU_count != 0 else 0, epoch)
         writer.add_scalar('Accuracy/train/cl_accuracy',
@@ -577,7 +577,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
         logger.info(f"ex loss: {(ex_loss * args.ex_weight).detach().cpu().item()}")
         total_loss += args.ex_weight * ex_loss
         cfg['ex_i'] += 1
-    return total_loss, args.ex_weight * ex_loss
+    return total_loss
 
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
           writer, epoch, logger):
@@ -649,14 +649,14 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         logger.info(f"masks picked: {len(train_dataset.used_masks)}")
         used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in train_dataset.used_masks]
-        total_loss, total_ex_loss = handle_EX_loss(model, used_mask_indices, augmented_masks,
+        total_loss = handle_EX_loss(model, used_mask_indices, augmented_masks,
                                     heatmaps, writer, total_loss, cfg, logger)
         #optimization
         total_loss.backward()
         optimizer.step()
         # Single label evaluation
         epoch_train_total_loss += total_loss.detach().cpu().item()
-        epoch_train_ex_loss += total_ex_loss.detach().cpu().item()
+        # epoch_train_ex_loss += total_ex_loss.detach().cpu().item()
         y_pred = logits_cl.detach().argmax(dim=1)
         y_pred = y_pred.view(-1)
         gt = labels.view(-1)
