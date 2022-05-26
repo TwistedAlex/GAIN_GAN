@@ -373,28 +373,24 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
     writer.add_scalar('Loss/train/Epoch_am_total_loss', epoch_train_am_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_ex_total_loss', epoch_train_ex_loss, epoch)
     if (test_before_train and epoch > 0) or test_before_train == False:
-        print('Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss
-                                                           / am_count))
+        print('Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss))
         logger.info(
-            'Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss
-                                                           / am_count))
-        # print('Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss
-        #                                                    / (num_train_samples * batchsize)))
-        # logger.info(
-        #     'Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss
-        #                                                    / (num_train_samples * batchsize)))
+            'Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss))
+        print('Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss))
+        logger.info(
+            'Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss))
         print('Average epoch train cl loss: {:.3f}'.format(
-            epoch_train_cl_loss / (num_train_samples * batchsize)))
+            epoch_train_cl_loss))
         logger.info('Average epoch train cl loss: {:.3f}'.format(
-            epoch_train_cl_loss / (num_train_samples * batchsize)))
+            epoch_train_cl_loss))
         print('Average epoch train total loss: {:.3f}'.format(
-            epoch_train_total_loss / count_pos))
+            epoch_train_total_loss))
         logger.info('Average epoch train total loss: {:.3f}'.format(
-            epoch_train_total_loss / count_pos))
+            epoch_train_total_loss))
         print('Average epoch single train accuracy: {:.3f}'.format(
-            total_train_single_accuracy / (num_train_samples*batchsize)))
+            total_train_single_accuracy))
         logger.info('Average epoch single train accuracy: {:.3f}'.format(
-            total_train_single_accuracy / (num_train_samples*batchsize)))
+            total_train_single_accuracy))
     if (test_before_train and epoch > 0) or test_before_train == False:
         writer.add_scalar('Loss/train/cl_total_loss', epoch_train_cl_loss /
                           (num_train_samples * batchsize), epoch)
