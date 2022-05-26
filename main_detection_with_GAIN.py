@@ -707,7 +707,7 @@ parser.add_argument('--level', default=0, type=int, help='epoch to resume from')
 parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
 parser.add_argument('--deviceID', type=int, help='deviceID', default=0)
 parser.add_argument('--num_workers', type=int, help='workers number for the dataloaders', default=3)
-
+parser.add_argument('--num_masks', type=int, help='number of masks to pick for each epoch', default=250)
 parser.add_argument('--tensorboard', help='Log progress to TensorBoard', action='store_true')
 parser.add_argument('--pos_to_write_train', type=int, help='train positive samples visualizations to monitor in tb', default=50)
 parser.add_argument('--neg_to_write_train', type=int, help='train negative samples visualizations to monitor in tb', default=20)
@@ -781,7 +781,7 @@ def main(args):
                                      batch_size=batch_size, steps_per_epoch=epoch_size,
                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
                                      transform=Deepfake_preprocess_image,
-                                     collate_fn=my_collate, customize_num_masks=args.customize_num_masks)
+                                     collate_fn=my_collate, customize_num_masks=args.customize_num_masks, num_masks=args.num_masks)
     print('loader created')
     logger.info('loader created')
     #if True test epoch will run first
@@ -891,7 +891,7 @@ def main(args):
                                              batch_size=batch_size, steps_per_epoch=epoch_size,
                                              masks_to_use=args.masks_to_use, mean=mean, std=std,
                                              transform=Deepfake_preprocess_image,
-                                             collate_fn=my_collate, customize_num_masks=args.customize_num_masks)
+                                             collate_fn=my_collate, customize_num_masks=args.customize_num_masks, num_masks=args.num_masks)
 
 
 if __name__ == '__main__':

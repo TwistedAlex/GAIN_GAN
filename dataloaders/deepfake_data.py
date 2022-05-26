@@ -85,7 +85,7 @@ def get_files_under_folder(dir):
 
 
 class DeepfakeTrainData(data.Dataset):
-    def __init__(self, masks_to_use, mean, std, transform, batch_size, steps_per_epoch, target_weight, customize_num_masks, root_dir='train', loader=load_func):
+    def __init__(self, masks_to_use, mean, std, transform, batch_size, steps_per_epoch, target_weight, customize_num_masks, num_masks, root_dir='train', loader=load_func):
         self.pos_root_dir = root_dir+'Pos/'
         self.neg_root_dir = root_dir + 'Neg/'
         all_neg_files = os.listdir(self.neg_root_dir)
@@ -106,8 +106,8 @@ class DeepfakeTrainData(data.Dataset):
             total_num_masks = len(mask_images)
             total_num_pos_cl = (int)(total_num_images * target_weight[1])
             total_num_neg_files = total_num_images - total_num_pos_cl
-            picked_mask_images = random.sample(mask_images, (total_num_masks // 2))
-            all_pos_files = random.sample(pos_cl_images_without_masks, total_num_pos_cl - total_num_masks // 2)
+            picked_mask_images = random.sample(mask_images, num_masks)
+            all_pos_files = random.sample(pos_cl_images_without_masks, total_num_pos_cl - num_masks)
             all_neg_files = random.sample(all_neg_files, total_num_neg_files)
             pos_cl_images = picked_mask_images + all_pos_files
             picked_cl_with_masks = [(file[:-4] + 'm.png') for file in picked_mask_images]
@@ -245,13 +245,13 @@ class DeepfakeTestData(data.Dataset):
 
 class DeepfakeLoader():
     def __init__(self, root_dir, target_weight, masks_to_use, mean, std,
-                 transform, collate_fn, customize_num_masks, batch_size=1, steps_per_epoch=6000,
+                 transform, collate_fn, customize_num_masks, num_masks, batch_size=1, steps_per_epoch=6000,
                  num_workers=3):
 
         self.train_dataset = DeepfakeTrainData(root_dir=root_dir + 'training/',
                                                masks_to_use=masks_to_use,
                                                mean=mean, std=std,
-                                               transform=transform, batch_size=batch_size, steps_per_epoch=steps_per_epoch, target_weight=target_weight, customize_num_masks=customize_num_masks)
+                                               transform=transform, batch_size=batch_size, steps_per_epoch=steps_per_epoch, target_weight=target_weight, customize_num_masks=customize_num_masks, num_masks=num_masks)
         self.validation_dataset = DeepfakeValidationData(root_dir=root_dir + 'validation/',
                                                          mean=mean, std=std,
                                                          transform=transform)
