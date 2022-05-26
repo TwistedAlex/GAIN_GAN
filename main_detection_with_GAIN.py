@@ -122,11 +122,9 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
 
 
     if gt in ['Neg']:
-        # print("**save heatmap**: "+gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
             path + "/Neg/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0]) + '_' + str(index_img) + '_gt_'+ gt + '.png')
     else:
-        # print("**save heatmap**: " + gt)
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
             path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu())+ '_' + str(index_img) + '_gt_'+ gt + '.png')
 
@@ -137,14 +135,15 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
 def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_path, batchsize, mode, logger):
     print("******** Test ********")
     logger.info('******** Test ********')
+    print(mode)
+    logger.info(mode)
+
     model.eval()
     output_path_heatmap = output_path+"/test_heatmap/"
     print(output_path_heatmap)
     logger.info(output_path_heatmap)
     output_path_heatmap_pos = output_path_heatmap+"/Pos/"
     output_path_heatmap_neg = output_path_heatmap+"/Neg/"
-    print(output_path_heatmap_pos)
-    logger.info(output_path_heatmap_pos)
     pathlib.Path(output_path_heatmap_pos).mkdir(parents=True, exist_ok=True)
     pathlib.Path(output_path_heatmap_neg).mkdir(parents=True, exist_ok=True)
     j = 0
@@ -235,7 +234,7 @@ def monitor_validation_epoch(writer, test_dataset, args, pos_count, test_differe
     num_test_samples = len(test_dataset)
     print('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
     logger.info('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
-    writer.add_scalar('Loss/validation/am_total_loss', epoch_test_am_loss / (pos_count / args.batchsize), epoch)
+    writer.add_scalar('Loss/validation/am_total_loss', epoch_test_am_loss, epoch)
 
     writer.add_scalar('Accuracy/validation/cl_accuracy_only_pos',
                       test_total_pos_correct / pos_count, epoch)
@@ -369,6 +368,10 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
     print("pos = {} neg = {}".format(count_pos, count_neg))
     logger.info(
         "pos = {} neg = {}".format(count_pos, count_neg))
+    writer.add_scalar('Loss/train/Epoch_total_loss', epoch_train_total_loss, epoch)
+    writer.add_scalar('Loss/train/Epoch_cl_total_loss', epoch_train_cl_loss, epoch)
+    writer.add_scalar('Loss/train/Epoch_am_total_loss', epoch_train_am_loss, epoch)
+    writer.add_scalar('Loss/train/Epoch_ex_total_loss', epoch_train_ex_loss, epoch)
     if (test_before_train and epoch > 0) or test_before_train == False:
         print('Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss
                                                            / am_count))
@@ -557,9 +560,10 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
 
 
 def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
-                   writer, total_loss, cfg, logger):
+                   writer, total_loss, cfg, logger, epoch_train_ex_loss):
+    ex_loss = 0
     if model.EX_enabled() and len(used_mask_indices) > 0:
-        print("External Supervision started")
+        # print("External Supervision started")
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
         augmented_masks = torch.cat(augmented_masks, dim=0)
         # e_loss calculation: equation 5
@@ -577,7 +581,8 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
         logger.info(f"ex loss: {(ex_loss * args.ex_weight).detach().cpu().item()}")
         total_loss += args.ex_weight * ex_loss
         cfg['ex_i'] += 1
-    return total_loss
+    epoch_train_ex_loss += args.ex_weight * ex_loss
+    return total_loss, epoch_train_ex_loss
 
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
           writer, epoch, logger):
@@ -652,8 +657,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #Ex loss computation and monitoring
         used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in train_dataset.used_masks]
-        total_loss = handle_EX_loss(model, used_mask_indices, augmented_masks,
-                                    heatmaps, writer, total_loss, cfg, logger)
+        total_loss,  epoch_train_ex_loss= handle_EX_loss(model, used_mask_indices, augmented_masks,
+                                    heatmaps, writer, total_loss, cfg, logger, epoch_train_ex_loss)
         #optimization
         total_loss.backward()
         optimizer.step()
@@ -703,6 +708,7 @@ parser.add_argument('--lr', default=0.0001, type=float, help='initial learning r
 parser.add_argument('--manualSeed', default=cfg.RNG_SEED, type=int, help='manual seed')
 parser.add_argument('--net', dest='torchmodel', help='path to the pretrained weights file', default=None, type=str)
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
+parser.add_argument('--pretrain', '-p', action='store_true', help='use pretrained model')
 parser.add_argument('--level', default=0, type=int, help='epoch to resume from')
 parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
 parser.add_argument('--deviceID', type=int, help='deviceID', default=0)
@@ -751,11 +757,12 @@ def main(args):
     pathlib.Path(psi_1_input_dir).mkdir(parents=True, exist_ok=True)
     pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
 
-    logging.basicConfig(filename=args.output_dir+"/std.log",
+    logging.basicConfig(level=logging.DEBUG,
+                        filename=args.output_dir+"/std.log",
                         format='%(asctime)s %(message)s',
                         filemode='w')
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
     num_classes = len(categories)
     device = torch.device('cuda:'+str(args.deviceID))
     model = resnet50(pretrained=False).train().to(device)
