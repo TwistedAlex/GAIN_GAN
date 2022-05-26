@@ -37,7 +37,7 @@ def monitor_test_epoch(writer, test_dataset, pos_count, test_differences, test_t
                        total_test_single_accuracy, test_total_neg_correct, path, mode, logger):
     num_test_samples = len(test_dataset)
     print('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
-    logger.info('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
+    logger.warning('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
     writer.add_text('Test/' + mode + '/Accuracy/cl_accuracy', 'Accuracy: {:.3f}'.format(
         total_test_single_accuracy / num_test_samples
     ),
@@ -134,14 +134,14 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
 
 def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_path, batchsize, mode, logger):
     print("******** Test ********")
-    logger.info('******** Test ********')
+    logger.warning('******** Test ********')
     print(mode)
-    logger.info(mode)
+    logger.warning(mode)
 
     model.eval()
     output_path_heatmap = output_path+"/test_heatmap/"
     print(output_path_heatmap)
-    logger.info(output_path_heatmap)
+    logger.warning(output_path_heatmap)
     output_path_heatmap_pos = output_path_heatmap+"/Pos/"
     output_path_heatmap_neg = output_path_heatmap+"/Neg/"
     pathlib.Path(output_path_heatmap_pos).mkdir(parents=True, exist_ok=True)
@@ -233,7 +233,7 @@ def monitor_validation_epoch(writer, test_dataset, args, pos_count, test_differe
                        total_test_single_accuracy, test_total_neg_correct, last_epoch, path, logger):
     num_test_samples = len(test_dataset)
     print('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
-    logger.info('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
+    logger.warning('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
     writer.add_scalar('Loss/validation/am_total_loss', epoch_test_am_loss, epoch)
 
     writer.add_scalar('Accuracy/validation/cl_accuracy_only_pos',
@@ -366,7 +366,7 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
                                train_total_neg_correct, train_total_neg_seen,
                                train_differences, have_mask_indices, logger):
     print("pos = {} neg = {}".format(count_pos, count_neg))
-    logger.info(
+    logger.warning(
         "pos = {} neg = {}".format(count_pos, count_neg))
     writer.add_scalar('Loss/train/Epoch_total_loss', epoch_train_total_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_cl_total_loss', epoch_train_cl_loss, epoch)
@@ -374,22 +374,22 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
     writer.add_scalar('Loss/train/Epoch_ex_total_loss', epoch_train_ex_loss, epoch)
     if (test_before_train and epoch > 0) or test_before_train == False:
         print('Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss))
-        logger.info(
+        logger.warning(
             'Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss))
         print('Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss))
-        logger.info(
+        logger.warning(
             'Average epoch train ex loss: {:.3f}'.format(epoch_train_ex_loss))
         print('Average epoch train cl loss: {:.3f}'.format(
             epoch_train_cl_loss))
-        logger.info('Average epoch train cl loss: {:.3f}'.format(
+        logger.warning('Average epoch train cl loss: {:.3f}'.format(
             epoch_train_cl_loss))
         print('Average epoch train total loss: {:.3f}'.format(
             epoch_train_total_loss))
-        logger.info('Average epoch train total loss: {:.3f}'.format(
+        logger.warning('Average epoch train total loss: {:.3f}'.format(
             epoch_train_total_loss))
         print('Average epoch single train accuracy: {:.3f}'.format(
             total_train_single_accuracy))
-        logger.info('Average epoch single train accuracy: {:.3f}'.format(
+        logger.warning('Average epoch single train accuracy: {:.3f}'.format(
             total_train_single_accuracy))
     if (test_before_train and epoch > 0) or test_before_train == False:
         writer.add_scalar('Loss/train/cl_total_loss', epoch_train_cl_loss /
@@ -574,7 +574,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
                           (ex_loss * args.ex_weight).detach().cpu().item(),
                           cfg['ex_i'])
         print(f"ex loss: {(ex_loss * args.ex_weight).detach().cpu().item()}")
-        logger.info(f"ex loss: {(ex_loss * args.ex_weight).detach().cpu().item()}")
+        logger.warning(f"ex loss: {(ex_loss * args.ex_weight).detach().cpu().item()}")
         total_loss += args.ex_weight * ex_loss
         cfg['ex_i'] += 1
     epoch_train_ex_loss += args.ex_weight * ex_loss
@@ -584,7 +584,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
           writer, epoch, logger):
     #switching model to train mode
     print('*****Training Begin*****')
-    logger.info('*****Training Begin*****')
+    logger.warning('*****Training Begin*****')
     model.train()
     #initializing all required variables
     count_pos, count_neg, dif_i, epoch_IOU, am_count = 0, 0, 0, 0, 0
@@ -600,7 +600,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     cl_loss_fn = torch.nn.BCEWithLogitsLoss()
     #data loading loop
     print(f"masks picked: {len(train_dataset.used_masks)}")
-    logger.info(f"masks picked: {len(train_dataset.used_masks)}")
+    logger.warning(f"masks picked: {len(train_dataset.used_masks)}")
 
     for sample in train_loader:
         #preparing all required data
@@ -755,8 +755,7 @@ def main(args):
 
     logging.basicConfig(level=logging.DEBUG,
                         filename=args.output_dir+"/std.log",
-                        format='%(asctime)s %(message)s',
-                        filemode='w')
+                        format='%(asctime)s %(message)s')
     logger = logging.getLogger(__name__)
 
     num_classes = len(categories)
@@ -779,14 +778,14 @@ def main(args):
     batch_size = args.batchsize
     epoch_size = args.nepoch
     print('loader creating...')
-    logger.info('loader creating...')
+    logger.warning('loader creating...')
     deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                      batch_size=batch_size, steps_per_epoch=epoch_size,
                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
                                      transform=Deepfake_preprocess_image,
                                      collate_fn=my_collate, customize_num_masks=args.customize_num_masks, num_masks=args.num_masks)
     print('loader created')
-    logger.info('loader created')
+    logger.warning('loader created')
     #if True test epoch will run first
     test_first_before_train = bool(args.test_before_train)
 
@@ -797,7 +796,7 @@ def main(args):
     fill_color = norm(torch.tensor(args.fill_color).view(1,3,1,1)).cuda()
     grad_layer = ["layer4"] #, "layer3", "layer2", "layer1", "maxpool", "relu", "bn1", "conv1"
     print('model creating...')
-    logger.info('model creating...')
+    logger.warning('model creating...')
     model = batch_GAIN_Deepfake(model=model, grad_layer=grad_layer, num_classes=num_classes,
                          am_pretraining_epochs=args.nepoch_am,
                          ex_pretraining_epochs=args.nepoch_ex,
@@ -805,7 +804,7 @@ def main(args):
                          test_first_before_train=test_first_before_train,
                          grad_magnitude=args.grad_magnitude)
     print('mode created')
-    logger.info('model created')
+    logger.warning('model created')
     chkpnt_epoch = 0
     # if len(args.checkpoint_file_path_load) > 0:
     #     checkpoint = torch.load('C:\Users\Student1\PycharmProjects\GCAM\checkpoints\batch_GAIN\with_am_no_ex_1_')
@@ -850,7 +849,7 @@ def main(args):
                   deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path, logger)
         if epoch == (epochs - 1):
             print("********Testing module starts********")
-            logger.info("********Testing module starts********")
+            logger.warning("********Testing module starts********")
             # test psi 0.5 dataset
             deepfake_psi0_loader = DeepfakeTestingOnlyLoader(args.input_dir,
                                                              [1 - args.batch_pos_dist, args.batch_pos_dist],
@@ -874,9 +873,9 @@ def main(args):
             select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "psi_1")
 
         print("finished epoch number:")
-        logger.info("finished epoch number:")
+        logger.warning("finished epoch number:")
         print(epoch)
-        logger.info(str(epoch))
+        logger.warning(str(epoch))
         model.increase_epoch_count()
 
         chkpt_path = args.output_dir+'/checkpoints/'
@@ -889,7 +888,7 @@ def main(args):
          }, chkpt_path + args.checkpoint_name+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         if args.customize_num_masks:
             print('*****customize_num_masks*****')
-            logger.info('*****customize_num_masks*****')
+            logger.warning('*****customize_num_masks*****')
             deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                              batch_size=batch_size, steps_per_epoch=epoch_size,
                                              masks_to_use=args.masks_to_use, mean=mean, std=std,
