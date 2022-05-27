@@ -557,15 +557,27 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
 
 
 def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
-                   writer, total_loss, cfg, logger, epoch_train_ex_loss):
+                   writer, total_loss, cfg, logger, epoch_train_ex_loss, ex_mode):
     ex_loss = 0
     if model.EX_enabled() and len(used_mask_indices) > 0:
         # print("External Supervision started")
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
         augmented_masks = torch.cat(augmented_masks, dim=0)
-        # e_loss calculation: equation 5
-        # caculate (A^c - H^c) * (A^c - H^c): just a pixel-wise square error between the original mask and the returned from the model
-        # augmented_masks: H^c; the heatmap returned from the model: heatmaps[used_mask_indices]
+
+        if ex_mode:
+            # new logic: Image Addition
+            # external masks = Image_Addition(heatmaps, pixel level masks)
+            # Equation 7: L_e = 1/n sum_c (A^c - Image_Addition(A^c, H^c))^2
+            augmented_masks = heatmaps[used_mask_indices].squeeze() + augmented_masks
+            idx_augmented = augmented_masks > 255
+            augmented_masks[idx_augmented] = 255
+            pass
+        else:
+            # e_loss calculation: equation 7
+            # caculate (A^c - H^c) * (A^c - H^c): just a pixel-wise square error between the original mask and the returned from the model
+            # augmented_masks: H^c; the heatmap returned from the model: heatmaps[used_mask_indices]
+            pass
+
         squared_diff = torch.pow(heatmaps[used_mask_indices].squeeze() - augmented_masks, 2)
         flattened_squared_diff = squared_diff.view(len(used_mask_indices), -1)
         flattned_sum = flattened_squared_diff.sum(dim=1)
@@ -655,7 +667,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in train_dataset.used_masks]
         total_loss,  epoch_train_ex_loss= handle_EX_loss(model, used_mask_indices, augmented_masks,
-                                    heatmaps, writer, total_loss, cfg, logger, epoch_train_ex_loss)
+                                    heatmaps, writer, total_loss, cfg, logger, epoch_train_ex_loss, args.ex_mode)
         #optimization
         total_loss.backward()
         optimizer.step()
@@ -726,6 +738,7 @@ parser.add_argument('--grad_magnitude', help='grad magnitude of second path', ty
 parser.add_argument('--cl_weight', default=1, type=int, help='classification loss weight')
 parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
 parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
+parser.add_argument('--ex_mode', '-e', action='store_true', help='use new external supervision logic')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
 parser.add_argument('--customize_num_masks', action='store_true', help='resume from checkpoint')
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
