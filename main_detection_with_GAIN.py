@@ -356,7 +356,7 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
                        total_validation_single_accuracy, validation_total_neg_correct, last_epoch, output_path, logger)
 
 
-def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
+def monitor_train_epoch(args, writer, count_pos, count_neg, epoch, am_count,
                                 epoch_train_ex_loss,
                                epoch_train_am_loss, epoch_train_cl_loss,
                                num_train_samples, epoch_train_total_loss,
@@ -372,6 +372,7 @@ def monitor_train_epoch(writer, count_pos, count_neg, epoch, am_count,
     writer.add_scalar('Loss/train/Epoch_cl_total_loss', epoch_train_cl_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_am_total_loss', epoch_train_am_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_ex_total_loss', epoch_train_ex_loss, epoch)
+    writer.add_scalar('Loss/train/Epoch_ex_1weight_total_loss', epoch_train_ex_loss/args.ex_weight, epoch)
     if (test_before_train and epoch > 0) or test_before_train == False:
         print('Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss))
         logger.warning(
@@ -682,7 +683,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                           epoch, logits_cl, am_scores, gt, cfg)
     #monitoring per epoch measurements
     monitor_train_epoch(
-        writer, count_pos, count_neg, epoch, am_count, epoch_train_ex_loss, epoch_train_am_loss,
+        args, writer, count_pos, count_neg, epoch, am_count, epoch_train_ex_loss, epoch_train_am_loss,
         epoch_train_cl_loss, cfg['num_train_samples'],
         epoch_train_total_loss, args.batchsize, epoch_IOU, IOU_count,
         train_labels, total_train_single_accuracy, args.test_before_train,
