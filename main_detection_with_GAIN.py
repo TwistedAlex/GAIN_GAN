@@ -372,7 +372,7 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, epoch, am_count,
     writer.add_scalar('Loss/train/Epoch_cl_total_loss', epoch_train_cl_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_am_total_loss', epoch_train_am_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_ex_total_loss', epoch_train_ex_loss, epoch)
-    writer.add_scalar('Loss/train/Epoch_ex_1weight_total_loss', epoch_train_ex_loss/args.ex_weight, epoch)
+    writer.add_scalar('Loss/train/Epoch_ex_1weight_total_loss', (epoch_train_ex_loss if args.ex_weight == 0 else epoch_train_ex_loss/args.ex_weight), epoch)
     if (test_before_train and epoch > 0) or test_before_train == False:
         print('Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss))
         logger.warning(

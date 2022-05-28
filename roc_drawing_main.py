@@ -85,7 +85,7 @@ def output_multiple_roc(stats_path_list, title_list, lim_offset, save_dir, mode=
 #               "E:\\workplace\\GAIN-pytorch-main\\logs_deepfake\\ex_500_exweight_1.5\\test_ex_500_exweight_1.5_s2f_psi_1_000000\\",
 #               "E:\\ResearchData\\heatmap_output\\ex_1k_exweight_1.5_PSI_1\\"]
 psi_1_list = ["E:\\ResearchData\\heatmap_output\\1k_psi_1\\",
-              "E:\\ResearchData\\heatmap_output\\test_ex_500_exweight_0_orig_sampling_PSI_1\\",
+              "E:\\ResearchData\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_PSI_1\\",
               ]
 
 
@@ -94,7 +94,7 @@ psi_1_list = ["E:\\ResearchData\\heatmap_output\\1k_psi_1\\",
 #                "E:\\workplace\\GAIN-pytorch-main\\logs_deepfake\\ex_500_exweight_1.5\\test_ex_500_exweight_1.5_ffhq_s2_PSI_0_5\\",
 #                "E:\\ResearchData\\heatmap_output\\\ex_1k_exweight_1.5_PSI_0.5\\"]
 psi_05_list = ["E:\\ResearchData\\heatmap_output\\2k_mixed_psi_05\\",
-               "E:\\ResearchData\\heatmap_output\\test_ex_500_exweight_0_orig_sampling_PSI_0.5\\",
+               "E:\\ResearchData\\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_PSI_0.5\\",
                ]
 
 
@@ -104,7 +104,7 @@ def main():
     #               "with_500_ex_1.5_exweight_AUC",
     #               "with_1k_ex_1.5_exweight_AUC"]
     title_list = ["no_ex_AUC",
-                "with_500_ex_0_exweight_AUC",]
+                "with_500_ex_0.2_exweight_origSampling_AUC",]
     save_dir = "E:/ResearchData/heatmap_output/"
 
     # psi_05_list = ["E:\\ResearchData\\heatmap_output\\\ex_1k_exweight_1.5_PSI_0.5\\"]
