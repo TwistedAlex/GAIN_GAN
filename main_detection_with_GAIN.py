@@ -569,12 +569,18 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
         augmented_masks = torch.cat(augmented_masks, dim=0)
 
         if ex_mode:
-            # new logic: Image Addition
+            # new logic: Image Max
+            # external masks = Image_Max(heatmaps, pixel level masks)
+            # Equation 7: L_e = (A - Image_Max(A, H))^2
+            idx_augmented = augmented_masks < heatmaps[used_mask_indices].squeeze()
+            augmented_masks[idx_augmented] = heatmaps[used_mask_indices].squeeze()[idx_augmented]
+
+            # new logic 2: Image Addition
             # external masks = Image_Addition(heatmaps, pixel level masks)
             # Equation 7: L_e = 1/n sum_c (A^c - Image_Addition(A^c, H^c))^2
-            augmented_masks = heatmaps[used_mask_indices].squeeze() + augmented_masks
-            idx_augmented = augmented_masks > 255
-            augmented_masks[idx_augmented] = 255
+            # augmented_masks = heatmaps[used_mask_indices].squeeze() + augmented_masks
+            # idx_augmented = augmented_masks > 255
+            # augmented_masks[idx_augmented] = 255
         else:
             # e_loss calculation: equation 7
             # caculate (A^c - H^c) * (A^c - H^c): just a pixel-wise square error between the original mask and the returned from the model
@@ -825,7 +831,7 @@ def main(args):
     logger.warning('model created')
     chkpnt_epoch = 0
     # if len(args.checkpoint_file_path_load) > 0:
-    #     checkpoint = torch.load('C:\Users\Student1\PycharmProjects\GCAM\checkpoints\batch_GAIN\with_am_no_ex_1_')
+    #     checkpoint = torch.load(args.checkpoint_file_path_load)
     #     model.load_state_dict(checkpoint['model_state_dict'])
     #     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     #     chkpnt_epoch = checkpoint['epoch']+1

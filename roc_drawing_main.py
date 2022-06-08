@@ -89,6 +89,8 @@ psi_1_list = ["E:\\ResearchData\\heatmap_output\\1k_psi_1\\",
               "E:\\ResearchData\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_PSI_1\\",
               "E:\\ResearchData\heatmap_output\\test_ex_500_exweight_0.2_orig_sampling_epoch_50_new_exloss_PSI_1\\",
               "E:\\ResearchData\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_epoch_50_new_exloss_PSI_1\\",
+                "E:\\ResearchData\heatmap_output\\test_ex_500_exweight_1_orig_sampling_epoch_50_new_exloss_PSI_1\\",
+                "E:\\ResearchData\heatmap_output\\test_pretrain_ex_500_exweight_1_orig_sampling_epoch_50_new_exloss_PSI_1\\",
               ]
 
 
@@ -101,7 +103,8 @@ psi_05_list = ["E:\\ResearchData\\heatmap_output\\2k_mixed_psi_05\\",
                "E:\\ResearchData\\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_PSI_0.5\\",
                "E:\\ResearchData\\heatmap_output\\test_ex_500_exweight_0.2_orig_sampling_epoch_50_new_exloss_PSI_0.5\\",
                "E:\\ResearchData\\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_epoch_50_new_exloss_PSI_0.5\\",
-
+                "E:\\ResearchData\\heatmap_output\\test_ex_500_exweight_1_orig_sampling_epoch_50_new_exloss_PSI_0.5\\",
+                "E:\\ResearchData\\heatmap_output\\test_pretrain_ex_500_exweight_1_orig_sampling_epoch_50_new_exloss_PSI_0.5\\",
                ]
 
 
@@ -112,9 +115,11 @@ def main():
     #               "with_1k_ex_1.5_exweight_AUC"]
     title_list = ["no_ex_AUC",
                   "pretrain_no_ex_AUC",
-                  "500_ex_0.2_exweight_origSampling_AUC",
-                  "500_ex_0.2_exweight_origSampling_new_exloss_AUC",
-                  "pretrain_500_ex_0.2_exweight_origSampling_new_exloss_AUC",
+                  "500_ex_0.2_exweight_AUC",
+                  "500_ex_0.2_exweight_new_exloss_AUC",
+                  "pretrain_500_ex_0.2_exweight_new_exloss_AUC",
+                  "500_ex_1_exweight_new_exloss_AUC",
+                  "pretrain_500_ex_1_exweight_new_exloss_AUC",
                   ]
     save_dir = "E:/ResearchData/heatmap_output/"
 
