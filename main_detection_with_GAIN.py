@@ -478,7 +478,7 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
 
 def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
                       sample, masked_images, train_dataset, label_idx_list,
-                      epoch, logits_cl, am_scores, gt, cfg):
+                      epoch, logits_cl, am_scores, gt, cfg, cl_loss, am_loss, ex_loss):
     for idx in records_indices:
         htm = np.uint8(heatmaps[idx].squeeze().cpu().detach().numpy() * 255)
         visualization, _ = show_cam_on_image(np.asarray(augmented_batch[idx]), htm, True)
@@ -504,7 +504,8 @@ def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
         groundtruth = [cfg['categories'][x] for x in label_idx_list][idx]
         img_idx = sample['idx'][idx]
         writer.add_images(
-            tag='Epoch_' + str(epoch) + '/Train_Heatmaps/image_' + str(img_idx) + '_' + groundtruth,
+            tag='Epoch_' + str(epoch) + '/Train_Heatmaps/image_' + str(img_idx) + '_' + groundtruth +
+                f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}',
             img_tensor=orig_viz, dataformats='NHWC', global_step=cfg['counter'][img_idx])
         y_scores = nn.Softmax(dim=1)(logits_cl.detach())
         predicted_categories = y_scores[idx].unsqueeze(0).argmax(dim=1)
@@ -533,36 +534,42 @@ def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
 
 def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
                    epoch_train_am_loss, am_count, writer, cfg, args, labels):
+    iter_am_loss = 0
     if not args.am_on_all and cur_pos_num > 1:
         am_labels_scores = am_scores[pos_indices,
                                      torch.ones(cur_pos_num).long()]
         am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
+        iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
         if model.AM_enabled():
             total_loss += am_loss * args.am_weight
-        epoch_train_am_loss += (am_loss * args.am_weight).detach().cpu().item()
+        epoch_train_am_loss += iter_am_loss
         am_count += 1
         if cfg['i'] % 100 == 0:
             writer.add_scalar('Loss/train/am_loss',
-                              (am_loss * args.am_weight).detach().cpu().item(),
+                              iter_am_loss,
                               cfg['am_i'])
-        return total_loss, epoch_train_am_loss, am_count
+
+        return total_loss, epoch_train_am_loss, am_count, iter_am_loss
     if args.am_on_all:
         am_labels_scores = am_scores[list(range(args.batchsize)), labels]
         am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
+        iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
         if model.AM_enabled():
             total_loss += am_loss * args.am_weight
         if cfg['i'] % 100 == 0:
             writer.add_scalar('Loss/train/am_loss',
-                              (am_loss * args.am_weight).detach().cpu().item(),
+                              iter_am_loss,
                               cfg['am_i'])
-        epoch_train_am_loss += (am_loss * args.am_weight).detach().cpu().item()
+        epoch_train_am_loss += iter_am_loss
+
         am_count += 1
-    return total_loss, epoch_train_am_loss, am_count
+    return total_loss, epoch_train_am_loss, am_count, iter_am_loss
 
 
 def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
                    writer, total_loss, cfg, logger, epoch_train_ex_loss, ex_mode, ex_count):
     ex_loss = 0
+    iter_ex_loss = 0
     if model.EX_enabled() and len(used_mask_indices) > 0:
         # print("External Supervision started")
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
@@ -592,16 +599,17 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
         flattned_sum = flattened_squared_diff.sum(dim=1)
         flatten_size = flattened_squared_diff.size(1)
         ex_loss = (flattned_sum / flatten_size).sum() / len(used_mask_indices)
+        iter_ex_loss = (ex_loss * args.ex_weight).detach().cpu().item()
         writer.add_scalar('Loss/train/ex_loss',
-                          (ex_loss * args.ex_weight).detach().cpu().item(),
+                          iter_ex_loss,
                           cfg['ex_i'])
-        print(f"ex loss: {(ex_loss * args.ex_weight).detach().cpu().item()}")
-        logger.warning(f"ex loss: {(ex_loss * args.ex_weight).detach().cpu().item()}")
+        print(f"ex loss: {iter_ex_loss}")
+        logger.warning(f"ex loss: {iter_ex_loss}")
         total_loss += args.ex_weight * ex_loss
         cfg['ex_i'] += 1
         ex_count += 1
     epoch_train_ex_loss += args.ex_weight * ex_loss
-    return total_loss, epoch_train_ex_loss, ex_count
+    return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
 
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
           writer, epoch, logger):
@@ -654,7 +662,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
         am_scores = nn.Softmax(dim=1)(logits_am)
-        total_loss, epoch_train_am_loss, am_count = handle_AM_loss(
+        total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
             cur_pos_num, am_scores, pos_indices, model, total_loss,
             epoch_train_am_loss, am_count, writer, cfg, args, labels)
         #monitoring cl_loss per epoch
@@ -676,7 +684,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #Ex loss computation and monitoring
         used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in train_dataset.used_masks]
-        total_loss,  epoch_train_ex_loss, ex_count = handle_EX_loss(model, used_mask_indices, augmented_masks,
+        total_loss,  epoch_train_ex_loss, ex_count, iter_ex_loss = handle_EX_loss(model, used_mask_indices, augmented_masks,
                                     heatmaps, writer, total_loss, cfg, logger, epoch_train_ex_loss, args.ex_mode, ex_count)
         #optimization
         total_loss.backward()
@@ -702,7 +710,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         records_indices = [sample['idx'].index(x) for x in sample['idx'] if x in pos_neg]
         monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
                           sample, masked_images, train_dataset, label_idx_list,
-                          epoch, logits_cl, am_scores, gt, cfg)
+                          epoch, logits_cl, am_scores, gt, cfg, cl_loss * args.cl_weight, iter_am_loss, iter_ex_loss)
     #monitoring per epoch measurements
     monitor_train_epoch(
         args, writer, count_pos, count_neg, epoch, am_count, ex_count, epoch_train_ex_loss, epoch_train_am_loss,
@@ -830,16 +838,16 @@ def main(args):
     print('mode created')
     logger.warning('model created')
     chkpnt_epoch = 0
-    # if len(args.checkpoint_file_path_load) > 0:
-    #     checkpoint = torch.load(args.checkpoint_file_path_load)
-    #     model.load_state_dict(checkpoint['model_state_dict'])
-    #     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #     chkpnt_epoch = checkpoint['epoch']+1
-    #     gain.cur_epoch = chkpnt_epoch
-    #     if gain.cur_epoch > gain.am_pretraining_epochs:
-    #        gain.enable_am = True
-    #     if gain.cur_epoch > gain.ex_pretraining_epochs:
-    #        gain.enable_ex = True
+    if len(args.checkpoint_file_path_load) > 0:
+        checkpoint = torch.load(args.checkpoint_file_path_load)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        chkpnt_epoch = checkpoint['epoch']+1
+        model.cur_epoch = chkpnt_epoch
+        if model.cur_epoch > model.am_pretraining_epochs:
+           model.enable_am = True
+        if model.cur_epoch > model.ex_pretraining_epochs:
+           model.enable_ex = True
 
     writer = SummaryWriter(args.output_dir + args.log_name +'_'+
                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
