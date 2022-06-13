@@ -579,9 +579,10 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
             # new logic: Image Max
             # external masks = Image_Max(heatmaps, pixel level masks)
             # Equation 7: L_e = (A - Image_Max(A, H))^2
-            idx_augmented = augmented_masks < heatmaps[used_mask_indices].squeeze()
-            augmented_masks[idx_augmented] = heatmaps[used_mask_indices].squeeze()[idx_augmented]
+            # idx_augmented = augmented_masks < heatmaps[used_mask_indices].squeeze()
+            # augmented_masks[idx_augmented] = heatmaps[used_mask_indices].squeeze()[idx_augmented]
 
+            augmented_masks = torch.maximum(augmented_masks, heatmaps[used_mask_indices].squeeze())
             # new logic 2: Image Addition
             # external masks = Image_Addition(heatmaps, pixel level masks)
             # Equation 7: L_e = 1/n sum_c (A^c - Image_Addition(A^c, H^c))^2
@@ -711,9 +712,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
 
         # record losses of the image with mask f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}'
         if iter_ex_loss > 0.0:
-            writer.add_scalar('Loss/images_with_masks/cl_loss', f'_{cl_loss * args.cl_weight:.4f}', epoch)
-            writer.add_scalar('Loss/images_with_masks/am_loss', f'_{iter_am_loss:.4f}', epoch)
-            writer.add_scalar('Loss/images_with_masks/ex_loss', f'_{iter_ex_loss:.4f}', epoch)
+            writer.add_scalar('Loss/images_with_masks/cl_loss', f'_{cl_loss * args.cl_weight:.5f}', epoch)
+            writer.add_scalar('Loss/images_with_masks/am_loss', f'_{iter_am_loss:.5f}', epoch)
+            writer.add_scalar('Loss/images_with_masks/ex_loss', f'_{iter_ex_loss:.5f}', epoch)
 
         monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
                           sample, masked_images, train_dataset, label_idx_list,
