@@ -541,7 +541,7 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
         am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
         iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
         if model.AM_enabled():
-            total_loss += am_loss * args.am_weight
+            total_loss += (am_loss * args.am_weight)/((am_loss * args.am_weight).detach().cpu().item())
         epoch_train_am_loss += iter_am_loss
         am_count += 1
         if cfg['i'] % 100 == 0:
@@ -606,7 +606,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
                           cfg['ex_i'])
         print(f"ex loss: {iter_ex_loss}")
         logger.warning(f"ex loss: {iter_ex_loss}")
-        total_loss += args.ex_weight * ex_loss
+        total_loss += args.ex_weight * ex_loss/((args.ex_weight * ex_loss).detach().cpu().item())
         cfg['ex_i'] += 1
         ex_count += 1
     epoch_train_ex_loss += args.ex_weight * ex_loss
@@ -658,7 +658,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #cl_loss and total loss computation
         cl_loss = cl_loss_fn(logits_cl, lbs)
         total_loss = 0
-        total_loss += cl_loss * args.cl_weight
+        total_loss += cl_loss * args.cl_weight / ((cl_loss * args.cl_weight).detach().cpu().item())
         # AM loss computation and monitoring
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
