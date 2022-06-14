@@ -712,9 +712,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
 
         # record losses of the image with mask f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}'
         if iter_ex_loss > 0.0:
-            writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, epoch)
-            writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, epoch)
-            writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, epoch)
+            writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, cfg['ex_i'] - 1)
+            writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, cfg['ex_i'] - 1)
+            writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, cfg['ex_i'] - 1)
 
         monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
                           sample, masked_images, train_dataset, label_idx_list,
