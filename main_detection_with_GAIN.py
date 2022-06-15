@@ -21,7 +21,7 @@ from configs.MDTconfig import cfg
 
 def my_collate(batch):
     orig_imgs, preprocessed_imgs, agumented_imgs, masks, preprocessed_masks, \
-    used_masks, labels, indices = zip(*batch)
+    used_masks, labels, datasource, file, indices = zip(*batch)
     used_masks = [mask for mask, used in zip(preprocessed_masks, used_masks) if used == True]
     preprocessed_masks = [mask for mask in preprocessed_masks if mask.size > 1]
     res_dict = {'orig_images': orig_imgs,
@@ -29,7 +29,7 @@ def my_collate(batch):
                 'augmented_images': agumented_imgs, 'orig_masks': masks,
                 'preprocessed_masks': preprocessed_masks,
                 'used_masks': used_masks,
-                'labels': labels, 'idx': indices}
+                'labels': labels, 'source': datasource, 'filename': file, 'idx': indices}
     return res_dict
 
 
@@ -356,7 +356,7 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
                        total_validation_single_accuracy, validation_total_neg_correct, last_epoch, output_path, logger)
 
 
-def monitor_train_epoch(args, writer, count_pos, count_neg, epoch, am_count,
+def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count,
                                 ex_count, epoch_train_ex_loss,
                                epoch_train_am_loss, epoch_train_cl_loss,
                                num_train_samples, epoch_train_total_loss,
@@ -366,6 +366,7 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, epoch, am_count,
                                train_total_neg_correct, train_total_neg_seen,
                                train_differences, have_mask_indices, logger):
     print("pos = {} neg = {}".format(count_pos, count_neg))
+    print("psi 0.5 = {} psi 1 = {} ffhq = {}".format(c_psi05, c_psi1, c_ffhq))
     logger.warning(
         "pos = {} neg = {}".format(count_pos, count_neg))
     writer.add_scalar('Loss/train/Epoch_total_loss', epoch_train_total_loss, epoch)
@@ -619,7 +620,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     logger.warning('*****Training Begin*****')
     model.train()
     #initializing all required variables
-    count_pos, count_neg, dif_i, epoch_IOU, am_count, ex_count = 0, 0, 0, 0, 0, 0
+    count_pos, count_neg, c_psi1, c_psi05, c_ffhq, dif_i, epoch_IOU, am_count, ex_count = 0, 0, 0, 0, 0, 0, 0, 0, 0
     train_differences = np.zeros(args.epochsize)
     train_labels = np.zeros(args.epochsize)
     total_train_single_accuracy = 0
@@ -640,6 +641,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         augmented_batch = sample['augmented_images']
         augmented_masks = sample['used_masks']
         all_augmented_masks = sample['preprocessed_masks']
+        datasource_list = sample['source']
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
         batch = batch.to(device)
         #starting the forward, backward, optimzer.step process
@@ -648,6 +650,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #sanity check for batch pos and neg distribution (for printing) #TODO: can be removed as it checked and it is ok
         count_pos += (labels == 1).int().sum()
         count_neg += (labels == 0).int().sum()
+        c_psi1 += (datasource_list == 'psi_1').int().sum()
+        c_psi05 += (datasource_list == 'psi_0.5').int().sum()
+        c_ffhq += (datasource_list == 'ffhq').int().sum()
         #one_hot transformation
         lb1 = labels.unsqueeze(0)
         lb2 = 1 - lb1
@@ -716,7 +721,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             y_am_loss_exsup_img.append(iter_am_loss)
             y_ex_loss_exsup_img.append(iter_ex_loss)
             x_epoch_exsup_img.append(epoch)
-            img_idx.append(sample['idx'])
+            img_idx.append(sample['filename'])
             writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, cfg['ex_i'] - 1)
@@ -726,8 +731,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                           epoch, logits_cl, am_scores, gt, cfg, cl_loss * args.cl_weight, iter_am_loss, iter_ex_loss)
     #monitoring per epoch measurements
     monitor_train_epoch(
-        args, writer, count_pos, count_neg, epoch, am_count, ex_count, epoch_train_ex_loss, epoch_train_am_loss,
-        epoch_train_cl_loss, cfg['num_train_samples'],
+        args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count, ex_count,
+        epoch_train_ex_loss, epoch_train_am_loss, epoch_train_cl_loss, cfg['num_train_samples'],
         epoch_train_total_loss, args.batchsize, epoch_IOU, IOU_count,
         train_labels, total_train_single_accuracy, args.test_before_train,
         train_total_pos_correct, train_total_pos_seen,
