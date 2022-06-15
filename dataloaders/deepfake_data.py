@@ -33,6 +33,7 @@ def build_balanced_dataloader(dataset, labels, collate_fn, target_weight=None, b
 
 def load_func(path, file, all_files):
     label = 0 if 'Neg' in path else 1
+    source = 'ffhq' if label == 0 else 'psi_1' if 'psi1' in file else 'psi_0.5'
     path_to_file = os.path.join(path, file)
     p_image = PIL.Image.open(path_to_file)
     np_image = np.asarray(p_image)
@@ -45,7 +46,7 @@ def load_func(path, file, all_files):
         np_mask = np.asarray(p_mask)
         tensor_mask = torch.tensor(np_mask)
         return tensor_image, tensor_mask, label
-    return tensor_image, torch.tensor(-1), label
+    return tensor_image, torch.tensor(-1), label, source, file
 
 
 def load_tuple_func(path, file, all_files):
@@ -151,10 +152,10 @@ class DeepfakeTrainData(data.Dataset):
                                              mean=self.mean, std=self.std)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
-                      [augmented_mask]+[True] + [res[2]]
+                      [augmented_mask]+[True] + [res[2]], [res[3]], [res[4]]
             else:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]] +\
-                      [augmented_mask]+[False] + [res[2]]
+                      [augmented_mask]+[False] + [res[2]], [res[3]], [res[4]]
         else:
             res = list(self.loader(self.neg_root_dir,
                                    self.all_cl_images[index], None))
@@ -163,7 +164,7 @@ class DeepfakeTrainData(data.Dataset):
                                          mask=self.dummy_mask.squeeze().permute([2, 0, 1]), train=True,
                                          mean=self.mean, std=self.std)
             res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + \
-                  [np.array(-1)] + [False] + [res[2]]
+                  [np.array(-1)] + [False] + [res[2]], [res[3]], [res[4]]
         res.append(index)
         return res
 
