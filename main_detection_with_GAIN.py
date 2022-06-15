@@ -613,7 +613,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
     return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
 
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
-          writer, epoch, logger):
+          writer, epoch, logger, y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx):
     #switching model to train mode
     print('*****Training Begin*****')
     logger.warning('*****Training Begin*****')
@@ -712,6 +712,11 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
 
         # record losses of the image with mask f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}'
         if iter_ex_loss > 0.0:
+            y_cl_loss_exsup_img.append(cl_loss * args.cl_weight)
+            y_am_loss_exsup_img.append(iter_am_loss)
+            y_ex_loss_exsup_img.append(iter_ex_loss)
+            x_epoch_exsup_img.append(epoch)
+            img_idx.append(sample['idx'])
             writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, cfg['ex_i'] - 1)
@@ -879,11 +884,18 @@ def main(args):
            'am_i' : am_i, 'ex_i' : ex_i, 'total_i' : total_i,
            'IOU_i' : IOU_i, 'counter':counter}
 
+    y_cl_loss_exsup_img = list()
+    y_am_loss_exsup_img = list()
+    y_ex_loss_exsup_img = list()
+    x_epoch_exsup_img = list()
+    img_idx = list()
+
     for epoch in range(chkpnt_epoch, epochs):
         if not test_first_before_train or \
                 (test_first_before_train and epoch != 0):
             train(args, cfg, model, device, deepfake_loader.datasets['train'],
-                  deepfake_loader.train_dataset, optimizer, writer, epoch, logger)
+                  deepfake_loader.train_dataset, optimizer, writer, epoch, logger,
+                  y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx)
 
         train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
                   deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path, logger)
@@ -934,6 +946,14 @@ def main(args):
                                              masks_to_use=args.masks_to_use, mean=mean, std=std,
                                              transform=Deepfake_preprocess_image,
                                              collate_fn=my_collate, customize_num_masks=args.customize_num_masks, num_masks=args.num_masks)
+
+    # output losses for exsup images
+    heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output_" + args.log_name + "/"
+    np.save(heatmap_home_dir + 'y_cl_loss_exsup_img', np.array(y_cl_loss_exsup_img))
+    np.save(heatmap_home_dir + 'y_am_loss_exsup_img', np.array(y_am_loss_exsup_img))
+    np.save(heatmap_home_dir + 'y_ex_loss_exsup_img', np.array(y_ex_loss_exsup_img))
+    np.save(heatmap_home_dir + 'x_epoch_exsup_img', np.array(x_epoch_exsup_img))
+    np.save(heatmap_home_dir + 'img_idx', np.array(img_idx))
 
 
 if __name__ == '__main__':
