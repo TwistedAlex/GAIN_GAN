@@ -366,9 +366,11 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
                                train_total_neg_correct, train_total_neg_seen,
                                train_differences, have_mask_indices, logger):
     print("pos = {} neg = {}".format(count_pos, count_neg))
-    print("psi 0.5 = {} psi 1 = {} ffhq = {}".format(c_psi05, c_psi1, c_ffhq))
+    print(f"psi 0.5 = {c_psi05} psi 1 = {c_psi1} ffhq = {c_ffhq}")
     logger.warning(
         "pos = {} neg = {}".format(count_pos, count_neg))
+    logger.warning(
+        f"psi 0.5 = {c_psi05} psi 1 = {c_psi1} ffhq = {c_ffhq}")
     writer.add_scalar('Loss/train/Epoch_total_loss', epoch_train_total_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_cl_total_loss', epoch_train_cl_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_am_total_loss', epoch_train_am_loss, epoch)
@@ -505,7 +507,7 @@ def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
         groundtruth = [cfg['categories'][x] for x in label_idx_list][idx]
         img_idx = sample['idx'][idx]
         writer.add_images(
-            tag='Epoch_' + str(epoch) + '/Train_Heatmaps/image_' + str(img_idx) + '_' + groundtruth +
+            tag='Epoch_' + str(epoch) + '/Train_Heatmaps/image_' + str(sample['filename'][idx]) + '_' + groundtruth +
                 f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}',
             img_tensor=orig_viz, dataformats='NHWC', global_step=cfg['counter'][img_idx])
         y_scores = nn.Softmax(dim=1)(logits_cl.detach())
@@ -653,7 +655,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         count_neg += (labels == 0).int().sum()
         # print(type(datasource_list)) : tuple
         c_psi1 += datasource_list.count('psi_1')
-        c_psi05 += datasource_list.count('psi_0')
+        c_psi05 += datasource_list.count('psi_0.5')
         c_ffhq += datasource_list.count('ffhq')
         #one_hot transformation
         lb1 = labels.unsqueeze(0)
