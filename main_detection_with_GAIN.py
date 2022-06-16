@@ -614,7 +614,8 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
     return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
 
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
-          writer, epoch, logger, y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx):
+          writer, epoch, logger, y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img,
+          img_idx, iter_num_list):
     #switching model to train mode
     print('*****Training Begin*****')
     logger.warning('*****Training Begin*****')
@@ -722,6 +723,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             y_ex_loss_exsup_img.append(iter_ex_loss)
             x_epoch_exsup_img.append(epoch)
             img_idx.append(sample['filename'])
+            iter_num_list.append(cfg['i'])
             writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, cfg['ex_i'] - 1)
@@ -894,13 +896,14 @@ def main(args):
     y_ex_loss_exsup_img = list()
     x_epoch_exsup_img = list()
     img_idx = list()
+    iter_num_list = list()
 
     for epoch in range(chkpnt_epoch, epochs):
         if not test_first_before_train or \
                 (test_first_before_train and epoch != 0):
             train(args, cfg, model, device, deepfake_loader.datasets['train'],
                   deepfake_loader.train_dataset, optimizer, writer, epoch, logger,
-                  y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx)
+                  y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx, iter_num_list)
 
         train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
                   deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path, logger)
@@ -959,6 +962,7 @@ def main(args):
     np.save(heatmap_home_dir + 'y_ex_loss_exsup_img', np.array(y_ex_loss_exsup_img))
     np.save(heatmap_home_dir + 'x_epoch_exsup_img', np.array(x_epoch_exsup_img))
     np.save(heatmap_home_dir + 'img_idx', np.array(img_idx))
+    np.save(heatmap_home_dir + 'iter_num_list', np.array(iter_num_list))
 
 
 if __name__ == '__main__':
