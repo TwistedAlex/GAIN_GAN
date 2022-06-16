@@ -201,7 +201,7 @@ class DeepfakeValidationData(data.Dataset):
             self.transform(img=res[0].squeeze().numpy(),
                            train=False, mean=self.mean, std=self.std)
         res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + [np.array(-1)] +\
-              [False] + [res[2]]
+              [False] + [res[2]] + [res[3]] + [res[4]]
         res.append(index)
         return res
 
@@ -235,7 +235,7 @@ class DeepfakeTestData(data.Dataset):
             self.transform(img=res[0].squeeze().numpy(),
                            train=False, mean=self.mean, std=self.std)
         res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + [np.array(-1)] +\
-              [False] + [res[2]]
+              [False] + [res[2]] + [res[3]] + [res[4]]
         res.append(index)
         return res
 
