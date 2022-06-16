@@ -651,9 +651,10 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #sanity check for batch pos and neg distribution (for printing) #TODO: can be removed as it checked and it is ok
         count_pos += (labels == 1).int().sum()
         count_neg += (labels == 0).int().sum()
-        c_psi1 += (datasource_list == 'psi_1').int().sum()
-        c_psi05 += (datasource_list == 'psi_0.5').int().sum()
-        c_ffhq += (datasource_list == 'ffhq').int().sum()
+        print(type(datasource_list))
+        c_psi1 += datasource_list.count('psi_1')
+        c_psi05 += datasource_list.count('psi_0')
+        c_ffhq += datasource_list.count('ffhq')
         #one_hot transformation
         lb1 = labels.unsqueeze(0)
         lb2 = 1 - lb1
