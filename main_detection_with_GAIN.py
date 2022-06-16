@@ -651,7 +651,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #sanity check for batch pos and neg distribution (for printing) #TODO: can be removed as it checked and it is ok
         count_pos += (labels == 1).int().sum()
         count_neg += (labels == 0).int().sum()
-        print(type(datasource_list))
+        # print(type(datasource_list)) : tuple
         c_psi1 += datasource_list.count('psi_1')
         c_psi05 += datasource_list.count('psi_0')
         c_ffhq += datasource_list.count('ffhq')
