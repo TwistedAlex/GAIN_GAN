@@ -20,7 +20,7 @@ def build_balanced_dataloader(dataset, labels, collate_fn, target_weight=None, b
     weighted_sampler = WeightedRandomSampler(
         weights=(target_weight * balancing_weight)[labels],
         num_samples=num_samples,
-        replacement=False
+        replacement=True
     )
     loader = torch.utils.data.DataLoader(dataset=dataset,
                         batch_size=batch_size,
