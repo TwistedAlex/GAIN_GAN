@@ -45,7 +45,7 @@ def load_func(path, file, all_files):
         p_mask = PIL.Image.open(path_to_mask).convert('RGB')
         np_mask = np.asarray(p_mask)
         tensor_mask = torch.tensor(np_mask)
-        return tensor_image, tensor_mask, label
+        return tensor_image, tensor_mask, label, source, file
     return tensor_image, torch.tensor(-1), label, source, file
 
 
