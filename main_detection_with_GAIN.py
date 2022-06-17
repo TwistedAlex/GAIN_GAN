@@ -4,6 +4,7 @@ import os
 import math
 import argparse
 import torch
+torch.multiprocessing.set_sharing_strategy('file_system')
 import numpy as np
 import logging
 from torch import nn
@@ -921,7 +922,7 @@ def main(args):
             train(args, cfg, model, device, deepfake_loader.datasets['train'],
                   deepfake_loader.train_dataset, optimizer, writer, epoch, logger,
                   y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx, iter_num_list,
-                  noex_y_cl_loss_exsup_img, noex_y_am_loss_exsup_img, noex_y_ex_loss_exsup_img, noex_x_epoch_exsup_img, noex_img_idx, noex_iter_num_list,)
+                  noex_y_cl_loss_exsup_img, noex_y_am_loss_exsup_img, noex_y_ex_loss_exsup_img, noex_x_epoch_exsup_img, noex_img_idx, noex_iter_num_list)
 
         train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
                   deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path, logger)
