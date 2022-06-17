@@ -617,7 +617,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
 
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
           writer, epoch, logger, y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img,
-          img_idx, iter_num_list):
+          img_idx, iter_num_list, noex_y_cl_loss_exsup_img, noex_y_am_loss_exsup_img, noex_y_ex_loss_exsup_img, noex_x_epoch_exsup_img, noex_img_idx, noex_iter_num_list):
     #switching model to train mode
     print('*****Training Begin*****')
     logger.warning('*****Training Begin*****')
@@ -720,7 +720,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         records_indices = [sample['idx'].index(x) for x in sample['idx'] if x in pos_neg]
 
         # record losses of the image with mask f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}'
-        if iter_ex_loss > 0.0:
+        if model.EX_enabled() and len(used_mask_indices) > 0:
             y_cl_loss_exsup_img.append(cl_loss * args.cl_weight)
             y_am_loss_exsup_img.append(iter_am_loss)
             y_ex_loss_exsup_img.append(iter_ex_loss)
@@ -730,6 +730,13 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, cfg['ex_i'] - 1)
+        else:
+            noex_y_cl_loss_exsup_img.append(cl_loss * args.cl_weight)
+            noex_y_am_loss_exsup_img.append(iter_am_loss)
+            noex_y_ex_loss_exsup_img.append(iter_ex_loss)
+            noex_x_epoch_exsup_img.append(epoch)
+            noex_img_idx.append(sample['filename'])
+            noex_iter_num_list.append(cfg['i'])
 
         monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
                           sample, masked_images, train_dataset, label_idx_list,
@@ -901,12 +908,20 @@ def main(args):
     img_idx = list()
     iter_num_list = list()
 
+    noex_y_cl_loss_exsup_img = list()
+    noex_y_am_loss_exsup_img = list()
+    noex_y_ex_loss_exsup_img = list()
+    noex_x_epoch_exsup_img = list()
+    noex_img_idx = list()
+    noex_iter_num_list = list()
+
     for epoch in range(chkpnt_epoch, epochs):
         if not test_first_before_train or \
                 (test_first_before_train and epoch != 0):
             train(args, cfg, model, device, deepfake_loader.datasets['train'],
                   deepfake_loader.train_dataset, optimizer, writer, epoch, logger,
-                  y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx, iter_num_list)
+                  y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx, iter_num_list,
+                  noex_y_cl_loss_exsup_img, noex_y_am_loss_exsup_img, noex_y_ex_loss_exsup_img, noex_x_epoch_exsup_img, noex_img_idx, noex_iter_num_list,)
 
         train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
                   deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path, logger)
@@ -967,6 +982,12 @@ def main(args):
     np.save(heatmap_home_dir + 'img_idx', np.array(img_idx))
     np.save(heatmap_home_dir + 'iter_num_list', np.array(iter_num_list))
 
+    np.save(heatmap_home_dir + 'noex_y_cl_loss_exsup_img', np.array(noex_y_cl_loss_exsup_img))
+    np.save(heatmap_home_dir + 'noex_y_am_loss_exsup_img', np.array(noex_y_am_loss_exsup_img))
+    np.save(heatmap_home_dir + 'noex_y_ex_loss_exsup_img', np.array(noex_y_ex_loss_exsup_img))
+    np.save(heatmap_home_dir + 'noex_x_epoch_exsup_img', np.array(noex_x_epoch_exsup_img))
+    np.save(heatmap_home_dir + 'noex_img_idx', np.array(noex_img_idx))
+    np.save(heatmap_home_dir + 'noex_iter_num_list', np.array(noex_iter_num_list))
 
 if __name__ == '__main__':
     args = parser.parse_args()
