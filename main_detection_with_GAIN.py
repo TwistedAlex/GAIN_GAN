@@ -819,7 +819,8 @@ def main(args):
     logging.basicConfig(level=logging.DEBUG,
                         filename=args.output_dir+"/std.log",
                         format='%(asctime)s %(message)s')
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger('PIL')
+    logger.setLevel(logging.WARNING)
 
     num_classes = len(categories)
     device = torch.device('cuda:'+str(args.deviceID))
