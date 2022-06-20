@@ -20,7 +20,7 @@ import logging
 
 def my_collate(batch):
     orig_imgs, preprocessed_imgs, agumented_imgs, masks, preprocessed_masks, \
-    used_masks, labels, indices = zip(*batch)
+    used_masks, labels, datasource, file, indices = zip(*batch)
     used_masks = [mask for mask, used in zip(preprocessed_masks, used_masks) if used == True]
     preprocessed_masks = [mask for mask in preprocessed_masks if mask.size > 1]
     res_dict = {'orig_images': orig_imgs,
@@ -28,7 +28,7 @@ def my_collate(batch):
                 'augmented_images': agumented_imgs, 'orig_masks': masks,
                 'preprocessed_masks': preprocessed_masks,
                 'used_masks': used_masks,
-                'labels': labels, 'idx': indices}
+                'labels': labels, 'source': datasource, 'filename': file, 'idx': indices}
     return res_dict
 
 
