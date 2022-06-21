@@ -80,8 +80,7 @@ def monitor_test_epoch(writer, test_dataset, pos_count, test_differences, test_t
 
 
 def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
-                     label_idx_list, logits_cl, am_scores, am_labels, writer,
-                     epoch, cfg, path):
+                     label_idx_list, logits_cl, cfg, path):
 
     htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
     resize = Resize(size=224)
@@ -110,27 +109,12 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
     labels_cl = list(itertools.chain(*labels_cl))
     cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
 
-    predicted_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in am_labels[0].view(-1)]
-    labels_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in [label_idx_list[0]]]
-    import itertools
-    predicted_am = list(itertools.chain(*predicted_am))
-    labels_am = list(itertools.chain(*labels_am))
-    am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
-    # print("**       save heatmap         **")
-    # print(y_scores[0].unsqueeze(0).cpu())
-    # print(y_scores[0].unsqueeze(0)[0].cpu())
-    # print('pic: {:.7f}'.format(y_scores[0].unsqueeze(0)[0][0].cpu()))
-
-
     if gt in ['Neg']:
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
             path + "/Neg/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0]) + '_' + str(index_img) + '_gt_'+ gt + '.png')
     else:
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
             path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu())+ '_' + str(index_img) + '_gt_'+ gt + '.png')
-
-    # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
-    #                 global_step=epoch)
 
 
 def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_path, batchsize, mode, logger):
@@ -188,8 +172,7 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
         pos_count = test_dataset.positive_len()
 
         viz_test_heatmap(j, heatmaps, sample, masked_images, test_dataset,
-                         label_idx_list, logits_cl, am_scores, am_labels, writer,
-                         epoch, cfg, output_path_heatmap)
+                         label_idx_list, logits_cl, cfg, output_path_heatmap)
         j += 1
 
     monitor_test_epoch(writer, test_dataset, pos_count, test_differences, test_total_pos_correct, epoch,
@@ -229,13 +212,12 @@ def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode
         os.system(command)
 
 
-def monitor_validation_epoch(writer, test_dataset, args, pos_count, test_differences,
-                       epoch_test_am_loss, test_total_pos_correct, epoch,
-                       total_test_single_accuracy, test_total_neg_correct, last_epoch, path, logger):
+def monitor_validation_epoch(writer, test_dataset, pos_count, test_differences,
+                       test_total_pos_correct, epoch,
+                       total_test_single_accuracy, test_total_neg_correct, logger):
     num_test_samples = len(test_dataset)
     print('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
     logger.warning('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
-    writer.add_scalar('Loss/validation/am_total_loss', epoch_test_am_loss, epoch)
 
     writer.add_scalar('Accuracy/validation/cl_accuracy_only_pos',
                       test_total_pos_correct / pos_count, epoch)
@@ -255,13 +237,10 @@ def monitor_validation_epoch(writer, test_dataset, args, pos_count, test_differe
     writer.add_scalar('ROC/validation/ROC_0.3', all_sens[2], epoch)
     writer.add_scalar('ROC/validation/ROC_0.5', all_sens[3], epoch)
     writer.add_scalar('ROC/validation/AUC', auc, epoch)
-    # if epoch == last_epoch:
-    #     save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
 
 
 def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
-                       label_idx_list, logits_cl, am_scores, am_labels, writer,
-                       epoch, cfg):
+                       label_idx_list, logits_cl, writer, epoch, cfg):
     if (j < args.pos_to_write_test and j % t == 0) or (
             j > args.pos_to_write_test and j % (args.pos_to_write_test * 3) == 0):
         htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
@@ -290,25 +269,17 @@ def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         predicted_cl = list(itertools.chain(*predicted_cl))
         labels_cl = list(itertools.chain(*labels_cl))
         cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
-
-        predicted_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in am_labels[0].view(-1)]
-        labels_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in [label_idx_list[0]]]
-        import itertools
-        predicted_am = list(itertools.chain(*predicted_am))
-        labels_am = list(itertools.chain(*labels_am))
-        am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
-
-        writer.add_text('Validation_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
+        writer.add_text('Validation_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text ,
                         global_step=epoch)
 
 
-def train_validate(args, cfg, model, device, validation_loader, validation_dataset, writer, epoch, last_epoch, output_path, logger):
+def train_validate(args, cfg, model, device, validation_loader, validation_dataset, writer, epoch, logger):
 
     model.eval()
 
     j = 0
     validation_total_pos_correct, validation_total_neg_correct = 0, 0
-    epoch_validation_am_loss, total_validation_single_accuracy = 0, 0
+    total_validation_single_accuracy = 0
     validation_differences = np.zeros(len(validation_dataset))
 
     for sample in validation_loader:
@@ -334,32 +305,18 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
         difference = (logits_cl[:, 1] - logits_cl[:, 0]).cpu().detach().numpy()
         validation_differences[j * args.batchsize: j * args.batchsize + len(difference)] = difference
 
-        am_scores = nn.Softmax(dim=1)(logits_am)
-        am_labels = am_scores.argmax(dim=1)
-
-        pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
-        cur_pos_num = len(pos_indices)
-        # The code to replace to train on positives and negatives
-        if cur_pos_num > 1:
-            am_labels_scores = am_scores[pos_indices, torch.ones(cur_pos_num).long()]
-            am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
-            epoch_validation_am_loss += (am_loss * args.am_weight).detach().cpu().item()
-
         pos_count = validation_dataset.positive_len()
         t = math.ceil(pos_count / (args.batchsize * args.pos_to_write_test))
         monitor_validation_viz(j, t, heatmaps, sample, masked_images, validation_dataset,
-                       label_idx_list, logits_cl, am_scores, am_labels, writer,
-                       epoch, cfg)
+                       label_idx_list, logits_cl, writer, epoch, cfg)
         j += 1
 
-    monitor_validation_epoch(writer, validation_dataset, args, pos_count, validation_differences,
-                       epoch_validation_am_loss, validation_total_pos_correct, epoch,
-                       total_validation_single_accuracy, validation_total_neg_correct, last_epoch, output_path, logger)
+    monitor_validation_epoch(writer, validation_dataset, pos_count, validation_differences,
+                       validation_total_pos_correct, epoch,
+                       total_validation_single_accuracy, validation_total_neg_correct, logger)
 
 
-def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count,
-                                ex_count, epoch_train_ex_loss,
-                               epoch_train_am_loss, epoch_train_cl_loss,
+def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, epoch_train_cl_loss,
                                num_train_samples, epoch_train_total_loss,
                                batchsize, epoch_IOU, IOU_count, train_labels,
                                total_train_single_accuracy, test_before_train,
@@ -374,18 +331,7 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
         f"psi 0.5 = {c_psi05} psi 1 = {c_psi1} ffhq = {c_ffhq}")
     writer.add_scalar('Loss/train/Epoch_total_loss', epoch_train_total_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_cl_total_loss', epoch_train_cl_loss, epoch)
-    writer.add_scalar('Loss/train/Epoch_am_total_loss', epoch_train_am_loss, epoch)
-    writer.add_scalar('Loss/train/Epoch_ex_total_loss', epoch_train_ex_loss, epoch)
-    writer.add_scalar('Loss/train/Epoch_ex_1weight_total_loss', (epoch_train_ex_loss if args.ex_weight == 0 else epoch_train_ex_loss/args.ex_weight), epoch)
     if (test_before_train and epoch > 0) or test_before_train == False:
-        print('Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss /
-                          am_count))
-        logger.warning(
-            'Average epoch train am loss: {:.3f}'.format(epoch_train_am_loss /
-                          am_count))
-        print('Average epoch train ex loss: {:.3f}'.format(0 if ex_count == 0 else (epoch_train_ex_loss / ex_count)))
-        logger.warning(
-            'Average epoch train ex loss: {:.3f}'.format(0 if ex_count == 0 else (epoch_train_ex_loss / ex_count)))
         print('Average epoch train cl loss: {:.3f}'.format(
             epoch_train_cl_loss / (num_train_samples * batchsize)))
         logger.warning('Average epoch train cl loss: {:.3f}'.format(
@@ -401,12 +347,7 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
     if (test_before_train and epoch > 0) or test_before_train == False:
         writer.add_scalar('Loss/train/Average_cl_total_loss', epoch_train_cl_loss /
                           (num_train_samples * batchsize), epoch)
-        writer.add_scalar('Loss/train/Average_am_total_loss', epoch_train_am_loss /
-                          am_count, epoch)
-        writer.add_scalar('Loss/train/Average_ex_total_loss', (
-                            0 if ex_count == 0 else (epoch_train_ex_loss / ex_count)),
-                            epoch
-                          )
+
         writer.add_scalar('IOU/train/average_IOU_per_sample', epoch_IOU /
                           IOU_count if IOU_count != 0 else 0, epoch)
         writer.add_scalar('Accuracy/train/cl_accuracy',
@@ -460,8 +401,6 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
             cl_loss_only_on_pos_samples = cl_loss_fn(
                 logits_cl.detach()[pos_indices], lbs.detach()[pos_indices])
             weighted_cl_pos = cl_loss_only_on_pos_samples * args.cl_weight
-            writer.add_scalar('Loss/train/cl_loss_only_on_pos_samples',
-                            weighted_cl_pos.detach().cpu().item(), cfg['am_i'])
 
         writer.add_scalar('Loss/train/cl_loss',
                           (cl_loss * args.cl_weight).detach().cpu().item(),
@@ -482,7 +421,7 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
 
 def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
                       sample, masked_images, train_dataset, label_idx_list,
-                      epoch, logits_cl, am_scores, gt, cfg, cl_loss, am_loss, ex_loss):
+                      epoch, logits_cl, am_scores, gt, cfg, cl_loss):
     for idx in records_indices:
         htm = np.uint8(heatmaps[idx].squeeze().cpu().detach().numpy() * 255)
         visualization, _ = show_cam_on_image(np.asarray(augmented_batch[idx]), htm, True)
@@ -509,7 +448,7 @@ def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
         img_idx = sample['idx'][idx]
         writer.add_images(
             tag='Epoch_' + str(epoch) + '/Train_Heatmaps/image_' + str(sample['filename'][idx]) + '_' + groundtruth +
-                f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}',
+                f'_{cl_loss:.4f}',
             img_tensor=orig_viz, dataformats='NHWC', global_step=cfg['counter'][img_idx])
         y_scores = nn.Softmax(dim=1)(logits_cl.detach())
         predicted_categories = y_scores[idx].unsqueeze(0).argmax(dim=1)
@@ -536,95 +475,14 @@ def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
         cfg['counter'][img_idx] += 1
 
 
-def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
-                   epoch_train_am_loss, am_count, writer, cfg, args, labels):
-    iter_am_loss = 0
-    if not args.am_on_all and cur_pos_num > 1:
-        am_labels_scores = am_scores[pos_indices,
-                                     torch.ones(cur_pos_num).long()]
-        am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
-        iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
-        if model.AM_enabled():
-            total_loss += (am_loss * args.am_weight)
-        epoch_train_am_loss += iter_am_loss
-        am_count += 1
-        if cfg['i'] % 100 == 0:
-            writer.add_scalar('Loss/train/am_loss',
-                              iter_am_loss,
-                              cfg['am_i'])
-        cfg['am_i'] += 1
-        return total_loss, epoch_train_am_loss, am_count, iter_am_loss
-    if args.am_on_all:
-        am_labels_scores = am_scores[list(range(args.batchsize)), labels]
-        am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
-        iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
-        if model.AM_enabled():
-            total_loss += am_loss * args.am_weight
-        if cfg['i'] % 100 == 0:
-            writer.add_scalar('Loss/train/am_loss',
-                              iter_am_loss,
-                              cfg['am_i'])
-        epoch_train_am_loss += iter_am_loss
-        cfg['am_i'] += 1
-        am_count += 1
-    return total_loss, epoch_train_am_loss, am_count, iter_am_loss
-
-
-def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
-                   writer, total_loss, cfg, logger, epoch_train_ex_loss, ex_mode, ex_count):
-    ex_loss = 0
-    iter_ex_loss = 0
-    if model.EX_enabled() and len(used_mask_indices) > 0:
-        # print("External Supervision started")
-        augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
-        augmented_masks = torch.cat(augmented_masks, dim=0)
-
-        if ex_mode:
-            # new logic: Image Max
-            # external masks = Image_Max(heatmaps, pixel level masks)
-            # Equation 7: L_e = (A - Image_Max(A, H))^2
-            # idx_augmented = augmented_masks < heatmaps[used_mask_indices].squeeze()
-            # augmented_masks[idx_augmented] = heatmaps[used_mask_indices].squeeze()[idx_augmented]
-
-            augmented_masks = torch.maximum(augmented_masks, heatmaps[used_mask_indices].squeeze())
-            # new logic 2: Image Addition
-            # external masks = Image_Addition(heatmaps, pixel level masks)
-            # Equation 7: L_e = 1/n sum_c (A^c - Image_Addition(A^c, H^c))^2
-            # augmented_masks = heatmaps[used_mask_indices].squeeze() + augmented_masks
-            # idx_augmented = augmented_masks > 255
-            # augmented_masks[idx_augmented] = 255
-        else:
-            # e_loss calculation: equation 7
-            # caculate (A^c - H^c) * (A^c - H^c): just a pixel-wise square error between the original mask and the returned from the model
-            # augmented_masks: H^c; the heatmap returned from the model: heatmaps[used_mask_indices]
-            pass
-
-        squared_diff = torch.pow(heatmaps[used_mask_indices].squeeze() - augmented_masks, 2)
-        flattened_squared_diff = squared_diff.view(len(used_mask_indices), -1)
-        flattned_sum = flattened_squared_diff.sum(dim=1)
-        flatten_size = flattened_squared_diff.size(1)
-        ex_loss = (flattned_sum / flatten_size).sum() / len(used_mask_indices)
-        iter_ex_loss = (ex_loss * args.ex_weight).detach().cpu().item()
-        writer.add_scalar('Loss/train/ex_loss',
-                          iter_ex_loss,
-                          cfg['ex_i'])
-        print(f"ex loss: {iter_ex_loss}")
-        logger.warning(f"ex loss: {iter_ex_loss}")
-        total_loss += args.ex_weight * ex_loss
-        cfg['ex_i'] += 1
-        ex_count += 1
-    epoch_train_ex_loss += args.ex_weight * ex_loss
-    return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
-
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
-          writer, epoch, logger, y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img,
-          img_idx, iter_num_list, noex_y_cl_loss_exsup_img, noex_y_am_loss_exsup_img, noex_y_ex_loss_exsup_img, noex_x_epoch_exsup_img, noex_img_idx, noex_iter_num_list):
+          writer, epoch, logger):
     #switching model to train mode
     print('*****Training Begin*****')
     logger.warning('*****Training Begin*****')
     model.train()
     #initializing all required variables
-    count_pos, count_neg, c_psi1, c_psi05, c_ffhq, dif_i, epoch_IOU, am_count, ex_count = 0, 0, 0, 0, 0, 0, 0, 0, 0
+    count_pos, count_neg, c_psi1, c_psi05, c_ffhq, dif_i, epoch_IOU = 0, 0, 0, 0, 0, 0, 0
     train_differences = np.zeros(args.epochsize)
     train_labels = np.zeros(args.epochsize)
     total_train_single_accuracy = 0
@@ -671,11 +529,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         total_loss += cl_loss * args.cl_weight
         # AM loss computation and monitoring
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
-        cur_pos_num = len(pos_indices)
         am_scores = nn.Softmax(dim=1)(logits_am)
-        total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
-            cur_pos_num, am_scores, pos_indices, model, total_loss,
-            epoch_train_am_loss, am_count, writer, cfg, args, labels)
+
         #monitoring cl_loss per epoch
         epoch_train_cl_loss += (cl_loss * args.cl_weight).detach().cpu().item()
         #saving logits difference for ROC monitoring
@@ -688,15 +543,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         all_masks = train_dataset.get_masks_indices()
         have_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in all_masks]
-        # epoch_IOU, IOU_count = monitor_IOU(
-        #     have_mask_indices, all_augmented_masks, masks, epoch_IOU,
-        #     IOU_count, writer, cfg)
 
-        #Ex loss computation and monitoring
-        used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
-                             if x in train_dataset.used_masks]
-        total_loss,  epoch_train_ex_loss, ex_count, iter_ex_loss = handle_EX_loss(model, used_mask_indices, augmented_masks,
-                                    heatmaps, writer, total_loss, cfg, logger, epoch_train_ex_loss, args.ex_mode, ex_count)
         #optimization
         total_loss.backward()
         optimizer.step()
@@ -720,32 +567,13 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         pos_neg = cfg['counter'].keys()
         records_indices = [sample['idx'].index(x) for x in sample['idx'] if x in pos_neg]
 
-        # record losses of the image with mask f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}'
-        if model.EX_enabled() and len(used_mask_indices) > 0:
-            y_cl_loss_exsup_img.append(cl_loss * args.cl_weight)
-            y_am_loss_exsup_img.append(iter_am_loss)
-            y_ex_loss_exsup_img.append(iter_ex_loss)
-            x_epoch_exsup_img.append(epoch)
-            img_idx.append(sample['filename'])
-            iter_num_list.append(cfg['i'])
-            writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, cfg['ex_i'] - 1)
-            writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, cfg['ex_i'] - 1)
-            writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, cfg['ex_i'] - 1)
-        else:
-            noex_y_cl_loss_exsup_img.append(cl_loss * args.cl_weight)
-            noex_y_am_loss_exsup_img.append(iter_am_loss)
-            noex_y_ex_loss_exsup_img.append(iter_ex_loss)
-            noex_x_epoch_exsup_img.append(epoch)
-            noex_img_idx.append(sample['filename'])
-            noex_iter_num_list.append(cfg['i'])
-
         monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
                           sample, masked_images, train_dataset, label_idx_list,
-                          epoch, logits_cl, am_scores, gt, cfg, cl_loss * args.cl_weight, iter_am_loss, iter_ex_loss)
+                          epoch, logits_cl, am_scores, gt, cfg, cl_loss * args.cl_weight)
     #monitoring per epoch measurements
     monitor_train_epoch(
-        args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count, ex_count,
-        epoch_train_ex_loss, epoch_train_am_loss, epoch_train_cl_loss, cfg['num_train_samples'],
+        args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch,
+        epoch_train_cl_loss, cfg['num_train_samples'],
         epoch_train_total_loss, args.batchsize, epoch_IOU, IOU_count,
         train_labels, total_train_single_accuracy, args.test_before_train,
         train_total_pos_correct, train_total_pos_seen,
@@ -758,10 +586,9 @@ parser = argparse.ArgumentParser(description='PyTorch GAIN Training')
 parser.add_argument('--batchsize', type=int, default=cfg.BATCHSIZE, help='batch size')
 parser.add_argument('--total_epochs', type=int, default=35, help='total number of epoch to train')
 parser.add_argument('--nepoch', type=int, default=6000, help='number of iterations per epoch')
-parser.add_argument('--nepoch_am', type=int, default=100, help='number of epochs to train without am loss')
-parser.add_argument('--nepoch_ex', type=int, default=1, help='number of epochs to train without ex loss')
+parser.add_argument('--nepoch_am', type=int, default=10000, help='number of epochs to train without am loss')
+parser.add_argument('--nepoch_ex', type=int, default=10000, help='number of epochs to train without ex loss')
 parser.add_argument('--masks_to_use', type=float, default=0.1, help='the relative number of masks to use in ex-supevision training')
-
 parser.add_argument('--lr', default=0.0001, type=float, help='initial learning rate')
 parser.add_argument('--manualSeed', default=cfg.RNG_SEED, type=int, help='manual seed')
 parser.add_argument('--net', dest='torchmodel', help='path to the pretrained weights file', default=None, type=str)
@@ -785,16 +612,12 @@ parser.add_argument('--fill_color', type=list, help='fill color of masked area i
 parser.add_argument('--grad_layer', help='path to the input idr', type=str, default='features')
 parser.add_argument('--grad_magnitude', help='grad magnitude of second path', type=int, default=1)
 parser.add_argument('--cl_weight', default=1, type=int, help='classification loss weight')
-parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
-parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
-parser.add_argument('--ex_mode', '-e', action='store_true', help='use new external supervision logic')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
 parser.add_argument('--customize_num_masks', action='store_true', help='resume from checkpoint')
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
 parser.add_argument('--output_dir', help='path to the outputdir', type=str)
 parser.add_argument('--checkpoint_name', help='checkpoint name', type=str)
 parser.add_argument('--checkpoint_file_path_load', type=str, default='', help='a full path including the name of the checkpoint_file to load from, empty otherwise')
-parser.add_argument('--writer_file_load', type=str, default='', help='a full path including the name of the writer_file to load from, empty otherwise')
 
 
 def main(args):
@@ -872,16 +695,12 @@ def main(args):
     logger.warning('model created')
     chkpnt_epoch = 0
 
-    if len(args.writer_file_load) > 1:
-        writer = SummaryWriter(args.output_dir + args.writer_file_load)
-    else:
-        writer = SummaryWriter(args.output_dir + args.log_name +'_'+
+
+    writer = SummaryWriter(args.output_dir + args.log_name +'_'+
                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     i = 0
     num_train_samples = 0
     args.epochsize = epoch_size * batch_size
-    am_i = 0
-    ex_i = 0
     total_i = 0
     IOU_i = 0
 
@@ -904,14 +723,6 @@ def main(args):
             total_i = checkpoint['total_i']
         else:
             total_i = 1 / 100
-        if 'am_i' in checkpoint:
-            am_i = checkpoint['am_i']
-        else:
-            am_i = (chkpnt_epoch - args.nepoch_am)*args.nepoch if args.nepoch_am >= chkpnt_epoch else 0
-        if 'ex_i' in checkpoint:
-            ex_i = checkpoint['ex_i']
-        else:
-            ex_i = (chkpnt_epoch - args.nepoch_ex)*args.nepoch if args.nepoch_ex >= chkpnt_epoch else 0
         if 'num_train_samples' in checkpoint:
             num_train_samples = checkpoint['num_train_samples']
         else:
@@ -926,33 +737,18 @@ def main(args):
     counter = dict({x: 0 for x in idx})
 
     cfg = {'categories' : categories, 'i' : i, 'num_train_samples' : num_train_samples,
-           'am_i' : am_i, 'ex_i' : ex_i, 'total_i' : total_i,
+           'total_i' : total_i,
            'IOU_i' : IOU_i, 'counter':counter}
 
-    y_cl_loss_exsup_img = list()
-    y_am_loss_exsup_img = list()
-    y_ex_loss_exsup_img = list()
-    x_epoch_exsup_img = list()
-    img_idx = list()
-    iter_num_list = list()
-
-    noex_y_cl_loss_exsup_img = list()
-    noex_y_am_loss_exsup_img = list()
-    noex_y_ex_loss_exsup_img = list()
-    noex_x_epoch_exsup_img = list()
-    noex_img_idx = list()
-    noex_iter_num_list = list()
 
     for epoch in range(chkpnt_epoch, epochs):
         if not test_first_before_train or \
                 (test_first_before_train and epoch != 0):
             train(args, cfg, model, device, deepfake_loader.datasets['train'],
-                  deepfake_loader.train_dataset, optimizer, writer, epoch, logger,
-                  y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img, img_idx, iter_num_list,
-                  noex_y_cl_loss_exsup_img, noex_y_am_loss_exsup_img, noex_y_ex_loss_exsup_img, noex_x_epoch_exsup_img, noex_img_idx, noex_iter_num_list)
+                  deepfake_loader.train_dataset, optimizer, writer, epoch, logger)
 
         train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
-                  deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1), roc_log_path, logger)
+                  deepfake_loader.validation_dataset, writer, epoch, logger)
         if epoch == (epochs - 1):
             print("********Testing module starts********")
             logger.warning("********Testing module starts********")
@@ -994,8 +790,6 @@ def main(args):
             'counter': cfg['counter'],
             'i': cfg['i'],
             'num_train_samples': cfg['num_train_samples'],
-            'am_i': cfg['am_i'],
-            'ex_i': cfg['ex_i'],
             'total_i': cfg['total_i'],
             'IOU_i': cfg['IOU_i'],
          }, chkpt_path + args.checkpoint_name+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
@@ -1007,22 +801,6 @@ def main(args):
                                              masks_to_use=args.masks_to_use, mean=mean, std=std,
                                              transform=Deepfake_preprocess_image,
                                              collate_fn=my_collate, customize_num_masks=args.customize_num_masks, num_masks=args.num_masks)
-
-    # output losses for exsup images
-    heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output_" + args.log_name + "/"
-    np.save(heatmap_home_dir + 'y_cl_loss_exsup_img', np.array(y_cl_loss_exsup_img))
-    np.save(heatmap_home_dir + 'y_am_loss_exsup_img', np.array(y_am_loss_exsup_img))
-    np.save(heatmap_home_dir + 'y_ex_loss_exsup_img', np.array(y_ex_loss_exsup_img))
-    np.save(heatmap_home_dir + 'x_epoch_exsup_img', np.array(x_epoch_exsup_img))
-    np.save(heatmap_home_dir + 'img_idx', np.array(img_idx))
-    np.save(heatmap_home_dir + 'iter_num_list', np.array(iter_num_list))
-
-    np.save(heatmap_home_dir + 'noex_y_cl_loss_exsup_img', np.array(noex_y_cl_loss_exsup_img))
-    np.save(heatmap_home_dir + 'noex_y_am_loss_exsup_img', np.array(noex_y_am_loss_exsup_img))
-    np.save(heatmap_home_dir + 'noex_y_ex_loss_exsup_img', np.array(noex_y_ex_loss_exsup_img))
-    np.save(heatmap_home_dir + 'noex_x_epoch_exsup_img', np.array(noex_x_epoch_exsup_img))
-    np.save(heatmap_home_dir + 'noex_img_idx', np.array(noex_img_idx))
-    np.save(heatmap_home_dir + 'noex_iter_num_list', np.array(noex_iter_num_list))
 
 if __name__ == '__main__':
     args = parser.parse_args()
