@@ -462,7 +462,7 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
             weighted_cl_pos = cl_loss_only_on_pos_samples * args.cl_weight
             writer.add_scalar('Loss/train/cl_loss_only_on_pos_samples',
                             weighted_cl_pos.detach().cpu().item(), cfg['am_i'])
-        cfg['am_i'] += 1
+
         writer.add_scalar('Loss/train/cl_loss',
                           (cl_loss * args.cl_weight).detach().cpu().item(),
                           cfg['i'])
@@ -552,7 +552,7 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
             writer.add_scalar('Loss/train/am_loss',
                               iter_am_loss,
                               cfg['am_i'])
-
+        cfg['am_i'] += 1
         return total_loss, epoch_train_am_loss, am_count, iter_am_loss
     if args.am_on_all:
         am_labels_scores = am_scores[list(range(args.batchsize)), labels]
@@ -565,7 +565,7 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
                               iter_am_loss,
                               cfg['am_i'])
         epoch_train_am_loss += iter_am_loss
-
+        cfg['am_i'] += 1
         am_count += 1
     return total_loss, epoch_train_am_loss, am_count, iter_am_loss
 
@@ -870,16 +870,7 @@ def main(args):
     print('mode created')
     logger.warning('model created')
     chkpnt_epoch = 0
-    if len(args.checkpoint_file_path_load) > 0:
-        checkpoint = torch.load(args.checkpoint_file_path_load)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        chkpnt_epoch = checkpoint['epoch']+1
-        model.cur_epoch = chkpnt_epoch
-        if model.cur_epoch > model.am_pretraining_epochs:
-           model.enable_am = True
-        if model.cur_epoch > model.ex_pretraining_epochs:
-           model.enable_ex = True
+
 
     writer = SummaryWriter(args.output_dir + args.log_name +'_'+
                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
@@ -890,6 +881,38 @@ def main(args):
     ex_i = 0
     total_i = 0
     IOU_i = 0
+
+    # load from existing model
+    if len(args.checkpoint_file_path_load) > 0:
+        checkpoint = torch.load(args.checkpoint_file_path_load)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        chkpnt_epoch = checkpoint['epoch']+1
+        model.cur_epoch = chkpnt_epoch
+        if model.cur_epoch > model.am_pretraining_epochs:
+           model.enable_am = True
+        if model.cur_epoch > model.ex_pretraining_epochs:
+           model.enable_ex = True
+        if 'i' in checkpoint:
+            i = checkpoint['i']
+        else:
+            i = chkpnt_epoch * args.nepoch
+        if 'total_i' in checkpoint:
+            total_i = checkpoint['total_i']
+        else:
+            total_i = 1 / 100
+        if 'am_i' in checkpoint:
+            am_i = checkpoint['am_i']
+        else:
+            am_i = (chkpnt_epoch - args.nepoch_am)*args.nepoch if args.nepoch_am >= chkpnt_epoch else 0
+        if 'ex_i' in checkpoint:
+            ex_i = checkpoint['ex_i']
+        else:
+            ex_i = (chkpnt_epoch - args.nepoch_ex)*args.nepoch if args.nepoch_ex >= chkpnt_epoch else 0
+        if 'num_train_samples' in checkpoint:
+            num_train_samples = checkpoint['num_train_samples']
+        else:
+            num_train_samples = 1
 
     pos_to_write = args.pos_to_write_train
     neg_to_write = args.neg_to_write_train
@@ -965,6 +988,13 @@ def main(args):
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
+            'counter': cfg['counter'],
+            'i': cfg['i'],
+            'num_train_samples': cfg['num_train_samples'],
+            'am_i': cfg['am_i'],
+            'ex_i': cfg['ex_i'],
+            'total_i': cfg['total_i'],
+            'IOU_i': cfg['IOU_i'],
          }, chkpt_path + args.checkpoint_name+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         if args.customize_num_masks:
             print('*****customize_num_masks*****')
