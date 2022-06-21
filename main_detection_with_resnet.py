@@ -1,0 +1,807 @@
+import pathlib
+import PIL.Image
+import os
+import math
+import argparse
+import torch
+torch.multiprocessing.set_sharing_strategy('file_system')
+import numpy as np
+import logging
+from torch import nn
+from torchvision.models import resnet50
+from torchvision.transforms import Resize, Normalize, ToTensor
+from dataloaders.deepfake_data import DeepfakeLoader
+from metrics.metrics import calc_sensitivity, save_roc_curve, save_roc_curve_with_threshold
+from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
+from dataloaders.deepfake_data import DeepfakeTestingOnlyLoader
+from utils.image import show_cam_on_image, denorm, Deepfake_preprocess_image
+from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
+from configs.MDTconfig import cfg
+
+
+def my_collate(batch):
+    orig_imgs, preprocessed_imgs, agumented_imgs, masks, preprocessed_masks, \
+    used_masks, labels, datasource, file, indices = zip(*batch)
+    used_masks = [mask for mask, used in zip(preprocessed_masks, used_masks) if used == True]
+    preprocessed_masks = [mask for mask in preprocessed_masks if mask.size > 1]
+    res_dict = {'orig_images': orig_imgs,
+                'preprocessed_images': preprocessed_imgs,
+                'augmented_images': agumented_imgs, 'orig_masks': masks,
+                'preprocessed_masks': preprocessed_masks,
+                'used_masks': used_masks,
+                'labels': labels, 'source': datasource, 'filename': file, 'idx': indices}
+    return res_dict
+
+
+def monitor_test_epoch(writer, test_dataset, pos_count, test_differences, test_total_pos_correct, epoch,
+                       total_test_single_accuracy, test_total_neg_correct, path, mode, logger):
+    num_test_samples = len(test_dataset)
+    print('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
+    logger.warning('Average epoch single test accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
+    writer.add_text('Test/' + mode + '/Accuracy/cl_accuracy', 'Accuracy: {:.3f}'.format(
+        total_test_single_accuracy / num_test_samples
+    ),
+                    global_step=epoch)
+
+    writer.add_scalar('Test/' + mode + '/Accuracy/cl_accuracy_only_pos',
+                      (test_total_pos_correct / pos_count) if pos_count != 0 else -1, epoch)
+    writer.add_text('Test/' + mode + '/Accuracy/cl_accuracy_only_pos', 'Accuracy: {:.3f}'.format((test_total_pos_correct / pos_count)
+                                                                                    if pos_count != 0
+                                                                                    else -1),
+                    global_step=epoch)
+    writer.add_scalar('Test/' + mode + '/Accuracy/cl_accuracy_only_neg',
+                      (test_total_neg_correct / (num_test_samples - pos_count))
+                      if (num_test_samples - pos_count) != 0
+                      else -1,
+                      epoch)
+    writer.add_text('Test/' + mode + '/Accuracy/cl_accuracy_only_neg', 'Accuracy: {:.3f}'.format(
+        (test_total_neg_correct / (num_test_samples - pos_count))
+        if (num_test_samples - pos_count) != 0
+        else -1),
+                    global_step=epoch)
+    writer.add_scalar('Test/' + mode + '/Accuracy/cl_accuracy',
+                      total_test_single_accuracy / num_test_samples,
+                      epoch)
+
+    ones = torch.ones(pos_count)
+    test_labels = torch.zeros(num_test_samples)
+    test_labels[0:len(ones)] = ones
+    test_labels = test_labels.int()
+    all_sens, auc, fpr, tpr = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
+    writer.add_scalar('Test/' + mode + '/ROC/ROC_0.1', all_sens[0], epoch)
+    writer.add_scalar('Test/' + mode + '/ROC/ROC_0.05', all_sens[1], epoch)
+    writer.add_scalar('Test/' + mode + '/ROC/ROC_0.3', all_sens[2], epoch)
+    writer.add_scalar('Test/' + mode + '/ROC/ROC_0.5', all_sens[3], epoch)
+    writer.add_scalar('Test/' + mode + '/ROC/AUC', auc, epoch)
+
+    save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
+    save_roc_curve_with_threshold(test_labels.cpu().numpy(), test_differences, epoch, path)
+
+
+def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
+                     label_idx_list, logits_cl, cfg, path):
+
+    htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
+    resize = Resize(size=224)
+    orig = sample['orig_images'][0].permute([2, 0, 1])
+    orig = resize(orig).permute([1, 2, 0])
+    np_orig = orig.cpu().detach().numpy()
+    visualization, heatmap = show_cam_on_image(np_orig, htm, True)
+    viz = torch.from_numpy(visualization).unsqueeze(0)
+    orig = orig.unsqueeze(0)
+    masked_image = denorm(masked_images[0].detach().squeeze(),
+                          test_dataset.mean, test_dataset.std)
+    masked_image = (masked_image.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+        np.uint8)
+    masked_image = torch.from_numpy(masked_image).unsqueeze(0)
+    orig_viz = torch.cat((orig, viz, masked_image), 1)
+    gt = [cfg['categories'][x] for x in label_idx_list][0]
+    # writer.add_images(tag='Test_Heatmaps/image_' + str(j) + '_' + gt,
+    #                   img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
+    y_scores = nn.Softmax(dim=1)(logits_cl.detach())
+    predicted_categories = y_scores[0].unsqueeze(0).argmax(dim=1)  # 'Neg', 'Pos': 0, 1
+    predicted_cl = [(cfg['categories'][x], format(y_scores[0].view(-1)[x], '.4f')) for x in
+                    predicted_categories.view(-1)]
+    labels_cl = [(cfg['categories'][x], format(y_scores[0].view(-1)[x], '.4f')) for x in [(label_idx_list[0])]]
+    import itertools
+    predicted_cl = list(itertools.chain(*predicted_cl))
+    labels_cl = list(itertools.chain(*labels_cl))
+    cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
+
+    if gt in ['Neg']:
+        PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
+            path + "/Neg/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0]) + '_' + str(index_img) + '_gt_'+ gt + '.png')
+    else:
+        PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
+            path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu())+ '_' + str(index_img) + '_gt_'+ gt + '.png')
+
+
+def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_path, batchsize, mode, logger):
+    print("******** Test ********")
+    logger.warning('******** Test ********')
+    print(mode)
+    logger.warning(mode)
+
+    model.eval()
+    output_path_heatmap = output_path+"/test_heatmap/"
+    print(output_path_heatmap)
+    logger.warning(output_path_heatmap)
+    output_path_heatmap_pos = output_path_heatmap+"/Pos/"
+    output_path_heatmap_neg = output_path_heatmap+"/Neg/"
+    pathlib.Path(output_path_heatmap_pos).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_neg).mkdir(parents=True, exist_ok=True)
+    j = 0
+    test_total_pos_correct, test_total_neg_correct = 0, 0
+    total_test_single_accuracy = 0
+    test_differences = np.zeros(len(test_dataset))
+
+    # iterate all samples in test_loader
+    for sample in test_loader:
+        # print("image number: "+str(j))
+        label_idx_list = sample['labels']  # size bach_size list of label idx of the samples in this
+        batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()  # dim=0 stores the res in the 1st dimension
+        if len(batch.size()) == 3:
+            batch = []
+            batch.append(torch.stack(sample['preprocessed_images'], dim=0).squeeze())
+            batch = torch.stack(batch, dim=0)
+        batch = batch.to(device)  # a list of images
+        labels = torch.Tensor(label_idx_list).to(device).long()  # a list of label idx
+        # output of the model based on the input images and labels
+
+        logits_cl, logits_am, heatmaps, masks, masked_images = model(batch, labels)
+
+        # Single label evaluation
+        y_pred = logits_cl.detach().argmax(dim=1)
+        y_pred = y_pred.view(-1)
+        gt = labels.view(-1)
+        acc = (y_pred == gt).sum()
+        total_test_single_accuracy += acc.detach().cpu()  # acc accumulation. final acc=total/size_of_test_dataset
+
+        pos_correct = (y_pred == gt).logical_and(gt == 1).sum()  # num of positive correct tests
+        neg_correct = (y_pred == gt).logical_and(gt == 0).sum()  # num of negative correct tests
+        test_total_neg_correct += neg_correct  # sum num of positive correct tests
+        test_total_pos_correct += pos_correct  # sum num of negative correct tests
+
+        difference = (logits_cl[:, 1] - logits_cl[:, 0]).cpu().detach().numpy()  # to cal fpr, tpr
+        test_differences[j * batchsize: j * batchsize + len(difference)] = difference
+
+        # related to am text info in viz
+        am_scores = nn.Softmax(dim=1)(logits_am)
+        am_labels = am_scores.argmax(dim=1)
+        pos_count = test_dataset.positive_len()
+
+        viz_test_heatmap(j, heatmaps, sample, masked_images, test_dataset,
+                         label_idx_list, logits_cl, cfg, output_path_heatmap)
+        j += 1
+
+    monitor_test_epoch(writer, test_dataset, pos_count, test_differences, test_total_pos_correct, epoch,
+                       total_test_single_accuracy, test_total_neg_correct, output_path, mode, logger)
+
+
+def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode):
+    input_path_heatmap_pos = input_path_heatmap + "/Pos/"
+    input_path_heatmap_neg = input_path_heatmap + "/Neg/"
+    heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output_" + log_name + "/" + mode
+    output_path_heatmap_pos_cl = heatmap_home_dir + "/Pos_Fake_0/" + "/50_closest/"
+    output_path_heatmap_pos_fa = heatmap_home_dir + "/Pos_Fake_0/" + "/50_farthest/"
+    output_path_heatmap_neg_cl = heatmap_home_dir + "/Neg_Real_1/" + "/50_closest/"
+    output_path_heatmap_neg_fa = heatmap_home_dir + "/Neg_Real_1/" + "/50_farthest/"
+    pathlib.Path(output_path_heatmap_pos_cl).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_pos_fa).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_neg_cl).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output_path_heatmap_neg_fa).mkdir(parents=True, exist_ok=True)
+
+    pos_heatmaps = os.listdir(input_path_heatmap_pos)
+    neg_heatmaps = os.listdir(input_path_heatmap_neg)
+    pos_heatmaps.sort()
+    neg_heatmaps.sort()
+
+    for file in pos_heatmaps[0:50]:
+        command = 'cp ' + input_path_heatmap_pos + file + ' ' + output_path_heatmap_pos_cl
+        os.system(command)
+    for file in pos_heatmaps[-50:]:
+        command = 'cp ' + input_path_heatmap_pos + file + ' ' + output_path_heatmap_pos_fa
+        os.system(command)
+
+    for file in neg_heatmaps[0:50]:
+        command = 'cp ' + input_path_heatmap_neg + file + ' ' + output_path_heatmap_neg_fa
+        os.system(command)
+    for file in neg_heatmaps[-50:]:
+        command = 'cp ' + input_path_heatmap_neg + file + ' ' + output_path_heatmap_neg_cl
+        os.system(command)
+
+
+def monitor_validation_epoch(writer, test_dataset, pos_count, test_differences,
+                       test_total_pos_correct, epoch,
+                       total_test_single_accuracy, test_total_neg_correct, logger):
+    num_test_samples = len(test_dataset)
+    print('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
+    logger.warning('Average epoch single validation accuracy: {:.3f}'.format(total_test_single_accuracy / num_test_samples))
+
+    writer.add_scalar('Accuracy/validation/cl_accuracy_only_pos',
+                      test_total_pos_correct / pos_count, epoch)
+
+    writer.add_scalar('Accuracy/validation/cl_accuracy_only_neg',
+                      test_total_neg_correct / (num_test_samples - pos_count), epoch)
+
+    writer.add_scalar('Accuracy/validation/cl_accuracy', total_test_single_accuracy / num_test_samples, epoch)
+
+    ones = torch.ones(pos_count)
+    test_labels = torch.zeros(num_test_samples)
+    test_labels[0:len(ones)] = ones
+    test_labels = test_labels.int()
+    all_sens, auc, fpr, tpr = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
+    writer.add_scalar('ROC/validation/ROC_0.1', all_sens[0], epoch)
+    writer.add_scalar('ROC/validation/ROC_0.05', all_sens[1], epoch)
+    writer.add_scalar('ROC/validation/ROC_0.3', all_sens[2], epoch)
+    writer.add_scalar('ROC/validation/ROC_0.5', all_sens[3], epoch)
+    writer.add_scalar('ROC/validation/AUC', auc, epoch)
+
+
+def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
+                       label_idx_list, logits_cl, writer, epoch, cfg):
+    if (j < args.pos_to_write_test and j % t == 0) or (
+            j > args.pos_to_write_test and j % (args.pos_to_write_test * 3) == 0):
+        htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
+        resize = Resize(size=224)
+        orig = sample['orig_images'][0].permute([2, 0, 1])
+        orig = resize(orig).permute([1, 2, 0])
+        np_orig = orig.cpu().detach().numpy()
+        visualization, heatmap = show_cam_on_image(np_orig, htm, True)
+        viz = torch.from_numpy(visualization).unsqueeze(0)
+        orig = orig.unsqueeze(0)
+        masked_image = denorm(masked_images[0].detach().squeeze(),
+                              test_dataset.mean, test_dataset.std)
+        masked_image = (masked_image.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+            np.uint8)
+        masked_image = torch.from_numpy(masked_image).unsqueeze(0)
+        orig_viz = torch.cat((orig, viz, masked_image), 0)
+        gt = [cfg['categories'][x] for x in label_idx_list][0]
+        writer.add_images(tag='Validation_Heatmaps/image_' + str(j) + '_' + gt,
+                          img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
+        y_scores = nn.Softmax(dim=1)(logits_cl.detach())
+        predicted_categories = y_scores[0].unsqueeze(0).argmax(dim=1)
+        predicted_cl = [(cfg['categories'][x], format(y_scores[0].view(-1)[x], '.4f')) for x in
+                        predicted_categories.view(-1)]
+        labels_cl = [(cfg['categories'][x], format(y_scores[0].view(-1)[x], '.4f')) for x in [(label_idx_list[0])]]
+        import itertools
+        predicted_cl = list(itertools.chain(*predicted_cl))
+        labels_cl = list(itertools.chain(*labels_cl))
+        cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
+        writer.add_text('Validation_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text ,
+                        global_step=epoch)
+
+
+def train_validate(args, cfg, model, device, validation_loader, validation_dataset, writer, epoch, logger):
+
+    model.eval()
+
+    j = 0
+    validation_total_pos_correct, validation_total_neg_correct = 0, 0
+    total_validation_single_accuracy = 0
+    validation_differences = np.zeros(len(validation_dataset))
+
+    for sample in validation_loader:
+        label_idx_list = sample['labels']
+        batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
+        batch = batch.to(device)
+        labels = torch.Tensor(label_idx_list).to(device).long()
+
+        logits_cl, logits_am, heatmaps, masks, masked_images = model(batch, labels)
+
+        # Single label evaluation
+        y_pred = logits_cl.detach().argmax(dim=1)
+        y_pred = y_pred.view(-1)
+        gt = labels.view(-1)
+        acc = (y_pred == gt).sum()
+        total_validation_single_accuracy += acc.detach().cpu()
+
+        pos_correct = (y_pred == gt).logical_and(gt == 1).sum()
+        neg_correct = (y_pred == gt).logical_and(gt == 0).sum()
+        validation_total_neg_correct += neg_correct
+        validation_total_pos_correct += pos_correct
+
+        difference = (logits_cl[:, 1] - logits_cl[:, 0]).cpu().detach().numpy()
+        validation_differences[j * args.batchsize: j * args.batchsize + len(difference)] = difference
+
+        pos_count = validation_dataset.positive_len()
+        t = math.ceil(pos_count / (args.batchsize * args.pos_to_write_test))
+        monitor_validation_viz(j, t, heatmaps, sample, masked_images, validation_dataset,
+                       label_idx_list, logits_cl, writer, epoch, cfg)
+        j += 1
+
+    monitor_validation_epoch(writer, validation_dataset, pos_count, validation_differences,
+                       validation_total_pos_correct, epoch,
+                       total_validation_single_accuracy, validation_total_neg_correct, logger)
+
+
+def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, epoch_train_cl_loss,
+                               num_train_samples, epoch_train_total_loss,
+                               batchsize, epoch_IOU, IOU_count, train_labels,
+                               total_train_single_accuracy, test_before_train,
+                               train_total_pos_correct, train_total_pos_seen,
+                               train_total_neg_correct, train_total_neg_seen,
+                               train_differences, have_mask_indices, logger):
+    print("pos = {} neg = {}".format(count_pos, count_neg))
+    print(f"psi 0.5 = {c_psi05} psi 1 = {c_psi1} ffhq = {c_ffhq}")
+    logger.warning(
+        "pos = {} neg = {}".format(count_pos, count_neg))
+    logger.warning(
+        f"psi 0.5 = {c_psi05} psi 1 = {c_psi1} ffhq = {c_ffhq}")
+    writer.add_scalar('Loss/train/Epoch_total_loss', epoch_train_total_loss, epoch)
+    writer.add_scalar('Loss/train/Epoch_cl_total_loss', epoch_train_cl_loss, epoch)
+    if (test_before_train and epoch > 0) or test_before_train == False:
+        print('Average epoch train cl loss: {:.3f}'.format(
+            epoch_train_cl_loss / (num_train_samples * batchsize)))
+        logger.warning('Average epoch train cl loss: {:.3f}'.format(
+            epoch_train_cl_loss / (num_train_samples * batchsize)))
+        print('Average epoch train total loss: {:.3f}'.format(
+            epoch_train_total_loss / (num_train_samples * batchsize)))
+        logger.warning('Average epoch train total loss: {:.3f}'.format(
+            epoch_train_total_loss / (num_train_samples * batchsize)))
+        print('Average epoch single train accuracy: {:.3f}'.format(
+            total_train_single_accuracy))
+        logger.warning('Average epoch single train accuracy: {:.3f}'.format(
+            total_train_single_accuracy))
+    if (test_before_train and epoch > 0) or test_before_train == False:
+        writer.add_scalar('Loss/train/Average_cl_total_loss', epoch_train_cl_loss /
+                          (num_train_samples * batchsize), epoch)
+
+        writer.add_scalar('IOU/train/average_IOU_per_sample', epoch_IOU /
+                          IOU_count if IOU_count != 0 else 0, epoch)
+        writer.add_scalar('Accuracy/train/cl_accuracy',
+                          total_train_single_accuracy / (num_train_samples *
+                                                         batchsize), epoch)
+        writer.add_scalar('Accuracy/train/cl_accuracy_only_pos',
+                          train_total_pos_correct / train_total_pos_seen,
+                          epoch)
+        writer.add_scalar('Accuracy/train/cl_accuracy_only_neg',
+                          train_total_neg_correct / train_total_neg_seen,
+                          epoch)
+        all_sens, auc, _, _ = calc_sensitivity(train_labels, train_differences)
+        writer.add_scalar('ROC/train/ROC_0.1', all_sens[0], epoch)
+        writer.add_scalar('ROC/train/ROC_0.05', all_sens[1], epoch)
+        writer.add_scalar('ROC/train/ROC_0.3', all_sens[2], epoch)
+        writer.add_scalar('ROC/train/ROC_0.5', all_sens[3], epoch)
+        writer.add_scalar('ROC/train/AUC', auc, epoch)
+
+
+def monitor_IOU(have_mask_indices, all_augmented_masks, masks, epoch_IOU,
+                IOU_count, writer, cfg):
+    if len(have_mask_indices) > 0 and cfg['i'] % 100 == 0:
+        m1 = torch.tensor(all_augmented_masks).cuda()
+        m2 = masks[have_mask_indices].squeeze().round().detach()
+        intersection = (m1.logical_and(m2)).int().sum()
+        union = (m1.logical_or(m2.squeeze())).int().sum()
+        IOU = (intersection / union) / len(have_mask_indices)
+        epoch_IOU += IOU
+        IOU_count += 1
+        writer.add_scalar('IOU/train/', IOU.detach().cpu().item(), cfg['IOU_i'])
+        cfg['IOU_i'] += 1
+    return epoch_IOU, IOU_count
+
+
+def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
+                            cl_loss_fn, total_loss, epoch, args, cfg, lbs,
+                            train_total_pos_seen, train_total_pos_correct,
+                            train_total_neg_correct, train_total_neg_seen):
+    if cfg['i'] % 100 == 0:
+        pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
+        neg_indices = [idx for idx, x in enumerate(sample['labels']) if x == 0]
+        pos_correct = len(
+            [pos_idx for pos_idx in pos_indices if logits_cl[pos_idx, 1] > logits_cl[pos_idx, 0]])
+        neg_correct = len(
+            [neg_idx for neg_idx in neg_indices if logits_cl[neg_idx, 1] <= logits_cl[neg_idx, 0]])
+        train_total_pos_seen += len(pos_indices)
+        train_total_pos_correct += pos_correct
+        train_total_neg_correct += neg_correct
+        train_total_neg_seen += len(neg_indices)
+        if len(pos_indices) > 0:
+            cl_loss_only_on_pos_samples = cl_loss_fn(
+                logits_cl.detach()[pos_indices], lbs.detach()[pos_indices])
+            weighted_cl_pos = cl_loss_only_on_pos_samples * args.cl_weight
+
+        writer.add_scalar('Loss/train/cl_loss',
+                          (cl_loss * args.cl_weight).detach().cpu().item(),
+                          cfg['i'])
+        writer.add_scalar('Loss/train/total_loss',
+                          total_loss.detach().cpu().item(), cfg['total_i'])
+        cfg['total_i'] += 1
+
+    cfg['i'] += 1
+
+    if epoch == 0 and args.test_before_train == False:
+        cfg['num_train_samples'] += 1
+    if epoch == 1 and args.test_before_train == True:
+        cfg['num_train_samples'] += 1
+
+    return train_total_pos_seen, train_total_pos_correct,\
+           train_total_neg_correct, train_total_neg_seen
+
+def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
+                      sample, masked_images, train_dataset, label_idx_list,
+                      epoch, logits_cl, am_scores, gt, cfg, cl_loss):
+    for idx in records_indices:
+        htm = np.uint8(heatmaps[idx].squeeze().cpu().detach().numpy() * 255)
+        visualization, _ = show_cam_on_image(np.asarray(augmented_batch[idx]), htm, True)
+        viz = torch.from_numpy(visualization).unsqueeze(0)
+        augmented = torch.tensor(np.asarray(augmented_batch[idx])).unsqueeze(0)
+        resize = Resize(size=224)
+        orig = sample['orig_images'][idx].permute([2, 0, 1])
+        orig = resize(orig).permute([1, 2, 0]).unsqueeze(0)
+        masked_img = denorm(masked_images[idx].detach().squeeze(),
+                            train_dataset.mean, train_dataset.std)
+        masked_img = (masked_img.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+            np.uint8)
+        masked_img = torch.from_numpy(masked_img).unsqueeze(0)
+        if gt[idx] == 1 and sample['orig_masks'][idx].numel() != 1:
+            orig_mask = sample['orig_masks'][idx].permute([2, 0, 1])
+            orig_mask = resize(orig_mask).permute([1, 2, 0])
+            orig_mask[orig_mask == 255] = 30
+            orig_masked = orig + orig_mask.unsqueeze(0)
+            orig_viz = torch.cat((orig, orig_masked, augmented, viz, masked_img), 0)
+        else:
+            orig_viz = torch.cat((orig, augmented, viz, masked_img), 0)
+
+        groundtruth = [cfg['categories'][x] for x in label_idx_list][idx]
+        img_idx = sample['idx'][idx]
+        writer.add_images(
+            tag='Epoch_' + str(epoch) + '/Train_Heatmaps/image_' + str(sample['filename'][idx]) + '_' + groundtruth +
+                f'_{cl_loss:.4f}',
+            img_tensor=orig_viz, dataformats='NHWC', global_step=cfg['counter'][img_idx])
+        y_scores = nn.Softmax(dim=1)(logits_cl.detach())
+        predicted_categories = y_scores[idx].unsqueeze(0).argmax(dim=1)
+        predicted_cl = [(cfg['categories'][x], format(y_scores[idx].view(-1)[x], '.4f')) for x in
+                        predicted_categories.view(-1)]
+        labels_cl = [(cfg['categories'][x], format(y_scores[idx].view(-1)[x], '.4f')) for x in
+                     [(label_idx_list[idx])]]
+        import itertools
+        predicted_cl = list(itertools.chain(*predicted_cl))
+        labels_cl = list(itertools.chain(*labels_cl))
+        cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
+        am_labels = am_scores.argmax(dim=1)
+        predicted_am = [(cfg['categories'][x], format(am_scores[idx].view(-1)[x], '.4f')) for x in
+                        am_labels[idx].view(-1)]
+        labels_am = [(cfg['categories'][x], format(am_scores[idx].view(-1)[x], '.4f')) for x in
+                     [label_idx_list[idx]]]
+        import itertools
+        predicted_am = list(itertools.chain(*predicted_am))
+        labels_am = list(itertools.chain(*labels_am))
+        am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
+        writer.add_text('Train_Heatmaps_Description/image_' + str(img_idx) + '_' + groundtruth,
+                        cl_text + am_text,
+                        global_step=cfg['counter'][img_idx])
+        cfg['counter'][img_idx] += 1
+
+
+def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
+          writer, epoch, logger):
+    #switching model to train mode
+    print('*****Training Begin*****')
+    logger.warning('*****Training Begin*****')
+    model.train()
+    #initializing all required variables
+    count_pos, count_neg, c_psi1, c_psi05, c_ffhq, dif_i, epoch_IOU = 0, 0, 0, 0, 0, 0, 0
+    train_differences = np.zeros(args.epochsize)
+    train_labels = np.zeros(args.epochsize)
+    total_train_single_accuracy = 0
+    epoch_train_cl_loss, epoch_train_am_loss, epoch_train_ex_loss = 0, 0, 0
+    epoch_train_total_loss = 0
+    IOU_count = 0
+    train_total_pos_correct, train_total_pos_seen = 0, 0
+    train_total_neg_correct, train_total_neg_seen = 0, 0
+    #defining classification loss function
+    cl_loss_fn = torch.nn.BCEWithLogitsLoss()
+    #data loading loop
+    print(f"masks picked: {len(train_dataset.used_masks)}")
+    logger.warning(f"masks picked: {len(train_dataset.used_masks)}")
+
+    for sample in train_loader:
+        #preparing all required data
+        label_idx_list = sample['labels']
+        augmented_batch = sample['augmented_images']
+        augmented_masks = sample['used_masks']
+        all_augmented_masks = sample['preprocessed_masks']
+        datasource_list = sample['source']
+        batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
+        batch = batch.to(device)
+        #starting the forward, backward, optimzer.step process
+        optimizer.zero_grad()
+        labels = torch.Tensor(label_idx_list).to(device).long()
+        #sanity check for batch pos and neg distribution (for printing) #TODO: can be removed as it checked and it is ok
+        count_pos += (labels == 1).int().sum()
+        count_neg += (labels == 0).int().sum()
+        # print(type(datasource_list)) : tuple
+        c_psi1 += datasource_list.count('psi_1')
+        c_psi05 += datasource_list.count('psi_0.5')
+        c_ffhq += datasource_list.count('ffhq')
+        #one_hot transformation
+        lb1 = labels.unsqueeze(0)
+        lb2 = 1 - lb1
+        lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
+        #model forward
+        logits_cl, logits_am, heatmaps, masks, masked_images = \
+            model(batch, lbs)
+        #cl_loss and total loss computation
+        cl_loss = cl_loss_fn(logits_cl, lbs)
+        total_loss = 0
+        total_loss += cl_loss * args.cl_weight
+        # AM loss computation and monitoring
+        pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
+        am_scores = nn.Softmax(dim=1)(logits_am)
+
+        #monitoring cl_loss per epoch
+        epoch_train_cl_loss += (cl_loss * args.cl_weight).detach().cpu().item()
+        #saving logits difference for ROC monitoring
+        difference = (logits_cl[:, 1] - logits_cl[:, 0]).cpu().detach().numpy()
+        train_differences[dif_i: dif_i + len(difference)] = difference
+        train_labels[dif_i: dif_i + len(difference)] = labels.squeeze().cpu().detach().numpy()
+        dif_i += len(difference)
+
+        # IOU monitoring
+        all_masks = train_dataset.get_masks_indices()
+        have_mask_indices = [sample['idx'].index(x) for x in sample['idx']
+                             if x in all_masks]
+
+        #optimization
+        total_loss.backward()
+        optimizer.step()
+        # Single label evaluation
+        epoch_train_total_loss += total_loss.detach().cpu().item()
+        # epoch_train_ex_loss += total_ex_loss.detach().cpu().item()
+        y_pred = logits_cl.detach().argmax(dim=1)
+        y_pred = y_pred.view(-1)
+        gt = labels.view(-1)
+        acc = (y_pred == gt).sum()
+        total_train_single_accuracy += acc.detach().cpu()
+        #monitoring per iteration measurements
+        train_total_pos_seen, train_total_pos_correct, \
+        train_total_neg_correct,train_total_neg_seen = \
+            monitor_train_iteration(
+                sample, writer, logits_cl, cl_loss, cl_loss_fn,
+                total_loss, epoch, args, cfg, lbs, train_total_pos_seen,
+                train_total_pos_correct, train_total_neg_correct,
+                train_total_neg_seen)
+        #monitoring visualizations which were choosen for recording
+        pos_neg = cfg['counter'].keys()
+        records_indices = [sample['idx'].index(x) for x in sample['idx'] if x in pos_neg]
+
+        monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
+                          sample, masked_images, train_dataset, label_idx_list,
+                          epoch, logits_cl, am_scores, gt, cfg, cl_loss * args.cl_weight)
+    #monitoring per epoch measurements
+    monitor_train_epoch(
+        args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch,
+        epoch_train_cl_loss, cfg['num_train_samples'],
+        epoch_train_total_loss, args.batchsize, epoch_IOU, IOU_count,
+        train_labels, total_train_single_accuracy, args.test_before_train,
+        train_total_pos_correct, train_total_pos_seen,
+        train_total_neg_correct, train_total_neg_seen, train_differences, have_mask_indices, logger)
+
+
+
+# Parse all the input argument
+parser = argparse.ArgumentParser(description='PyTorch GAIN Training')
+parser.add_argument('--batchsize', type=int, default=cfg.BATCHSIZE, help='batch size')
+parser.add_argument('--total_epochs', type=int, default=35, help='total number of epoch to train')
+parser.add_argument('--nepoch', type=int, default=6000, help='number of iterations per epoch')
+parser.add_argument('--nepoch_am', type=int, default=10000, help='number of epochs to train without am loss')
+parser.add_argument('--nepoch_ex', type=int, default=10000, help='number of epochs to train without ex loss')
+parser.add_argument('--masks_to_use', type=float, default=0.1, help='the relative number of masks to use in ex-supevision training')
+parser.add_argument('--lr', default=0.0001, type=float, help='initial learning rate')
+parser.add_argument('--manualSeed', default=cfg.RNG_SEED, type=int, help='manual seed')
+parser.add_argument('--net', dest='torchmodel', help='path to the pretrained weights file', default=None, type=str)
+parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
+parser.add_argument('--pretrain', '-p', action='store_true', help='use pretrained model')
+parser.add_argument('--level', default=0, type=int, help='epoch to resume from')
+parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
+parser.add_argument('--deviceID', type=int, help='deviceID', default=0)
+parser.add_argument('--num_workers', type=int, help='workers number for the dataloaders', default=3)
+parser.add_argument('--num_masks', type=int, help='number of masks to pick for each epoch', default=250)
+parser.add_argument('--tensorboard', help='Log progress to TensorBoard', action='store_true')
+parser.add_argument('--pos_to_write_train', type=int, help='train positive samples visualizations to monitor in tb', default=50)
+parser.add_argument('--neg_to_write_train', type=int, help='train negative samples visualizations to monitor in tb', default=20)
+parser.add_argument('--pos_to_write_test', type=int, help='test positive samples visualizations to monitor in tb', default=50)
+parser.add_argument('--neg_to_write_test', type=int, help='test negative samples visualizations to monitor in tb', default=20)
+parser.add_argument('--write_every', type=int, help='how often write to tensorboard numeric measurement', default=100)
+parser.add_argument('--log_name', type=str, help='identifying name for storing tensorboard logs')
+parser.add_argument('--test_before_train', type=int, default=0, help='test before train epoch')
+parser.add_argument('--batch_pos_dist', type=float, help='positive relative amount in a batch', default=0.25)
+parser.add_argument('--fill_color', type=list, help='fill color of masked area in AM training', default=[0.4948,0.3301,0.16])
+parser.add_argument('--grad_layer', help='path to the input idr', type=str, default='features')
+parser.add_argument('--grad_magnitude', help='grad magnitude of second path', type=int, default=1)
+parser.add_argument('--cl_weight', default=1, type=int, help='classification loss weight')
+parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
+parser.add_argument('--customize_num_masks', action='store_true', help='resume from checkpoint')
+parser.add_argument('--input_dir', help='path to the input idr', type=str)
+parser.add_argument('--output_dir', help='path to the outputdir', type=str)
+parser.add_argument('--checkpoint_name', help='checkpoint name', type=str)
+parser.add_argument('--checkpoint_file_path_load', type=str, default='', help='a full path including the name of the checkpoint_file to load from, empty otherwise')
+
+
+def main(args):
+    categories = [
+        'Neg', 'Pos'
+    ]
+    test_psi05_batchsize = 1
+    test_psi1_batchsize = 1
+    test_psi05_nepoch = 1000
+    test_psi1_nepoch = 2000
+    heatmap_home_dir = "/server_data/image-research/"
+    psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_0.5/"
+    psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_1/"
+    psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
+    psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
+    psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
+    roc_log_path = args.output_dir + "roc_log"
+    pathlib.Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(psi_05_heatmap_path).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(psi_1_input_dir).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
+
+    logging.basicConfig(level=logging.DEBUG,
+                        filename=args.output_dir+"/std.log",
+                        format='%(asctime)s %(message)s')
+    logger = logging.getLogger('PIL')
+    logger.setLevel(logging.WARNING)
+
+    num_classes = len(categories)
+    device = torch.device('cuda:'+str(args.deviceID))
+    model = resnet50(pretrained=False).train().to(device)
+    # source code of resnet50: https://pytorch.org/vision/stable/_modules/torchvision/models/resnet.html#resnet50
+    # change the last layer for finetuning
+
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Sequential(
+        nn.Linear(num_ftrs, num_classes).to(device)
+    )
+
+    model.train()
+    # target_layer = model.features[-1]
+
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+
+    batch_size = args.batchsize
+    epoch_size = args.nepoch
+    print('loader creating...')
+    logger.warning('loader creating...')
+    deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
+                                     batch_size=batch_size, steps_per_epoch=epoch_size,
+                                     masks_to_use=args.masks_to_use, mean=mean, std=std,
+                                     transform=Deepfake_preprocess_image,
+                                     collate_fn=my_collate, customize_num_masks=args.customize_num_masks, num_masks=args.num_masks)
+    print('loader created')
+    logger.warning('loader created')
+    #if True test epoch will run first
+    test_first_before_train = bool(args.test_before_train)
+
+    epochs = args.total_epochs
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    norm = Normalize(mean=mean, std=std)
+    fill_color = norm(torch.tensor(args.fill_color).view(1,3,1,1)).cuda()
+    grad_layer = ["layer4"] #, "layer3", "layer2", "layer1", "maxpool", "relu", "bn1", "conv1"
+    print('model creating...')
+    logger.warning('model creating...')
+    model = batch_GAIN_Deepfake(model=model, grad_layer=grad_layer, num_classes=num_classes,
+                         am_pretraining_epochs=args.nepoch_am,
+                         ex_pretraining_epochs=args.nepoch_ex,
+                         fill_color=fill_color,
+                         test_first_before_train=test_first_before_train,
+                         grad_magnitude=args.grad_magnitude)
+    print('mode created')
+    logger.warning('model created')
+    chkpnt_epoch = 0
+
+
+    writer = SummaryWriter(args.output_dir + args.log_name +'_'+
+                           datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    i = 0
+    num_train_samples = 0
+    args.epochsize = epoch_size * batch_size
+    total_i = 0
+    IOU_i = 0
+
+    # load from existing model
+    if len(args.checkpoint_file_path_load) > 0:
+        checkpoint = torch.load(args.checkpoint_file_path_load)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        chkpnt_epoch = checkpoint['epoch']+1
+        model.cur_epoch = chkpnt_epoch
+        if model.cur_epoch > model.am_pretraining_epochs:
+           model.enable_am = True
+        if model.cur_epoch > model.ex_pretraining_epochs:
+           model.enable_ex = True
+        if 'i' in checkpoint:
+            i = checkpoint['i']
+        else:
+            i = chkpnt_epoch * args.nepoch
+        if 'total_i' in checkpoint:
+            total_i = checkpoint['total_i']
+        else:
+            total_i = 1 / 100
+        if 'num_train_samples' in checkpoint:
+            num_train_samples = checkpoint['num_train_samples']
+        else:
+            num_train_samples = 1
+
+    pos_to_write = args.pos_to_write_train
+    neg_to_write = args.neg_to_write_train
+    pos_idx = list(range(pos_to_write))
+    pos_count = deepfake_loader.get_train_pos_count()
+    neg_idx = list(range(pos_count, pos_count+neg_to_write))
+    idx = pos_idx+neg_idx
+    counter = dict({x: 0 for x in idx})
+
+    cfg = {'categories' : categories, 'i' : i, 'num_train_samples' : num_train_samples,
+           'total_i' : total_i,
+           'IOU_i' : IOU_i, 'counter':counter}
+
+
+    for epoch in range(chkpnt_epoch, epochs):
+        if not test_first_before_train or \
+                (test_first_before_train and epoch != 0):
+            train(args, cfg, model, device, deepfake_loader.datasets['train'],
+                  deepfake_loader.train_dataset, optimizer, writer, epoch, logger)
+
+        train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
+                  deepfake_loader.validation_dataset, writer, epoch, logger)
+        if epoch == (epochs - 1):
+            print("********Testing module starts********")
+            logger.warning("********Testing module starts********")
+            # test psi 0.5 dataset
+            deepfake_psi0_loader = DeepfakeTestingOnlyLoader(args.input_dir,
+                                                             [1 - args.batch_pos_dist, args.batch_pos_dist],
+                                                             batch_size=test_psi05_batchsize, steps_per_epoch=test_psi05_nepoch,
+                                                             masks_to_use=args.masks_to_use, mean=mean, std=std,
+                                                             transform=Deepfake_preprocess_image,
+                                                             collate_fn=my_collate)
+            test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
+                deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "PSI_0.5", logger)
+
+            select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi_0.5")
+            # test psi 1 dataset
+            deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
+                                                        batch_size=test_psi1_batchsize, steps_per_epoch=test_psi1_nepoch,
+                                                        masks_to_use=args.masks_to_use, mean=mean, std=std,
+                                                        transform=Deepfake_preprocess_image,
+                                                        collate_fn=my_collate)
+            test(cfg, model, device, deepfake_psi1_loader.datasets['test'],
+                deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "PSI_1", logger)
+
+            select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "psi_1")
+
+        print("finished epoch number:")
+        logger.warning("finished epoch number:")
+        print(epoch)
+        logger.warning(str(epoch))
+        model.increase_epoch_count()
+
+        chkpt_path = args.output_dir+'/checkpoints/'
+        pathlib.Path(chkpt_path).mkdir(parents=True, exist_ok=True)
+
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'counter': cfg['counter'],
+            'i': cfg['i'],
+            'num_train_samples': cfg['num_train_samples'],
+            'total_i': cfg['total_i'],
+            'IOU_i': cfg['IOU_i'],
+         }, chkpt_path + args.checkpoint_name+datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+        if args.customize_num_masks:
+            print('*****customize_num_masks*****')
+            logger.warning('*****customize_num_masks*****')
+            deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
+                                             batch_size=batch_size, steps_per_epoch=epoch_size,
+                                             masks_to_use=args.masks_to_use, mean=mean, std=std,
+                                             transform=Deepfake_preprocess_image,
+                                             collate_fn=my_collate, customize_num_masks=args.customize_num_masks, num_masks=args.num_masks)
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    main(args)
