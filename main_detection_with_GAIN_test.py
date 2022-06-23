@@ -266,7 +266,7 @@ parser.add_argument('--cl_weight', default=1, type=int, help='classification los
 parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
 parser.add_argument('--ex_weight', default=1, type=int, help='extra-supervision loss weight')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
-parser.add_argument('--heatmap_output', '-h', action='store_false', help='not output heatmaps')
+parser.add_argument('--heatmap_output', '-h', action='store_true', help='not output heatmaps')
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
 parser.add_argument('--output_dir', help='path to the outputdir', type=str)
 parser.add_argument('--checkpoint_file_path_load', help='checkpoint name', type=str)
@@ -349,7 +349,7 @@ def main(args):
                                                      collate_fn=my_collate)
     test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
          deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "PSI_0.5", logger)
-    if args.heatmap_output:
+    if not args.heatmap_output:
         select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi_0.5")
     # test psi 1 dataset
     deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir,
@@ -359,7 +359,7 @@ def main(args):
                                                      collate_fn=my_collate)
     test(cfg, model, device, deepfake_psi1_loader.datasets['test'],
          deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "PSI_1", logger)
-    if args.heatmap_output:
+    if not args.heatmap_output:
         select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "psi_1")
 
 
