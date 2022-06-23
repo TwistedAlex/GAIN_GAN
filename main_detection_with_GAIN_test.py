@@ -285,6 +285,7 @@ def main(args):
     psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_0.5/"
     psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_1/"
     psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
+    psi_05_input_dir = "deepfake_data/data_s2_20kT/"
     psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
     psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
     roc_log_path = args.output_dir + "roc_log"
@@ -341,7 +342,7 @@ def main(args):
 
     epoch=49
 
-    deepfake_psi0_loader = DeepfakeTestingOnlyLoader(args.input_dir,
+    deepfake_psi0_loader = DeepfakeTestingOnlyLoader(psi_05_input_dir,
                                                      batch_size=test_psi05_batchsize,
                                                      mean=mean, std=std,
                                                      transform=Deepfake_preprocess_image,
