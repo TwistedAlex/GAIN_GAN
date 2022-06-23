@@ -318,9 +318,7 @@ class DeepfakeLoader():
 
 
 class DeepfakeTestingOnlyLoader():
-    def __init__(self, root_dir, target_weight, masks_to_use, mean, std,
-                 transform, collate_fn, batch_size=1, steps_per_epoch=6000,
-                 num_workers=3):
+    def __init__(self, root_dir, mean, std, transform, collate_fn, batch_size=1, num_workers=3):
         self.test_dataset = DeepfakeTestData(root_dir=root_dir + 'testing/',
                                              mean=mean, std=std,
                                              transform=transform)
