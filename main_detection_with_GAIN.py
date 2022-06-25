@@ -250,6 +250,7 @@ def monitor_validation_epoch(writer, test_dataset, args, pos_count, test_differe
     test_labels[0:len(ones)] = ones
     test_labels = test_labels.int()
     all_sens, auc, fpr, tpr = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
+    writer.add_scalar('AUROC/validation/auc', auc, epoch)
     writer.add_scalar('ROC/validation/ROC_0.1', all_sens[0], epoch)
     writer.add_scalar('ROC/validation/ROC_0.05', all_sens[1], epoch)
     writer.add_scalar('ROC/validation/ROC_0.3', all_sens[2], epoch)
