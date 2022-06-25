@@ -127,7 +127,7 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
             path + "/Neg/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0]) + '_' + str(sample['filename'][0][:-4]) + '_' + str(index_img) + '_gt_'+ gt + '.png')
     else:
         PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu())+ '_' + str(sample['filename'][0][:-4])+ '_' + str(index_img) +  + '_gt_'+ gt + '.png')
+            path + "/Pos/{:.7f}".format(y_scores[0].unsqueeze(0)[0][0].cpu())+ '_' + str(sample['filename'][0][:-4])+ '_' + str(index_img) + '_gt_'+ gt + '.png')
 
     # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
     #                 global_step=epoch)
@@ -250,6 +250,7 @@ def monitor_validation_epoch(writer, test_dataset, args, pos_count, test_differe
     test_labels[0:len(ones)] = ones
     test_labels = test_labels.int()
     all_sens, auc, fpr, tpr = calc_sensitivity(test_labels.cpu().numpy(), test_differences)
+    writer.add_scalar('AUROC/validation/auc', auc, epoch)
     writer.add_scalar('ROC/validation/ROC_0.1', all_sens[0], epoch)
     writer.add_scalar('ROC/validation/ROC_0.05', all_sens[1], epoch)
     writer.add_scalar('ROC/validation/ROC_0.3', all_sens[2], epoch)
