@@ -83,6 +83,7 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
 
     htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
     resize = Resize(size=224)
+    # test preprocessed_images, visual orig_images
     print("sample")
     print(len(sample['orig_images']))
     print(sample['orig_images'][0].shape)
@@ -91,16 +92,23 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
     np_orig = orig.cpu().detach().numpy()
     print(np_orig.shape)
     print(htm.shape)
-    exit(0)
+
     visualization, heatmap = show_cam_on_image(np_orig, htm, True)
     viz = torch.from_numpy(visualization).unsqueeze(0)
     orig = orig.unsqueeze(0)
+    print("viz, orig")
+    print(viz.shape)
+    print(orig.shape)
     masked_image = denorm(masked_images[0].detach().squeeze(),
                           test_dataset.mean, test_dataset.std)
     masked_image = (masked_image.squeeze().permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
         np.uint8)
     masked_image = torch.from_numpy(masked_image).unsqueeze(0)
     orig_viz = torch.cat((orig, viz, masked_image), 1)
+    print("orig_viz")
+    print(orig_viz.shape)
+    print(orig_viz[0].shape)
+    exit(0)
     gt = [cfg['categories'][x] for x in label_idx_list][0]
     # writer.add_images(tag='Test_Heatmaps/image_' + str(j) + '_' + gt,
     #                   img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
