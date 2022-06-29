@@ -168,8 +168,8 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
 
         logits_cl, logits_am, heatmaps, masks, masked_images = model(batch, labels)
         print("debug**********")
-        print(batch)
-        print(labels)
+        print(batch.shape)
+        print(labels.shape)
         print(logits_cl.shape)
         print(logits_am.shape)
         print(heatmaps.shape)
