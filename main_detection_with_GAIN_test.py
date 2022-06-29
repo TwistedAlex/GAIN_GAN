@@ -109,9 +109,9 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
     print(orig_viz.shape)
     print(orig_viz[0].shape)
     PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(path + "/orig_viz0.png")
-    PIL.Image.fromarray(orig.cpu().numpy(), 'RGB').save(path + "/orig.png")
-    PIL.Image.fromarray(viz.cpu().numpy(), 'RGB').save(path + "/viz.png")
-    PIL.Image.fromarray(masked_image.cpu().numpy(), 'RGB').save(path + "/masked_image.png")
+    PIL.Image.fromarray(orig[0].cpu().numpy(), 'RGB').save(path + "/orig0.png")
+    PIL.Image.fromarray(viz[0].cpu().numpy(), 'RGB').save(path + "/viz0.png")
+    PIL.Image.fromarray(masked_image[0].cpu().numpy(), 'RGB').save(path + "/masked_image0.png")
     exit(0)
     gt = [cfg['categories'][x] for x in label_idx_list][0]
     # writer.add_images(tag='Test_Heatmaps/image_' + str(j) + '_' + gt,
