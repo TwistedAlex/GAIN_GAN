@@ -83,6 +83,8 @@ def viz_test_heatmap(index_img, heatmaps, sample, masked_images, test_dataset,
 
     htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
     resize = Resize(size=224)
+    print("sample")
+    print(sample.shape)
     orig = sample['orig_images'][0].permute([2, 0, 1])
     orig = resize(orig).permute([1, 2, 0])
     np_orig = orig.cpu().detach().numpy()
