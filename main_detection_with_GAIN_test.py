@@ -167,7 +167,14 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
         # output of the model based on the input images and labels
 
         logits_cl, logits_am, heatmaps, masks, masked_images = model(batch, labels)
-
+        print("debug**********")
+        print(batch)
+        print(labels)
+        print(logits_cl.shape)
+        print(logits_am.shape)
+        print(heatmaps.shape)
+        print(masks.shape)
+        print(masked_images.shape)
         # Single label evaluation
         y_pred = logits_cl.detach().argmax(dim=1)
         y_pred = y_pred.view(-1)
