@@ -778,21 +778,6 @@ def main(args):
     grad_layer = ["layer4"]  # , "layer3", "layer2", "layer1", "maxpool", "relu", "bn1", "conv1"
     print('model creating...')
     logger.warning('model creating...')
-    model = batch_GAIN_Deepfake(model=model, grad_layer=grad_layer, num_classes=num_classes,
-                                am_pretraining_epochs=args.nepoch_am,
-                                ex_pretraining_epochs=args.nepoch_ex,
-                                fill_color=fill_color,
-                                test_first_before_train=test_first_before_train,
-                                grad_magnitude=args.grad_magnitude)
-    print('mode created')
-    logger.warning('model created')
-    chkpnt_epoch = 0
-
-    if len(args.writer_file_load) > 1:
-        writer = SummaryWriter(args.output_dir + args.writer_file_load)
-    else:
-        writer = SummaryWriter(args.output_dir + args.log_name + '_' +
-                               datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     i = 0
     num_train_samples = 0
     args.epochsize = epoch_size * batch_size
@@ -835,6 +820,23 @@ def main(args):
             num_train_samples = checkpoint['num_train_samples']
         else:
             num_train_samples = 1
+
+    model = batch_GAIN_Deepfake(model=model, grad_layer=grad_layer, num_classes=num_classes,
+                                am_pretraining_epochs=args.nepoch_am,
+                                ex_pretraining_epochs=args.nepoch_ex,
+                                fill_color=fill_color,
+                                test_first_before_train=test_first_before_train,
+                                grad_magnitude=args.grad_magnitude)
+    print('mode created')
+    logger.warning('model created')
+    chkpnt_epoch = 0
+
+    if len(args.writer_file_load) > 1:
+        writer = SummaryWriter(args.output_dir + args.writer_file_load)
+    else:
+        writer = SummaryWriter(args.output_dir + args.log_name + '_' +
+                               datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+
 
     pos_to_write = args.pos_to_write_train
     neg_to_write = args.neg_to_write_train
