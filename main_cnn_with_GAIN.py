@@ -7,7 +7,7 @@ from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
 from sklearn.metrics import accuracy_score, average_precision_score
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.models import resnet50
+from models.resnet import resnet50
 from torchvision.transforms import Resize, Normalize, ToTensor
 from utils.image import show_cam_on_image, denorm, Deepfake_preprocess_image
 import PIL.Image
@@ -808,7 +808,7 @@ def main(args):
 
     # load from existing model
     if len(args.checkpoint_file_path_load) > 0:
-        checkpoint = torch.load(args.checkpoint_file_path_load)
+        checkpoint = torch.load(args.checkpoint_file_path_load, map_location='cpu')
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         chkpnt_epoch = checkpoint['total_steps'] + 1
