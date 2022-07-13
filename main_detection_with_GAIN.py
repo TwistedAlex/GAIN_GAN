@@ -544,7 +544,7 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
         am_labels_scores = am_scores[pos_indices,
                                      torch.ones(cur_pos_num).long()]
         print(am_labels_scores.shape) # torch.size [10]
-        print(am_labels_scores)
+        print(am_labels_scores) #tensor [1, 2, 3....]grad_fn=IndexBackward
         print(am_labels_scores.size(0)) # 10
         print(am_labels_scores.sum()) # tensor floatnum grad_fn=sumBackward0
         exit(0)
