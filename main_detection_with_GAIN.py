@@ -671,6 +671,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #model forward
         logits_cl, logits_am, heatmaps, masks, masked_images = \
             model(batch, lbs)
+        print(logits_am)
         # print(logits_am.shape) # [20,2]
         #cl_loss and total loss computation
         cl_loss = cl_loss_fn(logits_cl, lbs)

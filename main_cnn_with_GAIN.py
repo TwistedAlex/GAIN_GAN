@@ -592,7 +592,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
         print("logits_am")
-        print(logits_am.shape)
+        print(logits_am)
         am_scores = nn.Softmax(dim=1)(logits_am)
         total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
             cur_pos_num, am_scores, pos_indices, model, total_loss,
