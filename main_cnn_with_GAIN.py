@@ -745,14 +745,9 @@ def main(args):
     # num_classes = len(categories)
     num_classes = 1
     device = torch.device('cuda:' + str(args.deviceID))
-    model = resnet50(pretrained=args.pretrain).train().to(device)
+    model = resnet50(num_classes=1).train().to(device)
     # source code of resnet50: https://pytorch.org/vision/stable/_modules/torchvision/models/resnet.html#resnet50
     # change the last layer for finetuning
-
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Sequential(
-        nn.Linear(num_ftrs, num_classes).to(device)
-    )
 
     model.train()
     # target_layer = model.features[-1]
