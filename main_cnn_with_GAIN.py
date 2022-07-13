@@ -573,8 +573,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # lb2 = 1 - lb1
         # lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
         # model forward
+        lbs = labels.unsqueeze(0)
         logits_cl, logits_am, heatmaps, masks, masked_images = \
-            model(batch, labels)
+            model(batch, lbs)
         # cl_loss and total loss computation
         cl_loss = cl_loss_fn(logits_cl, labels)
         total_loss = 0
