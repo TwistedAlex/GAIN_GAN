@@ -792,9 +792,7 @@ def main(args):
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         chkpnt_epoch = checkpoint['total_steps'] + 1
-        print("checkpoint:")
-        print(chkpnt_epoch)
-        exit(0)
+        chkpnt_epoch = 0
         model.cur_epoch = chkpnt_epoch
         if model.cur_epoch > model.am_pretraining_epochs:
             model.enable_am = True
