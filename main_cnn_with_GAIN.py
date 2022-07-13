@@ -578,6 +578,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             model(batch, lbs)
         # cl_loss and total loss computation
         cl_loss = cl_loss_fn(logits_cl, lbs)
+        print(logits_cl.shape)
+        print(lbs.shape)
         total_loss = 0
         total_loss += cl_loss * args.cl_weight
         # AM loss computation and monitoring
