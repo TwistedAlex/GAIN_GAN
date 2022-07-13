@@ -666,6 +666,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #model forward
         logits_cl, logits_am, heatmaps, masks, masked_images = \
             model(batch, lbs)
+        print(logits_am.shape)
         #cl_loss and total loss computation
         cl_loss = cl_loss_fn(logits_cl, lbs)
         total_loss = 0
@@ -674,6 +675,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
         am_scores = nn.Softmax(dim=1)(logits_am)
+        print(am_scores.shape)
+        exit(0)
         total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
             cur_pos_num, am_scores, pos_indices, model, total_loss,
             epoch_train_am_loss, am_count, writer, cfg, args, labels)
