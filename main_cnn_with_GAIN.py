@@ -569,9 +569,12 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         c_psi05 += datasource_list.count('psi_0.5')
         c_ffhq += datasource_list.count('ffhq')
         # one_hot transformation
-        # lb1 = labels.unsqueeze(0)
-        # lb2 = 1 - lb1
-        # lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
+        lb1 = labels.unsqueeze(0)
+        lb2 = 1 - lb1
+        lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
+        print(lbs.shape)
+        print(logits_cl.shape)
+        exit(0)
         # model forward
 
         logits_cl, logits_am, heatmaps, masks, masked_images = \
