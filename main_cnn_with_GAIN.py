@@ -451,6 +451,9 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
         am_labels_scores = am_scores[pos_indices,
                                      torch.ones(cur_pos_num).long()]
         am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
+        print("am_loss")
+        print(am_loss)
+        print(am_loss.shape)
         iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
         if model.AM_enabled():
             total_loss += (am_loss * args.am_weight)
@@ -580,6 +583,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         cl_loss = cl_loss_fn(logits_cl, lbs)
         print(logits_cl.shape)
         print(lbs.shape)
+        print(logits_cl)
+        print(lbs)
+        print(logits_am.shape)
         total_loss = 0
         total_loss += cl_loss * args.cl_weight
         # AM loss computation and monitoring
