@@ -448,9 +448,13 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
                    epoch_train_am_loss, am_count, writer, cfg, args, labels):
     iter_am_loss = 0
     if not args.am_on_all and cur_pos_num > 1:
+        print(am_scores.shape)
         am_labels_scores = am_scores[pos_indices,
                                      torch.ones(cur_pos_num).long()]
         am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
+        print(am_loss.shape)
+        print(am_loss)
+        exit(0)
         iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
         if model.AM_enabled():
             total_loss += (am_loss * args.am_weight)
@@ -569,23 +573,23 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         c_psi05 += datasource_list.count('psi_0.5')
         c_ffhq += datasource_list.count('ffhq')
         # one_hot transformation
-        lb1 = labels.unsqueeze(0)
-        lb2 = 1 - lb1
-        lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
+        # lb1 = labels.unsqueeze(0)
+        # lb2 = 1 - lb1
+        # lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
         # model forward
-
+        lbs = labels.unsqueeze(1)
         logits_cl, logits_am, heatmaps, masks, masked_images = \
-            model(batch, labels)
+            model(batch, lbs)
         # cl_loss and total loss computation
-        cl_loss = cl_loss_fn(logits_cl.squeeze(1), labels)
-        print(lbs.shape)
-        print(logits_cl.shape)
-        exit(0)
+        cl_loss = cl_loss_fn(logits_cl, lbs)
+
         total_loss = 0
         total_loss += cl_loss * args.cl_weight
         # AM loss computation and monitoring
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
+        print("logits_am")
+        print(logits_am.shape)
         am_scores = nn.Softmax(dim=1)(logits_am)
         total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
             cur_pos_num, am_scores, pos_indices, model, total_loss,
