@@ -543,6 +543,10 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
     if not args.am_on_all and cur_pos_num > 1:
         am_labels_scores = am_scores[pos_indices,
                                      torch.ones(cur_pos_num).long()]
+        print(am_labels_scores.shape)
+        print(am_labels_scores.size(0))
+        print(am_labels_scores.sum())
+        exit(0)
         am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
         iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
         if model.AM_enabled():
@@ -666,7 +670,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #model forward
         logits_cl, logits_am, heatmaps, masks, masked_images = \
             model(batch, lbs)
-        print(logits_am.shape)
+        # print(logits_am.shape) # [20,2]
         #cl_loss and total loss computation
         cl_loss = cl_loss_fn(logits_cl, lbs)
         total_loss = 0
@@ -674,9 +678,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # AM loss computation and monitoring
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
-        am_scores = nn.Softmax(dim=1)(logits_am)
-        print(am_scores.shape)
-        exit(0)
+        am_scores = nn.Softmax(dim=1)(logits_am) # [20,2]
         total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
             cur_pos_num, am_scores, pos_indices, model, total_loss,
             epoch_train_am_loss, am_count, writer, cfg, args, labels)

@@ -448,9 +448,12 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
                    epoch_train_am_loss, am_count, writer, cfg, args, labels):
     iter_am_loss = 0
     if not args.am_on_all and cur_pos_num > 1:
-        print(am_scores.shape)
         am_labels_scores = am_scores[pos_indices,
                                      torch.ones(cur_pos_num).long()]
+        print(am_labels_scores.shape)
+        print(am_labels_scores.size(0))
+        print(am_labels_scores.sum())
+        exit(0)
         am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
         print(am_loss.shape)
         print(am_loss)
