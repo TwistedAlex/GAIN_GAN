@@ -450,7 +450,7 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
     if not args.am_on_all and cur_pos_num > 1:
         am_labels_scores = am_scores[pos_indices]
         print(am_labels_scores.shape) # torch.size [14]
-        print(am_labels_scores) #tensor [1, 2, 3....]grad_fn=IndexBackward
+        # print(am_labels_scores) #tensor [1, 2, 3....]grad_fn=IndexBackward
         print(am_labels_scores.size(0)) # 14
         print(am_labels_scores.sum())
         exit(0)
@@ -594,6 +594,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         print("logits_am")
         print(logits_am)
         am_scores = nn.Softmax(dim=1)(logits_am)
+        print(am_scores)
         total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
             cur_pos_num, am_scores, pos_indices, model, total_loss,
             epoch_train_am_loss, am_count, writer, cfg, args, labels)

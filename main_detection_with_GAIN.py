@@ -544,7 +544,7 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
         am_labels_scores = am_scores[pos_indices,
                                      torch.ones(cur_pos_num).long()]
         print(am_labels_scores.shape) # torch.size [10]
-        print(am_labels_scores) #tensor [1, 2, 3....]grad_fn=IndexBackward
+        # print(am_labels_scores) #tensor [1, 2, 3....]grad_fn=IndexBackward
         print(am_labels_scores.size(0)) # 10
         print(am_labels_scores.sum()) # tensor floatnum grad_fn=sumBackward0
         exit(0)
@@ -681,6 +681,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
         am_scores = nn.Softmax(dim=1)(logits_am) # [20,2]
+        print(am_scores)
         total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
             cur_pos_num, am_scores, pos_indices, model, total_loss,
             epoch_train_am_loss, am_count, writer, cfg, args, labels)
