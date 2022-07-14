@@ -291,7 +291,7 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
                         num_train_samples, epoch_train_total_loss,
                         batchsize, train_labels,
                         test_before_train, y_true, y_pred, logger):
-    print("pos = {} neg = {}".format(count_pos, count_neg))
+    print("Epoch {}: pos = {} neg = {}".format(epoch, count_pos, count_neg))
     print(f"psi 0.5 = {c_psi05} psi 1 = {c_psi1} ffhq = {c_ffhq}")
     r_acc = accuracy_score(y_true[y_true == 0], y_pred[y_true == 0] > 0.5)
     f_acc = accuracy_score(y_true[y_true == 1], y_pred[y_true == 1] > 0.5)
