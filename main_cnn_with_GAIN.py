@@ -422,7 +422,7 @@ def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
         am_labels = 1 if am_scores[idx] > 0.5 else 0
         predicted_am = cfg['categories'][am_labels]
         labels_am = labels_cl
-        am_text = '_am_gt_' + '_'+ str(labels_am) + '_pred_' + '_' + str(predicted_am) + f'_{am_scores[idx]:.4f}'
+        am_text = '_am_gt_' + '_'+ str(labels_am) + '_pred_' + '_' + str(predicted_am) + f'_{am_scores[idx].cpu().item():.4f}'
 
         writer.add_text('Train_Heatmaps_Description/image_' + str(img_idx) + '_' + groundtruth,
                         cl_text + am_text,
