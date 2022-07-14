@@ -129,8 +129,8 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
         y_true.extend(label_idx_list)
 
         # related to am text info in viz
-        am_scores = nn.Softmax(dim=1)(logits_am)
-        am_labels = am_scores.argmax(dim=1)
+        am_scores = logits_am.sigmoid()
+        am_labels = [1 if x > 0.5 else 0 for x in am_scores]
         pos_count = test_dataset.positive_len()
 
         viz_test_heatmap(j, heatmaps, sample, label_idx_list, logits_cl, cfg, output_path_heatmap)
@@ -216,25 +216,25 @@ def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         gt = [cfg['categories'][x] for x in label_idx_list][0]
         writer.add_images(tag='Validation_Heatmaps/image_' + str(j) + '_' + gt,
                           img_tensor=orig_viz, dataformats='NHWC', global_step=epoch)
-        y_scores = logits_cl.sigmoid().flatten().tolist()
-        predicted_categories = [1 if y_scores[i] > 0.5 else 0 for i in range(len(y_scores))]
-        predicted_cl = [(cfg['categories'][x], format(y_scores[0], '.4f')) for x in
-                        predicted_categories[0]]
-        labels_cl = [(cfg['categories'][x], format(y_scores[0], '.4f')) for x in [(label_idx_list[0])]]
-        import itertools
-        predicted_cl = list(itertools.chain(*predicted_cl))
-        labels_cl = list(itertools.chain(*labels_cl))
-        cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
-
-        predicted_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in am_labels[0].view(-1)]
-        labels_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in [label_idx_list[0]]]
-        import itertools
-        predicted_am = list(itertools.chain(*predicted_am))
-        labels_am = list(itertools.chain(*labels_am))
-        am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
-
-        writer.add_text('Validation_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
-                        global_step=epoch)
+        # y_scores = logits_cl.sigmoid().flatten().tolist()
+        # predicted_categories = [1 if y_scores[i] > 0.5 else 0 for i in range(len(y_scores))]
+        # predicted_cl = [(cfg['categories'][x], format(y_scores[0], '.4f')) for x in
+        #                 predicted_categories[0]]
+        # labels_cl = [(cfg['categories'][x], format(y_scores[0], '.4f')) for x in [(label_idx_list[0])]]
+        # import itertools
+        # predicted_cl = list(itertools.chain(*predicted_cl))
+        # labels_cl = list(itertools.chain(*labels_cl))
+        # cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
+        #
+        # predicted_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in am_labels[0].view(-1)]
+        # labels_am = [(cfg['categories'][x], format(am_scores[0].view(-1)[x], '.4f')) for x in [label_idx_list[0]]]
+        # import itertools
+        # predicted_am = list(itertools.chain(*predicted_am))
+        # labels_am = list(itertools.chain(*labels_am))
+        # am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
+        #
+        # writer.add_text('Validation_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
+        #                 global_step=epoch)
 
 
 def train_validate(args, cfg, model, device, validation_loader, validation_dataset, writer, epoch, last_epoch,
@@ -257,21 +257,20 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
         y_true.extend(label_idx_list)
 
-        am_scores = nn.Softmax(dim=1)(logits_am)
-        am_labels = am_scores.argmax(dim=1)
+        am_scores = logits_am.sigmoid()
+
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
         # The code to replace to train on positives and negatives
         if cur_pos_num > 1:
-            am_labels_scores = am_scores[pos_indices, torch.ones(cur_pos_num).long()]
+            am_labels_scores = am_scores[pos_indices]
             am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
             epoch_validation_am_loss += (am_loss * args.am_weight).detach().cpu().item()
 
         pos_count = validation_dataset.positive_len()
         t = math.ceil(pos_count / (args.batchsize * args.pos_to_write_test))
         monitor_validation_viz(j, t, heatmaps, sample, masked_images, validation_dataset,
-                               label_idx_list, logits_cl, am_scores, am_labels, writer,
-                               epoch, cfg)
+                               label_idx_list, 0, 0, 0, writer, epoch, cfg)
         j += 1
 
     return monitor_validation_epoch(writer, validation_dataset, args, pos_count, epoch_validation_am_loss,
@@ -282,13 +281,14 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
                         ex_count, epoch_train_ex_loss,
                         epoch_train_am_loss, epoch_train_cl_loss,
                         num_train_samples, epoch_train_total_loss,
-                        batchsize, epoch_IOU, IOU_count, train_labels,
-                        total_train_single_accuracy, test_before_train,
-                        train_total_pos_correct, train_total_pos_seen,
-                        train_total_neg_correct, train_total_neg_seen,
-                        train_differences, have_mask_indices, logger):
+                        batchsize, train_labels,
+                        test_before_train, y_true, y_pred, logger):
     print("pos = {} neg = {}".format(count_pos, count_neg))
     print(f"psi 0.5 = {c_psi05} psi 1 = {c_psi1} ffhq = {c_ffhq}")
+    r_acc = accuracy_score(y_true[y_true == 0], y_pred[y_true == 0] > 0.5)
+    f_acc = accuracy_score(y_true[y_true == 1], y_pred[y_true == 1] > 0.5)
+    acc = accuracy_score(y_true, y_pred > 0.5)
+    ap = average_precision_score(y_true, y_pred)
     logger.warning(
         "pos = {} neg = {}".format(count_pos, count_neg))
     logger.warning(
@@ -317,9 +317,9 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
         logger.warning('Average epoch train total loss: {:.3f}'.format(
             epoch_train_total_loss / (num_train_samples * batchsize)))
         print('Average epoch single train accuracy: {:.3f}'.format(
-            total_train_single_accuracy))
+            acc))
         logger.warning('Average epoch single train accuracy: {:.3f}'.format(
-            total_train_single_accuracy))
+            acc))
     if (test_before_train and epoch > 0) or test_before_train == False:
         writer.add_scalar('Loss/train/Average_cl_total_loss', epoch_train_cl_loss /
                           (num_train_samples * batchsize), epoch)
@@ -329,22 +329,15 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
             0 if ex_count == 0 else (epoch_train_ex_loss / ex_count)),
                           epoch
                           )
-        writer.add_scalar('IOU/train/average_IOU_per_sample', epoch_IOU /
-                                                              IOU_count if IOU_count != 0 else 0, epoch)
         writer.add_scalar('Accuracy/train/cl_accuracy',
-                          total_train_single_accuracy / (num_train_samples *
-                                                         batchsize), epoch)
+                          acc, epoch)
         writer.add_scalar('Accuracy/train/cl_accuracy_only_pos',
-                          train_total_pos_correct / train_total_pos_seen,
+                          f_acc,
                           epoch)
         writer.add_scalar('Accuracy/train/cl_accuracy_only_neg',
-                          train_total_neg_correct / train_total_neg_seen,
+                          r_acc,
                           epoch)
-        all_sens, auc, _, _ = calc_sensitivity(train_labels, train_differences)
-        writer.add_scalar('ROC/train/ROC_0.1', all_sens[0], epoch)
-        writer.add_scalar('ROC/train/ROC_0.05', all_sens[1], epoch)
-        writer.add_scalar('ROC/train/ROC_0.3', all_sens[2], epoch)
-        writer.add_scalar('ROC/train/ROC_0.5', all_sens[3], epoch)
+        fpr, tpr, auc, threshold = roc_curve(y_true, y_pred)
         writer.add_scalar('ROC/train/AUC', auc, epoch)
 
 
@@ -356,9 +349,9 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         neg_indices = [idx for idx, x in enumerate(sample['labels']) if x == 0]
         pos_correct = len(
-            [pos_idx for pos_idx in pos_indices if logits_cl[pos_idx, 1] > logits_cl[pos_idx, 0]])
+            [pos_idx for pos_idx in pos_indices if logits_cl[pos_idx] > 0.5])
         neg_correct = len(
-            [neg_idx for neg_idx in neg_indices if logits_cl[neg_idx, 1] <= logits_cl[neg_idx, 0]])
+            [neg_idx for neg_idx in neg_indices if logits_cl[neg_idx] <= 0.5])
         train_total_pos_seen += len(pos_indices)
         train_total_pos_correct += pos_correct
         train_total_neg_correct += neg_correct
@@ -370,10 +363,10 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
             writer.add_scalar('Loss/train/cl_loss_only_on_pos_samples',
                               weighted_cl_pos.detach().cpu().item(), cfg['am_i'])
 
-        writer.add_scalar('Loss/train/cl_loss',
+        writer.add_scalar('Loss/train/cl_loss_per_iter',
                           (cl_loss * args.cl_weight).detach().cpu().item(),
                           cfg['i'])
-        writer.add_scalar('Loss/train/total_loss',
+        writer.add_scalar('Loss/train/total_loss_per_iter',
                           total_loss.detach().cpu().item(), cfg['total_i'])
         cfg['total_i'] += 1
 
@@ -391,6 +384,7 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
 def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
                       sample, masked_images, train_dataset, label_idx_list,
                       epoch, logits_cl, am_scores, gt, cfg, cl_loss, am_loss, ex_loss):
+    y_scores = logits_cl.sigmoid().flatten().tolist()
     for idx in records_indices:
         htm = np.uint8(heatmaps[idx].squeeze().cpu().detach().numpy() * 255)
         visualization, _ = show_cam_on_image(np.asarray(augmented_batch[idx]), htm, True)
@@ -419,25 +413,17 @@ def monitor_train_viz(writer, records_indices, heatmaps, augmented_batch,
             tag='Epoch_' + str(epoch) + '/Train_Heatmaps/image_' + str(sample['filename'][idx]) + '_' + groundtruth +
                 f'_{cl_loss:.4f}' + f'_{am_loss:.4f}' + f'_{ex_loss:.4f}',
             img_tensor=orig_viz, dataformats='NHWC', global_step=cfg['counter'][img_idx])
-        y_scores = nn.Softmax(dim=1)(logits_cl.detach())
-        predicted_categories = y_scores[idx].unsqueeze(0).argmax(dim=1)
-        predicted_cl = [(cfg['categories'][x], format(y_scores[idx].view(-1)[x], '.4f')) for x in
-                        predicted_categories.view(-1)]
-        labels_cl = [(cfg['categories'][x], format(y_scores[idx].view(-1)[x], '.4f')) for x in
-                     [(label_idx_list[idx])]]
-        import itertools
-        predicted_cl = list(itertools.chain(*predicted_cl))
-        labels_cl = list(itertools.chain(*labels_cl))
-        cl_text = 'cl_gt_' + '_'.join(labels_cl) + '_pred_' + '_'.join(predicted_cl)
-        am_labels = am_scores.argmax(dim=1)
-        predicted_am = [(cfg['categories'][x], format(am_scores[idx].view(-1)[x], '.4f')) for x in
-                        am_labels[idx].view(-1)]
-        labels_am = [(cfg['categories'][x], format(am_scores[idx].view(-1)[x], '.4f')) for x in
-                     [label_idx_list[idx]]]
-        import itertools
-        predicted_am = list(itertools.chain(*predicted_am))
-        labels_am = list(itertools.chain(*labels_am))
-        am_text = '_am_gt_' + '_'.join(labels_am) + '_pred_' + '_'.join(predicted_am)
+
+        predicted_categories = 1 if y_scores[idx] > 0.5 else 0
+        predicted_cl = cfg['categories'][predicted_categories]
+        labels_cl = cfg['categories'][label_idx_list[idx]]
+        cl_text = 'cl_gt_' + str(labels_cl) + '_pred_' + '_'+ str(predicted_cl) + f'_{y_scores[idx]:.4f}'
+
+        am_labels = 1 if am_scores[idx] > 0.5 else 0
+        predicted_am = cfg['categories'][am_labels]
+        labels_am = labels_cl
+        am_text = '_am_gt_' + '_'+ str(labels_am) + '_pred_' + '_' + str(predicted_am) + f'_{am_scores[idx]:.4f}'
+
         writer.add_text('Train_Heatmaps_Description/image_' + str(img_idx) + '_' + groundtruth,
                         cl_text + am_text,
                         global_step=cfg['counter'][img_idx])
@@ -541,13 +527,12 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     logger.warning('*****Training Begin*****')
     model.train()
     # initializing all required variables
-    count_pos, count_neg, c_psi1, c_psi05, c_ffhq, dif_i, epoch_IOU, am_count, ex_count = 0, 0, 0, 0, 0, 0, 0, 0, 0
-    train_differences = np.zeros(args.epochsize)
+    count_pos, count_neg, c_psi1, c_psi05, c_ffhq, dif_i, am_count, ex_count = 0, 0, 0, 0, 0, 0, 0, 0
     train_labels = np.zeros(args.epochsize)
-    total_train_single_accuracy = 0
+
     epoch_train_cl_loss, epoch_train_am_loss, epoch_train_ex_loss = 0, 0, 0
     epoch_train_total_loss = 0
-    IOU_count = 0
+    y_true, y_pred = [], []
     train_total_pos_correct, train_total_pos_seen = 0, 0
     train_total_neg_correct, train_total_neg_seen = 0, 0
     # defining classification loss function
@@ -567,7 +552,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         batch = batch.to(device)
         # starting the forward, backward, optimzer.step process
         optimizer.zero_grad()
-        labels = torch.Tensor(label_idx_list).to(device).float()
+        labels = torch.Tensor(label_idx_list).to(device).long()
         # sanity check for batch pos and neg distribution (for printing) #TODO: can be removed as it checked and it is ok
         count_pos += (labels == 1).int().sum()
         count_neg += (labels == 0).int().sum()
@@ -580,9 +565,13 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # lb2 = 1 - lb1
         # lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
         # model forward
-        lbs = labels.unsqueeze(1)
+        lbs = labels.unsqueeze(1).float()
         logits_cl, logits_am, heatmaps, masks, masked_images = \
             model(batch, lbs)
+
+        # prediction result recording
+        y_pred.extend(logits_cl.sigmoid().flatten().tolist())
+        y_true.extend(label_idx_list)
         # cl_loss and total loss computation
         cl_loss = cl_loss_fn(logits_cl, lbs)
         # print(logits_cl.shape)
@@ -591,26 +580,16 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # AM loss computation and monitoring
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
         cur_pos_num = len(pos_indices)
-        # print("logits_am")
-        # print(logits_am)
-        # am_scores = nn.Softmax(dim=1)(logits_am)
+
         am_scores = logits_am.sigmoid()
-        # print(am_scores)
+
         total_loss, epoch_train_am_loss, am_count, iter_am_loss = handle_AM_loss(
             cur_pos_num, am_scores, pos_indices, model, total_loss,
             epoch_train_am_loss, am_count, writer, cfg, args, labels)
         # monitoring cl_loss per epoch
         epoch_train_cl_loss += (cl_loss * args.cl_weight).detach().cpu().item()
         # saving logits difference for ROC monitoring
-        difference = (logits_cl[:, 1] - logits_cl[:, 0]).cpu().detach().numpy()
-        train_differences[dif_i: dif_i + len(difference)] = difference
-        train_labels[dif_i: dif_i + len(difference)] = labels.squeeze().cpu().detach().numpy()
-        dif_i += len(difference)
 
-        # IOU monitoring
-        all_masks = train_dataset.get_masks_indices()
-        have_mask_indices = [sample['idx'].index(x) for x in sample['idx']
-                             if x in all_masks]
 
         # Ex loss computation and monitoring
         used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
@@ -626,11 +605,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # Single label evaluation
         epoch_train_total_loss += total_loss.detach().cpu().item()
         # epoch_train_ex_loss += total_ex_loss.detach().cpu().item()
-        y_pred = logits_cl.detach().argmax(dim=1)
-        y_pred = y_pred.view(-1)
         gt = labels.view(-1)
-        acc = (y_pred == gt).sum()
-        total_train_single_accuracy += acc.detach().cpu()
         # monitoring per iteration measurements
         train_total_pos_seen, train_total_pos_correct, \
         train_total_neg_correct, train_total_neg_seen = \
@@ -669,10 +644,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     monitor_train_epoch(
         args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count, ex_count,
         epoch_train_ex_loss, epoch_train_am_loss, epoch_train_cl_loss, cfg['num_train_samples'],
-        epoch_train_total_loss, args.batchsize, epoch_IOU, IOU_count,
-        train_labels, total_train_single_accuracy, args.test_before_train,
-        train_total_pos_correct, train_total_pos_seen,
-        train_total_neg_correct, train_total_neg_seen, train_differences, have_mask_indices, logger)
+        epoch_train_total_loss, args.batchsize,
+        train_labels, args.test_before_train, y_true, y_pred, logger)
 
 
 # Parse all the input argument
