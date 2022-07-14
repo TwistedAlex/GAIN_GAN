@@ -135,7 +135,7 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
 
         viz_test_heatmap(j, heatmaps, sample, label_idx_list, logits_cl, cfg, output_path_heatmap)
         j += 1
-
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
     monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
                        output_path, mode, logger)
 
@@ -272,7 +272,7 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
         monitor_validation_viz(j, t, heatmaps, sample, masked_images, validation_dataset,
                                label_idx_list, 0, 0, 0, writer, epoch, cfg)
         j += 1
-
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
     return monitor_validation_epoch(writer, validation_dataset, args, pos_count, epoch_validation_am_loss,
                                     y_pred, y_true, epoch, logger)
 
@@ -641,6 +641,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                           sample, masked_images, train_dataset, label_idx_list,
                           epoch, logits_cl, am_scores, gt, cfg, cl_loss * args.cl_weight, iter_am_loss, iter_ex_loss)
     # monitoring per epoch measurements
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
     monitor_train_epoch(
         args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count, ex_count,
         epoch_train_ex_loss, epoch_train_am_loss, epoch_train_cl_loss, cfg['num_train_samples'],
