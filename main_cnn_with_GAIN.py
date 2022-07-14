@@ -517,7 +517,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
         writer.add_scalar('Loss/train/ex_loss',
                           iter_ex_loss,
                           cfg['ex_i'])
-        print(f"ex loss: {iter_ex_loss}")
+        # print(f"ex loss: {iter_ex_loss}")
         logger.warning(f"ex loss: {iter_ex_loss}")
         total_loss += args.ex_weight * ex_loss
         cfg['ex_i'] += 1
