@@ -358,7 +358,7 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
         train_total_neg_seen += len(neg_indices)
         if len(pos_indices) > 0:
             cl_loss_only_on_pos_samples = cl_loss_fn(
-                logits_cl.detach()[pos_indices], labels.detach()[pos_indices])
+                logits_cl.detach()[pos_indices], labels.unsqueeze(1).float().detach()[pos_indices])
             weighted_cl_pos = cl_loss_only_on_pos_samples * args.cl_weight
             writer.add_scalar('Loss/train/cl_loss_only_on_pos_samples',
                               weighted_cl_pos.detach().cpu().item(), cfg['am_i'])
