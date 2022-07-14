@@ -9,7 +9,7 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from models.resnet import resnet50
 from torchvision.transforms import Resize, Normalize, ToTensor
-from utils.image import show_cam_on_image, denorm, Deepfake_preprocess_image
+from utils.image import show_cam_on_image, denorm, Deepfake_CVPR_preprocess_image, Deepfake_preprocess_image
 import PIL.Image
 import argparse
 import logging
@@ -20,6 +20,14 @@ import pathlib
 import torch
 
 torch.multiprocessing.set_sharing_strategy('file_system')
+
+
+def adjust_learning_rate(optimizer, min_lr=1e-6):
+    for param_group in optimizer.param_groups:
+        param_group['lr'] /= 10.
+        if param_group['lr'] < min_lr:
+            return False
+    return True
 
 
 def my_collate(batch):
@@ -749,7 +757,7 @@ def main(args):
     deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                      batch_size=batch_size, steps_per_epoch=epoch_size,
                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
-                                     transform=Deepfake_preprocess_image,
+                                     transform=Deepfake_CVPR_preprocess_image,
                                      collate_fn=my_collate, customize_num_masks=args.customize_num_masks,
                                      num_masks=args.num_masks)
     print('loader created')
@@ -848,7 +856,9 @@ def main(args):
     noex_x_epoch_exsup_img = list()
     noex_img_idx = list()
     noex_iter_num_list = list()
-
+    best_score = 0.0
+    patience = 5
+    patience_count = 0
     for epoch in range(chkpnt_epoch, epochs):
         if not test_first_before_train or \
                 (test_first_before_train and epoch != 0):
@@ -862,6 +872,13 @@ def main(args):
         acc_val, ap_val = train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
                                          deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1),
                                          roc_log_path, logger)[:2]
+        if acc_val < best_score:
+            adjust_learning_rate(optimizer)
+            patience_count += 1
+            if patience_count > patience:
+                logger.warning('patience reached!')
+        else:
+            patience_count = 0
         if epoch == (epochs - 1):
             print("********Testing module starts********")
             logger.warning("********Testing module starts********")
@@ -869,7 +886,7 @@ def main(args):
             deepfake_psi0_loader = DeepfakeTestingOnlyLoader(psi_05_input_dir,
                                                              batch_size=test_psi05_batchsize,
                                                              mean=mean, std=std,
-                                                             transform=Deepfake_preprocess_image,
+                                                             transform=Deepfake_CVPR_preprocess_image,
                                                              collate_fn=my_collate)
             test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
                  deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "PSI_0.5",
@@ -880,7 +897,7 @@ def main(args):
             deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir,
                                                              batch_size=test_psi1_batchsize,
                                                              mean=mean, std=std,
-                                                             transform=Deepfake_preprocess_image,
+                                                             transform=Deepfake_CVPR_preprocess_image,
                                                              collate_fn=my_collate)
             test(cfg, model, device, deepfake_psi1_loader.datasets['test'],
                  deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "PSI_1",
@@ -915,7 +932,7 @@ def main(args):
             deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                              batch_size=batch_size, steps_per_epoch=epoch_size,
                                              masks_to_use=args.masks_to_use, mean=mean, std=std,
-                                             transform=Deepfake_preprocess_image,
+                                             transform=Deepfake_CVPR_preprocess_image,
                                              collate_fn=my_collate, customize_num_masks=args.customize_num_masks,
                                              num_masks=args.num_masks)
 
