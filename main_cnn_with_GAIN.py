@@ -154,8 +154,8 @@ def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode
     heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output_" + log_name + "/" + mode
     output_path_heatmap_pos_cl = heatmap_home_dir + "/Pos_Fake_0/" + "/50_closest/"
     output_path_heatmap_pos_fa = heatmap_home_dir + "/Pos_Fake_0/" + "/50_farthest/"
-    output_path_heatmap_neg_cl = heatmap_home_dir + "/Neg_Real_1/" + "/50_closest/"
-    output_path_heatmap_neg_fa = heatmap_home_dir + "/Neg_Real_1/" + "/50_farthest/"
+    output_path_heatmap_neg_cl = heatmap_home_dir + "/Neg_Real_0/" + "/50_closest/"
+    output_path_heatmap_neg_fa = heatmap_home_dir + "/Neg_Real_0/" + "/50_farthest/"
     pathlib.Path(output_path_heatmap_pos_cl).mkdir(parents=True, exist_ok=True)
     pathlib.Path(output_path_heatmap_pos_fa).mkdir(parents=True, exist_ok=True)
     pathlib.Path(output_path_heatmap_neg_cl).mkdir(parents=True, exist_ok=True)
@@ -166,17 +166,17 @@ def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode
     pos_heatmaps.sort()
     neg_heatmaps.sort()
 
-    for file in pos_heatmaps[0:50]:
+    for file in pos_heatmaps[-50:]:
         command = 'cp ' + input_path_heatmap_pos + file + ' ' + output_path_heatmap_pos_cl
         os.system(command)
-    for file in pos_heatmaps[-50:]:
+    for file in pos_heatmaps[0:50]:
         command = 'cp ' + input_path_heatmap_pos + file + ' ' + output_path_heatmap_pos_fa
         os.system(command)
 
-    for file in neg_heatmaps[0:50]:
+    for file in neg_heatmaps[-50:]:
         command = 'cp ' + input_path_heatmap_neg + file + ' ' + output_path_heatmap_neg_fa
         os.system(command)
-    for file in neg_heatmaps[-50:]:
+    for file in neg_heatmaps[0:50]:
         command = 'cp ' + input_path_heatmap_neg + file + ' ' + output_path_heatmap_neg_cl
         os.system(command)
 
