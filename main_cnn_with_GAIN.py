@@ -152,8 +152,8 @@ def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode
     input_path_heatmap_pos = input_path_heatmap + "/Pos/"
     input_path_heatmap_neg = input_path_heatmap + "/Neg/"
     heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output_" + log_name + "/" + mode
-    output_path_heatmap_pos_cl = heatmap_home_dir + "/Pos_Fake_0/" + "/50_closest/"
-    output_path_heatmap_pos_fa = heatmap_home_dir + "/Pos_Fake_0/" + "/50_farthest/"
+    output_path_heatmap_pos_cl = heatmap_home_dir + "/Pos_Fake_1/" + "/50_closest/"
+    output_path_heatmap_pos_fa = heatmap_home_dir + "/Pos_Fake_1/" + "/50_farthest/"
     output_path_heatmap_neg_cl = heatmap_home_dir + "/Neg_Real_0/" + "/50_closest/"
     output_path_heatmap_neg_fa = heatmap_home_dir + "/Neg_Real_0/" + "/50_farthest/"
     pathlib.Path(output_path_heatmap_pos_cl).mkdir(parents=True, exist_ok=True)
@@ -787,7 +787,8 @@ def main(args):
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         chkpnt_epoch = checkpoint['total_steps'] + 1
-        chkpnt_epoch = 0
+        if 'blur' in args.checkpoint_file_path_load:
+            chkpnt_epoch = 0
         model.cur_epoch = chkpnt_epoch
         # if model.cur_epoch > model.am_pretraining_epochs:
         #     model.enable_am = True

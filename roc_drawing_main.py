@@ -80,17 +80,96 @@ def output_multiple_roc(stats_path_list, title_list, lim_offset, save_dir, mode=
     plt.savefig(save_dir+file_suffix + datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".png")
     plt.cla()
 
+
+def output_losses(stats_path_list, title_list, x_list, img_idx_list, img_idx, lim_offset, save_dir):
+    file_suffix = "\\exsup_losses_"
+    plt.title('Losses')
+
+
+    # x_np = np.load(x_list, allow_pickle=True)
+    x_np = np.load(x_list, allow_pickle=True).astype(str)
+    print(x_np.shape)
+    print(x_np.shape)
+    x_len = range(len(x_np))
+    # count_pos = (x_np == 50).sum()
+    # print(x_np)
+    # print(np.count_nonzero(x_np == 49))
+    # img_idx_np = np.load(img_idx_list[0], allow_pickle=True)[-25:]
+    # exsup_count_np = list()
+    # for i in range(25):
+    #     count = 0
+    #     for str_item in img_idx_np[i]:
+    #         if len(str_item) == 10 and str_item[0:3] == '000' and str_item[3] in ('4', '3', '2', '1', '0'):
+    #             count += 1
+    #     exsup_count_np.append(count)
+    # print(img_idx_np)
+    # # exsup_count_np = np.count_nonzero(img_idx_np < 500, axis=1)
+    # plt.xticks(x_len, x_np)
+    # plt.plot(x_len, exsup_count_np, label='num of exsup')
+    # plt.legend(loc='lower right')
+    # plt.ylabel('Exsup Count')
+    # plt.xlabel('Epoch')
+    # plt.grid(True)
+    # plt.savefig(save_dir + file_suffix + datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".png")
+    # plt.cla()
+    # return
+    np.count_nonzero(x_np == 49)
+
+    for i in range(len(stats_path_list)):
+        if i == 0:
+            continue
+        losses = np.load(stats_path_list[i], allow_pickle=True)
+        # output losses per epoch (sum over iteration/average)
+        x_epoch_list = list()
+        y_sum_list = list()
+        y_avg_list = list()
+        for epoch in range(15, 50):
+            idx_epoch = x_np == str(epoch)
+            x_epoch_list.append(epoch)
+            # print(x_np)
+            # print(x_np[idx_epoch])
+            y_sum_list.append(np.sum(losses[idx_epoch], dtype=np.float64))
+            y_avg_list.append(np.sum(losses[idx_epoch] / len(idx_epoch), dtype=np.float64))
+        print(losses.shape)
+        # plt.xticks(x_len, x_np)
+        plt.plot(x_epoch_list, y_avg_list, label=f'{title_list[i]}')
+        plt.legend(loc='upper right')
+    # output losses per iteration
+    # for i in range(len(stats_path_list)):
+    #     if i == 0:
+    #         continue
+    #     losses = np.load(stats_path_list[i], allow_pickle=True)
+    #     print(losses.shape)
+    #     plt.xticks(x_len, x_np)
+    #     plt.plot(x_len, losses, label=f'{title_list[i]}')
+    #     plt.legend(loc='upper right')
+
+    plt.ylabel('Loss')
+    plt.xlabel('epoch')
+    plt.grid(True)
+    plt.title("Losses per epoch(iteration avg)")
+    plt.savefig(save_dir+file_suffix + datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".png")
+    plt.cla()
+
+    # proj = np.array([0, 0, 1, 1, 1, 1, 2]).astype(str)
+    # proj_x = range(len(proj))
+    # prVal = np.array([0.9, 0.8, 0.8, 0.9, 0.3, 0.2, 0.6])
+    #
+    # # creating the bar plot
+    # plt.xticks(proj_x, proj)
+    # plt.plot(proj_x, prVal)
+    # plt.xlabel("gifts")
+    # plt.ylabel("Value")
+    # plt.title("Gift recieved")
+    # plt.savefig(save_dir + file_suffix + datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".png")
+    # plt.cla()
 # psi_1_list = ["E:\\ResearchData\\heatmap_output\\1k_psi_1\\",
 #               "E:\\ResearchData\\heatmap_output\\ex_500_1k_psi_1\\",
 #               "E:\\workplace\\GAIN-pytorch-main\\logs_deepfake\\ex_500_exweight_1.5\\test_ex_500_exweight_1.5_s2f_psi_1_000000\\",
 #               "E:\\ResearchData\\heatmap_output\\ex_1k_exweight_1.5_PSI_1\\"]
-psi_1_list = ["E:\\ResearchData\\heatmap_output\\1k_psi_1\\",
+psi_1_list = [
               "E:\\ResearchData\\heatmap_output\\test_pretrain_no_ex_sampling_epoch_50_PSI_1\\",
-              "E:\\ResearchData\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_PSI_1\\",
-              "E:\\ResearchData\heatmap_output\\test_ex_500_exweight_0.2_orig_sampling_epoch_50_new_exloss_PSI_1\\",
-              "E:\\ResearchData\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_epoch_50_new_exloss_PSI_1\\",
-                "E:\\ResearchData\heatmap_output\\test_ex_500_exweight_1_orig_sampling_epoch_50_new_exloss_PSI_1\\",
-                "E:\\ResearchData\heatmap_output\\test_pretrain_ex_500_exweight_1_orig_sampling_epoch_50_new_exloss_PSI_1\\",
+                "E:\\ResearchData\\heatmap_output\\test_pretrain_no_ex_no_am_orig_sampling_epoch150_PSI_1\\",
               ]
 
 
@@ -98,36 +177,52 @@ psi_1_list = ["E:\\ResearchData\\heatmap_output\\1k_psi_1\\",
 #                "E:\\ResearchData\\heatmap_output\\ex_500_2k_mixed_psi_05\\",
 #                "E:\\workplace\\GAIN-pytorch-main\\logs_deepfake\\ex_500_exweight_1.5\\test_ex_500_exweight_1.5_ffhq_s2_PSI_0_5\\",
 #                "E:\\ResearchData\\heatmap_output\\\ex_1k_exweight_1.5_PSI_0.5\\"]
-psi_05_list = ["E:\\ResearchData\\heatmap_output\\2k_mixed_psi_05\\",
+psi_05_list = [
                "E:\\ResearchData\\heatmap_output\\test_pretrain_no_ex_sampling_epoch_50_PSI_0.5\\",
-               "E:\\ResearchData\\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_PSI_0.5\\",
-               "E:\\ResearchData\\heatmap_output\\test_ex_500_exweight_0.2_orig_sampling_epoch_50_new_exloss_PSI_0.5\\",
-               "E:\\ResearchData\\heatmap_output\\test_pretrain_ex_500_exweight_0.2_orig_sampling_epoch_50_new_exloss_PSI_0.5\\",
-                "E:\\ResearchData\\heatmap_output\\test_ex_500_exweight_1_orig_sampling_epoch_50_new_exloss_PSI_0.5\\",
-                "E:\\ResearchData\\heatmap_output\\test_pretrain_ex_500_exweight_1_orig_sampling_epoch_50_new_exloss_PSI_0.5\\",
+                "E:\\ResearchData\\heatmap_output\\test_pretrain_no_ex_no_am_orig_sampling_epoch150_PSI_0.5\\",
                ]
 
 
 def main():
-    # title_list = ["no_ex_AUC",
-    #               "with_500_ex_AUC",
-    #               "with_500_ex_1.5_exweight_AUC",
-    #               "with_1k_ex_1.5_exweight_AUC"]
-    title_list = ["no_ex_AUC",
-                  "pretrain_no_ex_AUC",
-                  "500_ex_0.2_exweight_AUC",
-                  "500_ex_0.2_exweight_new_exloss_AUC",
-                  "pretrain_500_ex_0.2_exweight_new_exloss_AUC",
-                  "500_ex_1_exweight_new_exloss_AUC",
-                  "pretrain_500_ex_1_exweight_new_exloss_AUC",
-                  ]
-    save_dir = "E:/ResearchData/heatmap_output/"
+    if True:
+        # title_list = ["no_ex_AUC",
+        #               "with_500_ex_AUC",
+        #               "with_500_ex_1.5_exweight_AUC",
+        #               "with_1k_ex_1.5_exweight_AUC"]
+        # title_list = ["no_ex_AUC",
+        #               "pretrain_no_ex_AUC",
+        #               "with_500_ex_0.2_exweight_origSampling_AUC",
+        #               "pretrain_with_500_ex_0.2_exweight_origSampling_newEx_AUC",
+        #               ]
+        title_list = ["E-g: pretrain_no_ex_AUC",
+                      "E-m-2: pretrain_no_am_no_ex_150epoch_AUC",
+                     ]
+        save_dir = "E:/ResearchData/heatmap_output/"
 
-    # psi_05_list = ["E:\\ResearchData\\heatmap_output\\\ex_1k_exweight_1.5_PSI_0.5\\"]
+        # psi_05_list = ["E:\\ResearchData\\heatmap_output\\\ex_1k_exweight_1.5_PSI_0.5\\"]
 
-    # output_single_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
-    output_multiple_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
-    output_multiple_roc(psi_1_list, title_list, lim_offset=1, save_dir=save_dir)
+        # output_single_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
+        output_multiple_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
+        output_multiple_roc(psi_1_list, title_list, lim_offset=1, save_dir=save_dir)
+    else:
+        losses_list = ["E:\\ResearchData\\heatmap_output\\20220617_heatmap_output_pretrain_ex_500_exweight_0.2_orig_sampling_newex_v4\\y_cl_loss_exsup_img.npy",
+                       "E:\\ResearchData\\heatmap_output\\20220617_heatmap_output_pretrain_ex_500_exweight_0.2_orig_sampling_newex_v4\\y_am_loss_exsup_img.npy",
+                       "E:\\ResearchData\\heatmap_output\\20220617_heatmap_output_pretrain_ex_500_exweight_0.2_orig_sampling_newex_v4\\y_ex_loss_exsup_img.npy",
+                       ]
+        title_list = ["cl loss",
+                      "am loss",
+                      "ex loss",
+                      ]
+        x_list = "E:\\ResearchData\\heatmap_output\\20220617_heatmap_output_pretrain_ex_500_exweight_0.2_orig_sampling_newex_v4\\x_epoch_exsup_img.npy"
+        img_idx_list = ["E:\\ResearchData\\heatmap_output\\20220617_heatmap_output_pretrain_ex_500_exweight_0.2_orig_sampling_newex_v4\\img_idx.npy"]
+        img_idx = 1
+        lim_offset = 0
+        save_dir = "E:/ResearchData/heatmap_output/20220617_heatmap_output_pretrain_ex_500_exweight_0.2_orig_sampling_newex_v4/losses/"
+        output_losses(losses_list, title_list, x_list, img_idx_list, img_idx, lim_offset, save_dir)
+
+
+
+
 
 if __name__ == '__main__':
     main()
