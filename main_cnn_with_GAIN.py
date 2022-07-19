@@ -182,21 +182,21 @@ def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode
 
 
 def monitor_validation_epoch(writer, validation_dataset, args, pos_count,
-                             epoch_test_am_loss, y_pred, y_true, epoch, logger):
+                             epoch_test_am_loss, y_pred, y_true, epoch, logger, mode):
     num_test_samples = len(validation_dataset)
     r_acc = accuracy_score(y_true[y_true == 0], y_pred[y_true == 0] > 0.5)
     f_acc = accuracy_score(y_true[y_true == 1], y_pred[y_true == 1] > 0.5)
     acc = accuracy_score(y_true, y_pred > 0.5)
     ap = average_precision_score(y_true, y_pred)
-    print('Average epoch single validation accuracy: {:.3f}'.format(acc))
-    logger.warning('Average epoch single validation accuracy: {:.3f}'.format(acc))
-    writer.add_scalar('Loss/validation/am_total_loss', epoch_test_am_loss, epoch)
-    writer.add_scalar('Accuracy/validation/cl_accuracy_only_pos', f_acc, epoch)
-    writer.add_scalar('Accuracy/validation/cl_accuracy_only_neg', r_acc, epoch)
-    writer.add_scalar('Accuracy/validation/cl_accuracy', acc, epoch)
+    print(f'{mode}_' + 'Average epoch single validation accuracy: {:.3f}'.format(acc))
+    logger.warning(f'{mode}_' + 'Average epoch single validation accuracy: {:.3f}'.format(acc))
+    writer.add_scalar(f'Loss/validation_{mode}/am_total_loss', epoch_test_am_loss, epoch)
+    writer.add_scalar(f'Accuracy/validation_{mode}/cl_accuracy_only_pos', f_acc, epoch)
+    writer.add_scalar(f'Accuracy/validation_{mode}/cl_accuracy_only_neg', r_acc, epoch)
+    writer.add_scalar(f'Accuracy/validation_{mode}/cl_accuracy', acc, epoch)
 
     fpr, tpr, auc, threshold = roc_curve(y_true, y_pred)
-    writer.add_scalar('ROC/validation/AUC', auc, epoch)
+    writer.add_scalar(f'ROC/validation_{mode}/AUC', auc, epoch)
     # if epoch == last_epoch:
     #     save_roc_curve(test_labels.cpu().numpy(), test_differences, epoch, path)
     return acc, ap, f_acc, r_acc
@@ -245,8 +245,7 @@ def monitor_validation_viz(j, t, heatmaps, sample, masked_images, test_dataset,
         #                 global_step=epoch)
 
 
-def train_validate(args, cfg, model, device, validation_loader, validation_dataset, writer, epoch, last_epoch,
-                   output_path, logger):
+def train_validate(args, cfg, model, device, validation_loader, validation_dataset, writer, epoch, logger, mode):
     model.eval()
 
     j = 0
@@ -282,7 +281,7 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
         j += 1
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return monitor_validation_epoch(writer, validation_dataset, args, pos_count, epoch_validation_am_loss,
-                                    y_pred, y_true, epoch, logger)
+                                    y_pred, y_true, epoch, logger, mode)
 
 
 def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count,
@@ -871,8 +870,7 @@ def main(args):
                   noex_img_idx, noex_iter_num_list)
 
         acc_val, ap_val = train_validate(args, cfg, model, device, deepfake_loader.datasets['validation'],
-                                         deepfake_loader.validation_dataset, writer, epoch, (args.total_epochs - 1),
-                                         roc_log_path, logger)[:2]
+                                         deepfake_loader.validation_dataset, writer, epoch, logger, 'psi0.5')[:2]
         if acc_val < best_score:
             adjust_learning_rate(optimizer)
             patience_count += 1
@@ -880,6 +878,8 @@ def main(args):
                 logger.warning('patience reached!')
         else:
             patience_count = 0
+        acc_val_psi1, ap_val_psi1 = train_validate(args, cfg, model, device, deepfake_loader.datasets['validation_psi1'],
+                                         deepfake_loader.validation_dataset_psi1, writer, epoch, logger, 'psi1')[:2]
         if epoch == (epochs - 1):
             print("********Testing module starts********")
             logger.warning("********Testing module starts********")

@@ -256,6 +256,10 @@ class DeepfakeLoader():
                                                          mean=mean, std=std,
                                                          transform=transform)
 
+        self.validation_dataset_psi1 = DeepfakeValidationData(root_dir=root_dir + 'validation/',
+                                                         mean=mean, std=std,
+                                                         transform=transform)
+
         self.test_dataset = DeepfakeTestData(root_dir=root_dir + 'testing/',
                                              mean=mean, std=std,
                                              transform=transform)
@@ -265,6 +269,8 @@ class DeepfakeLoader():
         test_sampler = SequentialSampler(self.test_dataset)
 
         validation_sampler = SequentialSampler(self.validation_dataset)
+
+        validation_sampler_psi1 = SequentialSampler(self.validation_dataset_psi1)
 
         train_as_test_sampler = SequentialSampler(self.train_dataset)
 
@@ -292,6 +298,13 @@ class DeepfakeLoader():
             sampler=validation_sampler,
             collate_fn=collate_fn)
 
+        psi1_validation_loader = torch.utils.data.DataLoader(
+            self.validation_dataset_psi1,
+            num_workers=num_workers,
+            batch_size=batch_size,
+            sampler=validation_sampler_psi1,
+            collate_fn=collate_fn)
+
         test_loader = torch.utils.data.DataLoader(
             self.test_dataset,
             num_workers=num_workers,
@@ -305,7 +318,7 @@ class DeepfakeLoader():
             batch_size=batch_size,
             sampler=train_as_test_sampler)
 
-        self.datasets = {'train': train_loader, 'validation': validation_loader, 'test': test_loader, 
+        self.datasets = {'train': train_loader, 'validation': validation_loader, 'validation_psi1': psi1_validation_loader, 'test': test_loader,
                          'train_as_test': train_as_test_loader }
 
     def get_test_pos_count(self, train_as_test=False):
