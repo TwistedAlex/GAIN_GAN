@@ -784,9 +784,9 @@ def main(args):
     # load from existing model
     if len(args.checkpoint_file_path_load) > 0:
         checkpoint = torch.load(args.checkpoint_file_path_load, map_location='cpu')
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        chkpnt_epoch = checkpoint['epoch'] + 1
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        chkpnt_epoch = checkpoint['total_steps'] + 1
         if 'blur' in args.checkpoint_file_path_load:
             chkpnt_epoch = 0
         model.cur_epoch = chkpnt_epoch
