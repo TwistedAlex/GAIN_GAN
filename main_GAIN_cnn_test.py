@@ -281,12 +281,16 @@ def main(args):
 
     if len(args.checkpoint_file_path_load) > 0 and 'blur' not in args.checkpoint_file_path_load:
         checkpoint = torch.load(args.checkpoint_file_path_load, map_location='cpu')
-        model.load_state_dict(checkpoint['model_state_dict'], strict=False)
-
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        chkpnt_epoch = checkpoint['epoch'] + 1
-        model.cur_epoch = chkpnt_epoch
-
+        if 'model_state_dict' in checkpoint.keys():
+            model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            chkpnt_epoch = checkpoint['epoch'] + 1
+            model.cur_epoch = chkpnt_epoch
+        else:
+            model.load_state_dict(checkpoint['model'], strict=False)
+            optimizer.load_state_dict(checkpoint['optimizer'])
+            chkpnt_epoch = checkpoint['total_steps'] + 1
+            model.cur_epoch = chkpnt_epoch
 
     epoch=chkpnt_epoch
 
