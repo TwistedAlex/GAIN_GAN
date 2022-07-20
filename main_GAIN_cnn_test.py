@@ -290,8 +290,8 @@ def main(args):
     ]
     test_psi05_batchsize = 1
     test_psi1_batchsize = 1
-    test_psi05_nepoch = 1000
-    test_psi1_nepoch = 1000
+    test_psi05_nepoch = 2000
+    test_psi1_nepoch = 2000
     heatmap_home_dir = "/server_data/image-research/"
     psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_0.5/"
     psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_1/"
@@ -316,7 +316,7 @@ def main(args):
     device = torch.device('cuda:' + str(args.deviceID))
     model = resnet50(num_classes=1).train().to(device)
     model.train()
-
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     mean = [0.485, 0.456, 0.406]
     std = [0.229, 0.224, 0.225]
     cfg = {'categories': categories}
@@ -332,6 +332,13 @@ def main(args):
     norm = Normalize(mean=mean, std=std)
     fill_color = norm(torch.tensor(args.fill_color).view(1, 3, 1, 1)).cuda()
     grad_layer = ["layer4"]
+    if len(args.checkpoint_file_path_load) > 0:
+        checkpoint = torch.load('/home/shuoli/attention_env/CNNDetection/weights/blur_jpg_prob0.5.pth', map_location='cpu')
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        chkpnt_epoch = checkpoint['total_steps'] + 1
+        chkpnt_epoch = 0
+        model.cur_epoch = chkpnt_epoch
     model = batch_GAIN_Deepfake(model=model, grad_layer=grad_layer, num_classes=num_classes,
                                 am_pretraining_epochs=args.nepoch_am,
                                 ex_pretraining_epochs=args.nepoch_ex,
@@ -342,7 +349,7 @@ def main(args):
     if len(args.checkpoint_file_path_load) > 0 and 'blur' not in args.checkpoint_file_path_load:
         checkpoint = torch.load(args.checkpoint_file_path_load, map_location='cpu')
         model.load_state_dict(checkpoint['model'])
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+
         optimizer.load_state_dict(checkpoint['optimizer'])
         chkpnt_epoch = checkpoint['total_steps'] + 1
         model.cur_epoch = chkpnt_epoch
