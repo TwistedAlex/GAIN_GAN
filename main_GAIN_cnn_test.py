@@ -314,14 +314,7 @@ def main(args):
     pathlib.Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     num_classes = len(categories)
     device = torch.device('cuda:' + str(args.deviceID))
-    model = resnet50(pretrained=False).train().to(device)
-    # source code of resnet50: https://pytorch.org/vision/stable/_modules/torchvision/models/resnet.html#resnet50
-    # change the last layer for finetuning
-
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Sequential(
-        nn.Linear(num_ftrs, num_classes).to(device)
-    )
+    model = resnet50(num_classes=1).train().to(device)
     model.train()
 
     mean = [0.485, 0.456, 0.406]
