@@ -5,7 +5,7 @@ from metrics.metrics import calc_sensitivity, save_roc_curve, save_roc_curve_wit
 from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.models import resnet50
+from models.resnet import resnet50
 from torchvision.transforms import Resize, Normalize, ToTensor
 from utils.image import show_cam_on_image, denorm, Deepfake_preprocess_image
 import PIL.Image
