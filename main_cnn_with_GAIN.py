@@ -781,13 +781,12 @@ def main(args):
     IOU_i = 0
 
     # load from existing model
-    if len(args.checkpoint_file_path_load) > 0:
+    if len(args.checkpoint_file_path_load) > 0 and 'blur' in args.checkpoint_file_path_load:
         checkpoint = torch.load(args.checkpoint_file_path_load, map_location='cpu')
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         chkpnt_epoch = checkpoint['total_steps'] + 1
-        if 'blur' in args.checkpoint_file_path_load:
-            chkpnt_epoch = 0
+        chkpnt_epoch = 0
         model.cur_epoch = chkpnt_epoch
         # if model.cur_epoch > model.am_pretraining_epochs:
         #     model.enable_am = True
@@ -823,7 +822,12 @@ def main(args):
     print('mode created')
     logger.warning('model created')
     chkpnt_epoch = 0
-
+    if len(args.checkpoint_file_path_load) > 0 and 'blur' not in args.checkpoint_file_path_load:
+        checkpoint = torch.load(args.checkpoint_file_path_load, map_location='cpu')
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        chkpnt_epoch = checkpoint['total_steps'] + 1
+        model.cur_epoch = chkpnt_epoch
     if len(args.writer_file_load) > 1:
         writer = SummaryWriter(args.output_dir + args.writer_file_load)
     else:
