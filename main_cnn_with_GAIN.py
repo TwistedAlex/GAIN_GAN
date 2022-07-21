@@ -835,6 +835,30 @@ def main(args):
             optimizer.load_state_dict(checkpoint['optimizer'])
             chkpnt_epoch = checkpoint['total_steps'] + 1
             model.cur_epoch = chkpnt_epoch
+        if model.cur_epoch > model.am_pretraining_epochs:
+            model.enable_am = True
+        if model.cur_epoch > model.ex_pretraining_epochs:
+            model.enable_ex = True
+        if 'i' in checkpoint:
+            i = checkpoint['i']
+        else:
+            i = chkpnt_epoch * args.nepoch
+        if 'total_i' in checkpoint:
+            total_i = checkpoint['total_i']
+        else:
+            total_i = 1 / 100
+        if 'am_i' in checkpoint:
+            am_i = checkpoint['am_i']
+        else:
+            am_i = (chkpnt_epoch - args.nepoch_am) * args.nepoch if args.nepoch_am >= chkpnt_epoch else 0
+        if 'ex_i' in checkpoint:
+            ex_i = checkpoint['ex_i']
+        else:
+            ex_i = (chkpnt_epoch - args.nepoch_ex) * args.nepoch if args.nepoch_ex >= chkpnt_epoch else 0
+        if 'num_train_samples' in checkpoint:
+            num_train_samples = checkpoint['num_train_samples']
+        else:
+            num_train_samples = 1
     if len(args.writer_file_load) > 1:
         writer = SummaryWriter(args.output_dir + args.writer_file_load)
     else:
