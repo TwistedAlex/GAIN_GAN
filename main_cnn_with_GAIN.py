@@ -782,7 +782,8 @@ def main(args):
 
     # load from existing model
     if len(args.checkpoint_file_path_load) > 0:
-        checkpoint = torch.load('/home/shuoli/attention_env/CNNDetection/weights/blur_jpg_prob0.5.pth', map_location='cpu')
+        checkpoint = torch.load('/home/shuoli/attention_env/CNNDetection/weights/blur_jpg_prob0.5.pth',
+                                map_location='cpu')
         model.load_state_dict(checkpoint['model'], strict=False)
         optimizer.load_state_dict(checkpoint['optimizer'])
         chkpnt_epoch = checkpoint['total_steps'] + 1
@@ -824,10 +825,16 @@ def main(args):
     chkpnt_epoch = 0
     if len(args.checkpoint_file_path_load) > 0 and 'blur' not in args.checkpoint_file_path_load:
         checkpoint = torch.load(args.checkpoint_file_path_load, map_location='cpu')
-        model.load_state_dict(checkpoint['model'], strict=False)
-        optimizer.load_state_dict(checkpoint['optimizer'])
-        chkpnt_epoch = checkpoint['total_steps'] + 1
-        model.cur_epoch = chkpnt_epoch
+        if 'model_state_dict' in checkpoint.keys():
+            model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            chkpnt_epoch = checkpoint['epoch'] + 1
+            model.cur_epoch = chkpnt_epoch
+        else:
+            model.load_state_dict(checkpoint['model'], strict=False)
+            optimizer.load_state_dict(checkpoint['optimizer'])
+            chkpnt_epoch = checkpoint['total_steps'] + 1
+            model.cur_epoch = chkpnt_epoch
     if len(args.writer_file_load) > 1:
         writer = SummaryWriter(args.output_dir + args.writer_file_load)
     else:
