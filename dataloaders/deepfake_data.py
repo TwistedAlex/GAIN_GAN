@@ -256,7 +256,7 @@ class DeepfakeLoader():
                                                          mean=mean, std=std,
                                                          transform=transform)
 
-        self.validation_dataset_psi1 = DeepfakeValidationData(root_dir='/home/shuoli/deepfake_test_data/s2f_psi_1/testing',
+        self.validation_dataset_psi1 = DeepfakeValidationData(root_dir='/home/shuoli/deepfake_test_data/s2f_psi_1/testing/',
                                                          mean=mean, std=std,
                                                          transform=transform)
 
