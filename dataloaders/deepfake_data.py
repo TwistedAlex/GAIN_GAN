@@ -246,7 +246,7 @@ class DeepfakeTestData(data.Dataset):
 class DeepfakeLoader():
     def __init__(self, root_dir, target_weight, masks_to_use, mean, std,
                  transform, collate_fn, customize_num_masks, num_masks, batch_size=1, steps_per_epoch=6000,
-                 num_workers=3):
+                 num_workers=4):
 
         self.train_dataset = DeepfakeTrainData(root_dir=root_dir + 'training/',
                                                masks_to_use=masks_to_use,
@@ -256,7 +256,7 @@ class DeepfakeLoader():
                                                          mean=mean, std=std,
                                                          transform=transform)
 
-        self.validation_dataset_psi1 = DeepfakeValidationData('/home/shuoli/deepfake_test_data/s2f_psi_1/testing/',
+        self.validation_dataset_psi1 = DeepfakeValidationData(root_dir='/home/shuoli/deepfake_test_data/s2f_psi_1/testing',
                                                          mean=mean, std=std,
                                                          transform=transform)
 
