@@ -339,7 +339,7 @@ def Deepfake_CVPR_preprocess_image(img , train , mask=-1, mean=None, std=None) -
         ])
         normilize_augment = Compose([
             ToTensor(),
-            AddGaussianNoise(),
+            # AddGaussianNoise(),
         ])
         normilize = Normalize(mean=mean, std=std)
 
