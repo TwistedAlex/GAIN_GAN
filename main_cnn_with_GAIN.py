@@ -475,6 +475,17 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
         epoch_train_am_loss += iter_am_loss
         cfg['am_i'] += 1
         am_count += 1
+    else:
+        am_labels_scores = am_scores[pos_indices]
+        am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
+        iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
+        epoch_train_am_loss += iter_am_loss
+        am_count += 1
+        if cfg['i'] % 100 == 0:
+            writer.add_scalar('Loss/train/am_loss',
+                              iter_am_loss,
+                              cfg['am_i'])
+        cfg['am_i'] += 1
     return total_loss, epoch_train_am_loss, am_count, iter_am_loss
 
 
@@ -482,6 +493,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
                    writer, total_loss, cfg, logger, epoch_train_ex_loss, ex_mode, ex_count):
     ex_loss = 0
     iter_ex_loss = 0
+
     if model.EX_enabled() and len(used_mask_indices) > 0:
         # print("External Supervision started")
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
@@ -519,6 +531,20 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
         # print(f"ex loss: {iter_ex_loss}")
         logger.warning(f"ex loss: {iter_ex_loss}")
         total_loss += args.ex_weight * ex_loss
+        cfg['ex_i'] += 1
+        ex_count += 1
+    else:
+        augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
+        augmented_masks = torch.cat(augmented_masks, dim=0)
+        squared_diff = torch.pow(heatmaps[used_mask_indices].squeeze() - augmented_masks, 2)
+        flattened_squared_diff = squared_diff.view(len(used_mask_indices), -1)
+        flattned_sum = flattened_squared_diff.sum(dim=1)
+        flatten_size = flattened_squared_diff.size(1)
+        ex_loss = (flattned_sum / flatten_size).sum() / len(used_mask_indices)
+        iter_ex_loss = (ex_loss * args.ex_weight).detach().cpu().item()
+        writer.add_scalar('Loss/train/ex_loss',
+                          iter_ex_loss,
+                          cfg['ex_i'])
         cfg['ex_i'] += 1
         ex_count += 1
     epoch_train_ex_loss += args.ex_weight * ex_loss
