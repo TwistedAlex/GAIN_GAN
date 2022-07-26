@@ -536,6 +536,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
     else:
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
         augmented_masks = torch.cat(augmented_masks, dim=0)
+        augmented_masks = torch.maximum(augmented_masks, heatmaps[used_mask_indices].squeeze())
         squared_diff = torch.pow(heatmaps[used_mask_indices].squeeze() - augmented_masks, 2)
         flattened_squared_diff = squared_diff.view(len(used_mask_indices), -1)
         flattned_sum = flattened_squared_diff.sum(dim=1)
