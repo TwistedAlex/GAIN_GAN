@@ -226,10 +226,10 @@ def main(args):
     test_psi05_nepoch = 2000
     test_psi1_nepoch = 2000
     heatmap_home_dir = "/server_data/image-research/"
-    psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_0.5/"
-    psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_1/"
-    psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
-    psi_05_input_dir = "deepfake_data/data_s2_20kT/"
+    psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + '_ffhq' # "_PSI_0.5/"
+    psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + '_CeleAHQ' # "_PSI_1/"
+    psi_1_input_dir = "/home/shuoli/GAIN_GAN/deepfake_data/test_VQGAN/celeahq/" # "/home/shuoli/deepfake_test_data/s2f_psi_1/"
+    psi_05_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/P2_weighting/" # "deepfake_data/data_s2_20kT/"
     psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
     psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
     roc_log_path = args.output_dir + "roc_log"
@@ -300,10 +300,11 @@ def main(args):
                                                      transform=Deepfake_preprocess_image,
                                                      collate_fn=my_collate)
     test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
-         deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "PSI_0.5",
+         deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "ffhq",
          logger)
     if not args.heatmap_output:
-        select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi_0.5")
+        select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "ffhq")
+    exit(1)
     # test psi 1 dataset
     deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir,
                                                      batch_size=test_psi1_batchsize,
@@ -311,10 +312,10 @@ def main(args):
                                                      transform=Deepfake_preprocess_image,
                                                      collate_fn=my_collate)
     test(cfg, model, device, deepfake_psi1_loader.datasets['test'],
-         deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "PSI_1",
+         deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "CeleAHQ",
          logger)
     if not args.heatmap_output:
-        select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "psi_1")
+        select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "CeleAHQ")
 
 
 if __name__ == '__main__':
