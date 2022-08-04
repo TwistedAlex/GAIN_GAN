@@ -62,7 +62,7 @@ def monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
                     global_step=epoch)
     writer.add_scalar('Test/' + mode + '/Accuracy/cl_accuracy', acc, epoch)
     writer.add_scalar('Test/' + mode + '/Accuracy/ap', ap, epoch)
-    writer.add_text('Test/' + mode + '/Accuracy/ap', 'Accuracy: {:.3f}'.format(ap),
+    writer.add_text('Test/' + mode + '/Accuracy/ap', 'AP: {:.3f}'.format(ap),
                     global_step=epoch)
 
     fpr, tpr, auc, threshold = roc_curve(y_true, y_pred)
@@ -194,7 +194,7 @@ def monitor_validation_epoch(writer, validation_dataset, args, pos_count,
     writer.add_scalar(f'Accuracy/validation_{mode}/cl_accuracy_only_pos', f_acc, epoch)
     writer.add_scalar(f'Accuracy/validation_{mode}/cl_accuracy_only_neg', r_acc, epoch)
     writer.add_scalar(f'Accuracy/validation_{mode}/cl_accuracy', acc, epoch)
-
+    writer.add_scalar(f'Accuracy/validation_{mode}/ap', ap, epoch)
     fpr, tpr, auc, threshold = roc_curve(y_true, y_pred)
     writer.add_scalar(f'ROC/validation_{mode}/AUC', auc, epoch)
     # if epoch == last_epoch:
@@ -338,6 +338,8 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
                           )
         writer.add_scalar('Accuracy/train/cl_accuracy',
                           acc, epoch)
+        writer.add_scalar('Accuracy/train/ap',
+                          ap, epoch)
         writer.add_scalar('Accuracy/train/cl_accuracy_only_pos',
                           f_acc,
                           epoch)
