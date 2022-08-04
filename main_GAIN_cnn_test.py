@@ -318,7 +318,7 @@ def main(args):
          deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "psi05",
          logger)
     if not args.heatmap_output:
-        select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi05")
+        select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, args.model + "_psi05")
     # test psi 1 dataset
     deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir,
                                                      batch_size=test_psi1_batchsize,
@@ -329,7 +329,7 @@ def main(args):
          deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "psi1",
          logger)
     if not args.heatmap_output:
-        select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "psi1")
+        select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, args.model + "psi1")
 
 
 if __name__ == '__main__':
