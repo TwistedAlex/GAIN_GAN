@@ -299,12 +299,11 @@ def main(args):
                                                      mean=mean, std=std,
                                                      transform=Deepfake_preprocess_image,
                                                      collate_fn=my_collate)
-    test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
-         deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "psi05",
-         logger)
-    if not args.heatmap_output:
-        select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi05")
-    exit(1)
+    # test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
+    #      deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "psi05",
+    #      logger)
+    # if not args.heatmap_output:
+    #     select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi05")
     # test psi 1 dataset
     deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir,
                                                      batch_size=test_psi1_batchsize,
