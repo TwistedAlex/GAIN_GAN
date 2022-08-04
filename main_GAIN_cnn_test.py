@@ -57,7 +57,11 @@ def monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
 
     fpr, tpr, auc, threshold = roc_curve(y_true, y_pred)
     writer.add_scalar('ROC/Test/AUC', auc, epoch)
-
+    with open(path + f'/{mode}test_res.txt', 'w') as f:
+        f.write(
+            mode + ': AP: {:2.2f}, Acc: {:2.2f}, Acc (real): {:2.2f}, Acc (fake): {:2.2f}'.format(ap * 100., acc * 100.,
+                                                                                                  r_acc * 100.,
+                                                                                                  f_acc * 100.))
     save_roc_curve(y_true, y_pred, epoch, path)
     save_roc_curve_with_threshold(y_true, y_pred, epoch, path)
 
@@ -169,6 +173,10 @@ def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode
     for file in neg_heatmaps[0:50]:
         command = 'cp ' + input_path_heatmap_neg + file + ' ' + output_path_heatmap_neg_cl
         os.system(command)
+    command = 'rm -rf ' + input_path_heatmap_pos
+    os.system(command)
+    command = 'rm -rf ' + input_path_heatmap_neg
+    os.system(command)
 
 
 parser = argparse.ArgumentParser(description='PyTorch GAIN Training')
@@ -214,6 +222,7 @@ parser.add_argument('--heatmap_output', '-o', action='store_true', help='not out
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
 parser.add_argument('--output_dir', help='path to the outputdir', type=str)
 parser.add_argument('--checkpoint_file_path_load', help='checkpoint name', type=str)
+parser.add_argument('--model', '-m', help='path to the outputdir', type=str)
 
 
 def main(args):
@@ -226,10 +235,16 @@ def main(args):
     test_psi05_nepoch = 2000
     test_psi1_nepoch = 2000
     heatmap_home_dir = "/server_data/image-research/"
-    psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_0.5/"#'_ffhq' # "_PSI_0.5/"
-    psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_1/"#'_CeleAHQ' # "_PSI_1/"
-    psi_1_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/"# "/home/shuoli/GAIN_GAN/deepfake_data/test_VQGAN/celeahq/" # "/home/shuoli/deepfake_test_data/s2f_psi_1/"
-    psi_05_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/"#"/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/P2_weighting/" # "deepfake_data/data_s2_20kT/"
+    if args.model == 's':
+        psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.mode}' + "_PSI_0.5/"#'_ffhq' # "_PSI_0.5/"
+        psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.mode}' + "_PSI_1/"#'_CeleAHQ' # "_PSI_1/"
+        psi_1_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/"# "/home/shuoli/GAIN_GAN/deepfake_data/test_VQGAN/celeahq/" # "/home/shuoli/deepfake_test_data/s2f_psi_1/"
+        psi_05_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/"#"/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/P2_weighting/" # "deepfake_data/data_s2_20kT/"
+    else:
+        psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.mode}' + "_PSI_0.5/"
+        psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.mode}' + "_PSI_1/"
+        psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
+        psi_05_input_dir = "deepfake_data/data_s2_20kT/"
     psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
     psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
     roc_log_path = args.output_dir + "roc_log"
