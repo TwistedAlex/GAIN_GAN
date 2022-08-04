@@ -237,13 +237,13 @@ def main(args):
     test_psi1_nepoch = 2000
     heatmap_home_dir = "/server_data/image-research/"
     if args.model == 's':
-        psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.mode}' + "_PSI_0.5/"#'_ffhq' # "_PSI_0.5/"
-        psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.mode}' + "_PSI_1/"#'_CeleAHQ' # "_PSI_1/"
+        psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_0.5/"#'_ffhq' # "_PSI_0.5/"
+        psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_1/"#'_CeleAHQ' # "_PSI_1/"
         psi_1_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/"# "/home/shuoli/GAIN_GAN/deepfake_data/test_VQGAN/celeahq/" # "/home/shuoli/deepfake_test_data/s2f_psi_1/"
         psi_05_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/"#"/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/P2_weighting/" # "deepfake_data/data_s2_20kT/"
     else:
-        psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.mode}' + "_PSI_0.5/"
-        psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.mode}' + "_PSI_1/"
+        psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_0.5/"
+        psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_1/"
         psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
         psi_05_input_dir = "deepfake_data/data_s2_20kT/"
     psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
