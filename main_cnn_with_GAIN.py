@@ -76,7 +76,7 @@ def monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
     save_roc_curve_with_threshold(y_true, y_pred, epoch, path)
 
 
-def viz_test_heatmap(index_img, heatmaps, sample, label_idx_list, logits_cl, cfg, path):
+def viz_test_heatmap(index_img, heatmaps, sample, label_idx_list, logits_cl, cfg, path, mapflag):
     htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
     resize = Resize(size=224)
     orig = sample['orig_images'][0].permute([2, 0, 1])
@@ -89,21 +89,21 @@ def viz_test_heatmap(index_img, heatmaps, sample, label_idx_list, logits_cl, cfg
     orig_viz = torch.cat((orig, viz), 1)
     gt = [cfg['categories'][x] for x in label_idx_list][0]
     y_scores = logits_cl.sigmoid().flatten().tolist()
+    if not mapflag:
+        if gt in ['Neg']:
+            PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
+                path + "/Neg/{:.7f}".format(y_scores[0]) + '_' + str(sample['filename'][0][:-4]) + '_' + str(
+                    index_img) + '_gt_' + gt + '.png')
+        else:
+            PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
+                path + "/Pos/{:.7f}".format(y_scores[0]) + '_' + str(sample['filename'][0][:-4]) + '_' + str(
+                    index_img) + '_gt_' + gt + '.png')
 
-    if gt in ['Neg']:
-        PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Neg/{:.7f}".format(y_scores[0]) + '_' + str(sample['filename'][0][:-4]) + '_' + str(
-                index_img) + '_gt_' + gt + '.png')
-    else:
-        PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
-            path + "/Pos/{:.7f}".format(y_scores[0]) + '_' + str(sample['filename'][0][:-4]) + '_' + str(
-                index_img) + '_gt_' + gt + '.png')
-
-    # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
-    #                 global_step=epoch)
+        # writer.add_text('Test_Heatmaps_Description/image_' + str(j) + '_' + gt, cl_text + am_text,
+        #                 global_step=epoch)
 
 
-def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_path, batchsize, mode, logger):
+def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_path, batchsize, mode, logger, mapflag):
     print("******** Test ********")
     logger.warning('******** Test ********')
     print(mode)
@@ -145,7 +145,7 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
         am_labels = [1 if x > 0.5 else 0 for x in am_scores]
         pos_count = test_dataset.positive_len()
 
-        viz_test_heatmap(j, heatmaps, sample, label_idx_list, logits_cl, cfg, output_path_heatmap)
+        viz_test_heatmap(j, heatmaps, sample, label_idx_list, logits_cl, cfg, output_path_heatmap, mapflag)
         j += 1
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
@@ -760,11 +760,11 @@ def main(args):
     psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
     psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
     roc_log_path = args.output_dir + "roc_log"
-    pathlib.Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     pathlib.Path(psi_05_heatmap_path).mkdir(parents=True, exist_ok=True)
     pathlib.Path(psi_1_input_dir).mkdir(parents=True, exist_ok=True)
-    pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
 
+    pathlib.Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
     logging.basicConfig(level=logging.DEBUG,
                         filename=args.output_dir + "/std.log",
                         format='%(asctime)s %(message)s')
@@ -961,7 +961,7 @@ def main(args):
                                                              collate_fn=my_collate)
             test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
                  deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "PSI_0.5",
-                 logger)
+                 logger, args.heatmap_output)
             if not args.heatmap_output:
                 select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi_0.5")
             # test psi 1 dataset
@@ -972,7 +972,7 @@ def main(args):
                                                              collate_fn=my_collate)
             test(cfg, model, device, deepfake_psi1_loader.datasets['test'],
                  deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "PSI_1",
-                 logger)
+                 logger, args.heatmap_output)
             if not args.heatmap_output:
                 select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "psi_1")
 
