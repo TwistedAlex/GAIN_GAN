@@ -250,19 +250,19 @@ def main(args):
         psi_05_input_dir = "deepfake_data/data_s2_20kT/"
     elif args.model == 'new':
         all_test_path = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/"
-        heatmap_paths = [args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
+        heatmap_paths = [# args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
                          args.output_dir + "/test_" + args.log_name + '_NVAE_ffhq/',
-                         args.output_dir + "/test_" + args.log_name + '_P2_celebahq/',
+                         # args.output_dir + "/test_" + args.log_name + '_P2_celebahq/',
                          args.output_dir + "/test_" + args.log_name + '_P2_ffhq/',
-                         args.output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
+                         # args.output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
                          args.output_dir + "/test_" + args.log_name + '_VQGAN_ffhq/']
-        input_dirs = [all_test_path + "NVAE_celebahq/",
+        input_dirs = [# all_test_path + "NVAE_celebahq/",
                       all_test_path + "NVAE_ffhq/",
-                      all_test_path + "P2_celebahq/",
+                      # all_test_path + "P2_celebahq/",
                       all_test_path + "P2_ffhq/",
-                      all_test_path + "VQGAN_celebahq/",
+                      # all_test_path + "VQGAN_celebahq/",
                       all_test_path + "VQGAN_ffhq/"]
-        models = ["NVAE_celebahq", "NVAE_ffhq", "P2_celebahq", "P2_ffhq", "VQGAN_celebahq", "VQGAN_ffhq"]
+        models = ["NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq"]
         for dir in input_dirs:
             pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
         for path in heatmap_paths:
