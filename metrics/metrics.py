@@ -12,7 +12,7 @@ def save_roc_curve(labels, predictions, epoch_num, path):
     roc_auc = metrics.auc(fpr, tpr)
 
     plt.title('Receiver Operating Characteristic')
-    plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % roc_auc)
+    plt.plot(fpr, tpr, 'b', label='AUC = %0.4f' % roc_auc)
     plt.legend(loc='lower right')
     # plt.plot([0, 1], [0, 1], 'r--')
     plt.xlim([0, 1])
@@ -34,7 +34,7 @@ def save_roc_curve_with_threshold(labels, predictions, epoch_num, path, fpr_thre
     # max_xy = max(fpr[-index_fpr_threshold], tpr[-index_fpr_threshold])
 
     plt.title('Receiver Operating Characteristic')
-    plt.plot(fpr, tpr, 'b', label='AUC = %0.2f' % auc)
+    plt.plot(fpr, tpr, 'b', label='AUC = %0.4f' % auc)
     plt.legend(loc='lower right')
     # plt.plot([0, 0.1], [0.9, 1], 'r--')
     plt.xlim([0, 0.1])

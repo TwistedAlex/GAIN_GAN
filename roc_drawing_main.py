@@ -1,9 +1,9 @@
 from datetime import datetime
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sklearn.metrics as metrics
-
+from sklearn.metrics import accuracy_score, average_precision_score
 
 def roc_curve(labels, preds, thresholds_count=10000):
     if len(labels) == 1:
@@ -225,4 +225,14 @@ def main():
 
 
 if __name__ == '__main__':
+
+    y_true = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_0.5\\labels.npy")
+    y_pred = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_0.5\\predictions.npy")
+    ap = average_precision_score(y_true, y_pred)
+    print(ap)
+    y_true = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_1\\labels.npy")
+    y_pred = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_1\\predictions.npy")
+    ap = average_precision_score(y_true, y_pred)
+    print(ap)
+    exit(0)
     main()

@@ -77,3 +77,6 @@ list_commands = [
 for com in list_commands:
 
     shell(com)
+files = os.listdir('E:\\ResearchData\\masks_styelgan2psi05\\000000_mouth\\')
+for file in files:
+    os.rename('E:\\ResearchData\\masks_styelgan2psi05\\000000_mouth\\'+file, 'E:\\ResearchData\\masks_styelgan2psi05\\000000_mouth\\'+file[5:])
