@@ -268,12 +268,14 @@ def main(args):
         for path in heatmap_paths:
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
-    psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
-    psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
+    if args.model != "new":
+        psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
+        psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
+        pathlib.Path(psi_05_heatmap_path).mkdir(parents=True, exist_ok=True)
+        pathlib.Path(psi_1_heatmap_path).mkdir(parents=True, exist_ok=True)
     roc_log_path = args.output_dir + "/roc_log"
-    pathlib.Path(psi_05_heatmap_path).mkdir(parents=True, exist_ok=True)
-    pathlib.Path(psi_1_heatmap_path).mkdir(parents=True, exist_ok=True)
     pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
+
 
     logging.basicConfig(level=logging.DEBUG,
                         filename=args.output_dir + "/std.log",
