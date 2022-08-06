@@ -262,7 +262,7 @@ def main(args):
                       all_test_path + "P2_ffhq/",
                       # all_test_path + "VQGAN_celebahq/",
                       all_test_path + "VQGAN_ffhq/"]
-        models = ["NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq"]
+        modes = ["NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq"]
         for dir in input_dirs:
             pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
         for path in heatmap_paths:
