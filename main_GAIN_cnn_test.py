@@ -333,7 +333,9 @@ def main(args):
 
     epoch=chkpnt_epoch
     if args.model == 'new':
+        print("begin")
         for idx in range(len(modes)):
+            print(idx)
             deepfake_psi0_loader = DeepfakeTestingOnlyLoader(input_dirs[idx],
                                                              batch_size=test_psi05_batchsize,
                                                              mean=mean, std=std,
