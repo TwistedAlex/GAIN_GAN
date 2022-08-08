@@ -255,14 +255,16 @@ def main(args):
                          # args.output_dir + "/test_" + args.log_name + '_P2_celebahq/',
                          args.output_dir + "/test_" + args.log_name + '_P2_ffhq/',
                          # args.output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
-                         args.output_dir + "/test_" + args.log_name + '_VQGAN_ffhq/']
+                         args.output_dir + "/test_" + args.log_name + '_P2_ffhq/',
+                         args.output_dir + "/test_" + args.log_name + '_diffae_ffhq/',]
         input_dirs = [# all_test_path + "NVAE_celebahq/",
                       all_test_path + "NVAE_ffhq/",
                       # all_test_path + "P2_celebahq/",
                       all_test_path + "P2_ffhq/",
                       # all_test_path + "VQGAN_celebahq/",
-                      all_test_path + "VQGAN_ffhq/"]
-        modes = ["NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq"]
+                      all_test_path + "VQGAN_ffhq/",
+                      all_test_path + "diffae_ffhq/",]
+        modes = ["NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
         for dir in input_dirs:
             pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
         for path in heatmap_paths:
