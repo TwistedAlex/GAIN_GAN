@@ -183,7 +183,10 @@ def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode
     for file in neg_heatmaps[0:50]:
         command = 'cp ' + input_path_heatmap_neg + file + ' ' + output_path_heatmap_neg_cl
         os.system(command)
-
+    command = 'rm -rf ' + input_path_heatmap_pos
+    os.system(command)
+    command = 'rm -rf ' + input_path_heatmap_neg
+    os.system(command)
 
 def monitor_validation_epoch(writer, validation_dataset, args, pos_count,
                              epoch_test_am_loss, y_pred, y_true, epoch, logger, mode):
