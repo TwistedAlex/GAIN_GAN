@@ -76,7 +76,7 @@ def monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
     save_roc_curve_with_threshold(y_true, y_pred, epoch, path)
 
 
-def viz_test_heatmap(index_img, heatmaps, sample, label_idx_list, logits_cl, cfg, path, mapflag):
+def viz_test_heatmap(index_img, heatmaps, sample, label_idx_list, logits_cl, cfg, path):
     htm = np.uint8(heatmaps[0].squeeze().cpu().detach().numpy() * 255)
     resize = Resize(size=224)
     orig = sample['orig_images'][0].permute([2, 0, 1])
@@ -89,7 +89,7 @@ def viz_test_heatmap(index_img, heatmaps, sample, label_idx_list, logits_cl, cfg
     orig_viz = torch.cat((orig, viz), 1)
     gt = [cfg['categories'][x] for x in label_idx_list][0]
     y_scores = logits_cl.sigmoid().flatten().tolist()
-    if not mapflag:
+    if not args.heatmap_output:
         if gt in ['Neg']:
             PIL.Image.fromarray(orig_viz[0].cpu().numpy(), 'RGB').save(
                 path + "/Neg/{:.7f}".format(y_scores[0]) + '_' + str(sample['filename'][0][:-4]) + '_' + str(
@@ -103,7 +103,7 @@ def viz_test_heatmap(index_img, heatmaps, sample, label_idx_list, logits_cl, cfg
         #                 global_step=epoch)
 
 
-def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_path, batchsize, mode, logger, mapflag):
+def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_path, batchsize, mode, logger):
     print("******** Test ********")
     logger.warning('******** Test ********')
     print(mode)
@@ -145,7 +145,7 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
         am_labels = [1 if x > 0.5 else 0 for x in am_scores]
         pos_count = test_dataset.positive_len()
 
-        viz_test_heatmap(j, heatmaps, sample, label_idx_list, logits_cl, cfg, output_path_heatmap, mapflag)
+        viz_test_heatmap(j, heatmaps, sample, label_idx_list, logits_cl, cfg, output_path_heatmap)
         j += 1
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
@@ -751,25 +751,48 @@ def main(args):
     categories = [
         'Neg', 'Pos'
     ]
+
+    # test preparation
     test_psi05_batchsize = 1
     test_psi1_batchsize = 1
     test_psi05_nepoch = 2000
     test_psi1_nepoch = 2000
     heatmap_home_dir = "/server_data/image-research/"
-    psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_s2_PSI_0.5/"
-    psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_s2_PSI_1/"
-    psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
-    psi_05_input_dir = "deepfake_data/data_s2_20kT/"
-    psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
-    psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
-    roc_log_path = args.output_dir + "roc_log"
-    pathlib.Path(psi_05_heatmap_path).mkdir(parents=True, exist_ok=True)
-    pathlib.Path(psi_1_input_dir).mkdir(parents=True, exist_ok=True)
+    test_output_dir = args.output_dir + "/test_test/" + args.log_name + "/"
+    pathlib.Path(test_output_dir).mkdir(parents=True, exist_ok=True)
 
-    pathlib.Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-    pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
+    all_test_path = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/"
+    heatmap_paths = [  # args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
+        test_output_dir + "/test_" + args.log_name + "_s1_PSI_0.5/",
+        test_output_dir + "/test_" + args.log_name + "_s1_PSI_1/",
+        test_output_dir + "/test_" + args.log_name + "_s2_PSI_0.5/",
+        test_output_dir+ "/test_" + args.log_name + "_s2_PSI_1/",
+        test_output_dir + "/test_" + args.log_name + '_NVAE_ffhq/',
+        # test_output_dir + "/test_" + args.log_name + '_P2_celebahq/',
+        test_output_dir + "/test_" + args.log_name + '_P2_ffhq/',
+        # test_output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
+        test_output_dir + "/test_" + args.log_name + '_VQGAN_ffhq/',
+        test_output_dir + "/test_" + args.log_name + '_diffae_ffhq/', ]
+    input_dirs = [  # all_test_path + "NVAE_celebahq/",
+        "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/",
+        "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/",
+        "deepfake_data/data_s2_20kT/"
+        "/home/shuoli/deepfake_test_data/s2f_psi_1/",
+        all_test_path + "NVAE_ffhq/",
+        # all_test_path + "P2_celebahq/",
+        all_test_path + "P2_ffhq/",
+        # all_test_path + "VQGAN_celebahq/",
+        all_test_path + "VQGAN_ffhq/",
+        all_test_path + "diffae_ffhq/", ]
+    modes = ["s1_psi_0.5", "s1_psi_1", "s2_psi_0.5", "s2_psi_1", "NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
+    for dir in input_dirs:
+        pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
+    for path in heatmap_paths:
+        pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+
+
     logging.basicConfig(level=logging.DEBUG,
-                        filename=args.output_dir + "/std.log",
+                        filename=test_output_dir + "/std.log",
                         format='%(asctime)s %(message)s')
     logger = logging.getLogger('PIL')
     logger.setLevel(logging.WARNING)
@@ -957,27 +980,21 @@ def main(args):
             print("********Testing module starts********")
             logger.warning("********Testing module starts********")
             # test psi 0.5 dataset
-            deepfake_psi0_loader = DeepfakeTestingOnlyLoader(psi_05_input_dir,
-                                                             batch_size=test_psi05_batchsize,
-                                                             mean=mean, std=std,
-                                                             transform=Deepfake_CVPR_preprocess_image,
-                                                             collate_fn=my_collate)
-            test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
-                 deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "s2_PSI_0.5",
-                 logger, args.heatmap_output)
-            if not args.heatmap_output:
-                select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "s2_psi_0.5")
-            # test psi 1 dataset
-            deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir,
-                                                             batch_size=test_psi1_batchsize,
-                                                             mean=mean, std=std,
-                                                             transform=Deepfake_CVPR_preprocess_image,
-                                                             collate_fn=my_collate)
-            test(cfg, model, device, deepfake_psi1_loader.datasets['test'],
-                 deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "s2_PSI_1",
-                 logger, args.heatmap_output)
-            if not args.heatmap_output:
-                select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "s2_psi_1")
+
+            for idx in range(len(modes)):
+                print(idx)
+                deepfake_psi0_loader = DeepfakeTestingOnlyLoader(input_dirs[idx],
+                                                                 batch_size=test_psi05_batchsize,
+                                                                 mean=mean, std=std,
+                                                                 transform=Deepfake_preprocess_image,
+                                                                 collate_fn=my_collate)
+                test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
+                     deepfake_psi0_loader.test_dataset, writer, epoch, heatmap_paths[idx], test_psi05_batchsize,
+                     modes[idx],
+                     logger)
+                if not args.heatmap_output:
+                    select_clo_far_heatmaps(heatmap_home_dir, heatmap_paths[idx] + "/test_heatmap/", args.log_name,
+                                            args.model + modes[idx])
 
         print("finished epoch number:")
         logger.warning("finished epoch number:")
