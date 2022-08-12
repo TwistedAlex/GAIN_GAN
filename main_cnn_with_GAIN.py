@@ -756,8 +756,8 @@ def main(args):
     test_psi05_nepoch = 2000
     test_psi1_nepoch = 2000
     heatmap_home_dir = "/server_data/image-research/"
-    psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_0.5/"
-    psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_PSI_1/"
+    psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + "_s2_PSI_0.5/"
+    psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + "_s2_PSI_1/"
     psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
     psi_05_input_dir = "deepfake_data/data_s2_20kT/"
     psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
@@ -963,10 +963,10 @@ def main(args):
                                                              transform=Deepfake_CVPR_preprocess_image,
                                                              collate_fn=my_collate)
             test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
-                 deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "PSI_0.5",
+                 deepfake_psi0_loader.test_dataset, writer, epoch, psi_05_heatmap_path, test_psi05_batchsize, "s2_PSI_0.5",
                  logger, args.heatmap_output)
             if not args.heatmap_output:
-                select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "psi_0.5")
+                select_clo_far_heatmaps(heatmap_home_dir, psi_05_input_path_heatmap, args.log_name, "s2_psi_0.5")
             # test psi 1 dataset
             deepfake_psi1_loader = DeepfakeTestingOnlyLoader(psi_1_input_dir,
                                                              batch_size=test_psi1_batchsize,
@@ -974,10 +974,10 @@ def main(args):
                                                              transform=Deepfake_CVPR_preprocess_image,
                                                              collate_fn=my_collate)
             test(cfg, model, device, deepfake_psi1_loader.datasets['test'],
-                 deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "PSI_1",
+                 deepfake_psi1_loader.test_dataset, writer, epoch, psi_1_heatmap_path, test_psi1_batchsize, "s2_PSI_1",
                  logger, args.heatmap_output)
             if not args.heatmap_output:
-                select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "psi_1")
+                select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, "s2_psi_1")
 
         print("finished epoch number:")
         logger.warning("finished epoch number:")
