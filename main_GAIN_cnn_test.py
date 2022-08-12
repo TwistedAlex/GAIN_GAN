@@ -255,7 +255,7 @@ def main(args):
                          # args.output_dir + "/test_" + args.log_name + '_P2_celebahq/',
                          args.output_dir + "/test_" + args.log_name + '_P2_ffhq/',
                          # args.output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
-                         args.output_dir + "/test_" + args.log_name + '_P2_ffhq/',
+                         args.output_dir + "/test_" + args.log_name + '_VQGAN_ffhq/',
                          args.output_dir + "/test_" + args.log_name + '_diffae_ffhq/',]
         input_dirs = [# all_test_path + "NVAE_celebahq/",
                       all_test_path + "NVAE_ffhq/",
