@@ -994,7 +994,7 @@ def main(args):
                      logger)
                 if not args.heatmap_output:
                     select_clo_far_heatmaps(heatmap_home_dir, heatmap_paths[idx] + "/test_heatmap/", args.log_name,
-                                            args.model + modes[idx])
+                                            modes[idx])
 
         print("finished epoch number:")
         logger.warning("finished epoch number:")
