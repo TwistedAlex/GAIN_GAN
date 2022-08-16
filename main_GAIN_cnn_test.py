@@ -59,7 +59,10 @@ def monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
     writer.add_scalar('ROC/Test/AUC', auc, epoch)
     with open(path + f'/{mode}test_res.txt', 'w') as f:
         f.write(
-            mode + ': AP: {:2.2f}, Acc: {:2.2f}, Acc (real): {:2.2f}, Acc (fake): {:2.2f}'.format(ap * 100., acc * 100.,
+            mode + ': AP: {:2.2f}, AUC: {:2.2f}, Acc: {:2.2f}, Acc (real): {:2.2f}, Acc (fake): {:2.2f}'.format(
+                                                                                                ap * 100.,
+                                                                                                auc * 100,
+                                                                                                  acc * 100.,
                                                                                                   r_acc * 100.,
                                                                                                   f_acc * 100.))
     save_roc_curve(y_true, y_pred, epoch, path)
