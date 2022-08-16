@@ -776,7 +776,7 @@ def main(args):
     input_dirs = [  # all_test_path + "NVAE_celebahq/",
         "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/",
         "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/",
-        "deepfake_data/data_s2_20kT/"
+        "deepfake_data/data_s2_20kT/",
         "/home/shuoli/deepfake_test_data/s2f_psi_1/",
         all_test_path + "NVAE_ffhq/",
         # all_test_path + "P2_celebahq/",
