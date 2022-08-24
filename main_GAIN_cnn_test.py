@@ -286,7 +286,7 @@ def main(args):
         for path in heatmap_paths:
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
-    if args.model != "new":
+    if args.model == "s" or args.model == "s2":
         psi_05_input_path_heatmap = psi_05_heatmap_path + "/test_heatmap/"
         psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
         pathlib.Path(psi_05_heatmap_path).mkdir(parents=True, exist_ok=True)
