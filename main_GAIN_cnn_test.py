@@ -268,8 +268,21 @@ def main(args):
                       all_test_path + "VQGAN_ffhq/",
                       all_test_path + "diffae_ffhq/",]
         modes = ["NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
-        for dir in input_dirs:
-            pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
+        for mydir in input_dirs:
+            pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
+        for path in heatmap_paths:
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    elif args.model == 'debg':
+        heatmap_paths = [  # args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
+            args.output_dir + "/test_" + args.log_name + '_s2p1_debg/',
+            args.output_dir + "/test_" + args.log_name + '_P2_ffhq_debg/',
+        ]
+        input_dirs = ["/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s2/s2p1_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/P2/P2_ffhq_debg/",
+                      ]
+        modes = ["s2p1_debg", "P2_ffhq_debg", ]
+        for mydir in input_dirs:
+            pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
         for path in heatmap_paths:
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
 
@@ -278,9 +291,6 @@ def main(args):
         psi_1_input_path_heatmap = psi_1_heatmap_path + "/test_heatmap/"
         pathlib.Path(psi_05_heatmap_path).mkdir(parents=True, exist_ok=True)
         pathlib.Path(psi_1_heatmap_path).mkdir(parents=True, exist_ok=True)
-    roc_log_path = args.output_dir + "/roc_log"
-    pathlib.Path(roc_log_path).mkdir(parents=True, exist_ok=True)
-
 
     logging.basicConfig(level=logging.DEBUG,
                         filename=args.output_dir + "/std.log",
@@ -337,6 +347,7 @@ def main(args):
             model.cur_epoch = chkpnt_epoch
 
     epoch=chkpnt_epoch
+
     if args.model == 'new':
         print("begin")
         for idx in range(len(modes)):
@@ -352,7 +363,7 @@ def main(args):
             if not args.heatmap_output:
                 select_clo_far_heatmaps(heatmap_home_dir, heatmap_paths[idx] + "/test_heatmap/", args.log_name,
                                         args.model + modes[idx])
-    else:
+    elif args.model == 's' or args.model == 's2':
         deepfake_psi0_loader = DeepfakeTestingOnlyLoader(psi_05_input_dir,
                                                          batch_size=test_psi05_batchsize,
                                                          mean=mean, std=std,
@@ -375,6 +386,21 @@ def main(args):
         if not args.heatmap_output:
             select_clo_far_heatmaps(heatmap_home_dir, psi_1_input_path_heatmap, args.log_name, args.model + "_psi1")
 
+    elif args.model == 'debg':
+        print("begin")
+        for idx in range(len(modes)):
+            print(idx)
+            deepfake_psi0_loader = DeepfakeTestingOnlyLoader(input_dirs[idx],
+                                                             batch_size=test_psi05_batchsize,
+                                                             mean=mean, std=std,
+                                                             transform=Deepfake_preprocess_image,
+                                                             collate_fn=my_collate)
+            test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
+                 deepfake_psi0_loader.test_dataset, writer, epoch, heatmap_paths[idx], test_psi05_batchsize, modes[idx],
+                 logger)
+            if not args.heatmap_output:
+                select_clo_far_heatmaps(heatmap_home_dir, heatmap_paths[idx] + "/test_heatmap/", args.log_name,
+                                        args.model + modes[idx])
 
 if __name__ == '__main__':
     args = parser.parse_args()
