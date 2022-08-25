@@ -277,10 +277,17 @@ def main(args):
             args.output_dir + "/test_" + args.log_name + '_s2p1_debg/',
             args.output_dir + "/test_" + args.log_name + '_P2_ffhq_debg/',
         ]
-        input_dirs = ["/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s2/s2p1_debg/",
-                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/P2/P2_ffhq_debg/",
+        input_dirs = ["/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s1/s1p05_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s1/s1p1_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s2/s2p05_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s2/s2p1_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/nvae/nvae_ffhq_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/vqgan/vqgan_ffhq_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/p2/P2_ffhq_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/diffae/diffae_ffhq_debg/",
                       ]
-        modes = ["s2p1_debg", "P2_ffhq_debg", ]
+        modes = ["s1p05_debg", "s1p1_debg", "s2p05_debg", "s2p1_debg",
+                 "nvae_ffhq_debg", "vqgan_ffhq_debg", "P2_ffhq_debg", "diffae_ffhq_debg", ]
         for mydir in input_dirs:
             pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
         for path in heatmap_paths:

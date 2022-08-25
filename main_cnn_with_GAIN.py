@@ -738,6 +738,7 @@ parser.add_argument('--cl_weight', default=1, type=int, help='classification los
 parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
 parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
 parser.add_argument('--ex_mode', '-e', action='store_true', help='use new external supervision logic')
+parser.add_argument('--debg_mode', '-d', action='store_true', help='use debg testing mode')
 parser.add_argument('--heatmap_output', '-o', action='store_true', help='not output heatmaps')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
 parser.add_argument('--customize_num_masks', action='store_true', help='resume from checkpoint')
@@ -763,31 +764,46 @@ def main(args):
     heatmap_home_dir = "/server_data/image-research/"
     test_output_dir = args.output_dir + "/test_test/" + args.log_name + "/"
     pathlib.Path(test_output_dir).mkdir(parents=True, exist_ok=True)
-
-    all_test_path = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/"
-    heatmap_paths = [  # args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
-        test_output_dir + "/test_" + args.log_name + "_s1_PSI_0.5/",
-        test_output_dir + "/test_" + args.log_name + "_s1_PSI_1/",
-        test_output_dir + "/test_" + args.log_name + "_s2_PSI_0.5/",
-        test_output_dir+ "/test_" + args.log_name + "_s2_PSI_1/",
-        test_output_dir + "/test_" + args.log_name + '_NVAE_ffhq/',
-        # test_output_dir + "/test_" + args.log_name + '_P2_celebahq/',
-        test_output_dir + "/test_" + args.log_name + '_P2_ffhq/',
-        # test_output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
-        test_output_dir + "/test_" + args.log_name + '_VQGAN_ffhq/',
-        test_output_dir + "/test_" + args.log_name + '_diffae_ffhq/', ]
-    input_dirs = [  # all_test_path + "NVAE_celebahq/",
-        "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/",
-        "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/",
-        "deepfake_data/data_s2_20kT/",
-        "/home/shuoli/deepfake_test_data/s2f_psi_1/",
-        all_test_path + "NVAE_ffhq/",
-        # all_test_path + "P2_celebahq/",
-        all_test_path + "P2_ffhq/",
-        # all_test_path + "VQGAN_celebahq/",
-        all_test_path + "VQGAN_ffhq/",
-        all_test_path + "diffae_ffhq/", ]
-    modes = ["s1_psi_0.5", "s1_psi_1", "s2_psi_0.5", "s2_psi_1", "NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
+    if not args.debg_mode:
+        all_test_path = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/"
+        heatmap_paths = [  # args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
+            test_output_dir + "/test_" + args.log_name + "_s1_PSI_0.5/",
+            test_output_dir + "/test_" + args.log_name + "_s1_PSI_1/",
+            test_output_dir + "/test_" + args.log_name + "_s2_PSI_0.5/",
+            test_output_dir+ "/test_" + args.log_name + "_s2_PSI_1/",
+            test_output_dir + "/test_" + args.log_name + '_NVAE_ffhq/',
+            # test_output_dir + "/test_" + args.log_name + '_P2_celebahq/',
+            test_output_dir + "/test_" + args.log_name + '_P2_ffhq/',
+            # test_output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
+            test_output_dir + "/test_" + args.log_name + '_VQGAN_ffhq/',
+            test_output_dir + "/test_" + args.log_name + '_diffae_ffhq/', ]
+        input_dirs = [  # all_test_path + "NVAE_celebahq/",
+            "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/",
+            "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/",
+            "deepfake_data/data_s2_20kT/",
+            "/home/shuoli/deepfake_test_data/s2f_psi_1/",
+            all_test_path + "NVAE_ffhq/",
+            # all_test_path + "P2_celebahq/",
+            all_test_path + "P2_ffhq/",
+            # all_test_path + "VQGAN_celebahq/",
+            all_test_path + "VQGAN_ffhq/",
+            all_test_path + "diffae_ffhq/", ]
+        modes = ["s1_psi_0.5", "s1_psi_1", "s2_psi_0.5", "s2_psi_1", "NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
+    else:
+        heatmap_paths = [
+            args.output_dir + "/test_" + args.log_name + '_s2p1_debg/',
+            args.output_dir + "/test_" + args.log_name + '_P2_ffhq_debg/',]
+        input_dirs = ["/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s1/s1p05_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s1/s1p1_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s2/s2p05_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s2/s2p1_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/nvae/nvae_ffhq_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/vqgan/vqgan_ffhq_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/p2/P2_ffhq_debg/",
+                      "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/diffae/diffae_ffhq_debg/",
+                      ]
+        modes = ["s1p05_debg", "s1p1_debg", "s2p05_debg", "s2p1_debg",
+                 "nvae_ffhq_debg", "vqgan_ffhq_debg", "P2_ffhq_debg", "diffae_ffhq_debg", ]
     for dir in input_dirs:
         pathlib.Path(dir).mkdir(parents=True, exist_ok=True)
     for path in heatmap_paths:
