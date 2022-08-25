@@ -791,8 +791,14 @@ def main(args):
         modes = ["s1_psi_0.5", "s1_psi_1", "s2_psi_0.5", "s2_psi_1", "NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
     else:
         heatmap_paths = [
+            args.output_dir + "/test_" + args.log_name + '_s1p05_debg/',
+            args.output_dir + "/test_" + args.log_name + '_s1p1_debg/',
+            args.output_dir + "/test_" + args.log_name + '_s2p05_debg/',
             args.output_dir + "/test_" + args.log_name + '_s2p1_debg/',
-            args.output_dir + "/test_" + args.log_name + '_P2_ffhq_debg/',]
+            args.output_dir + "/test_" + args.log_name + '_nvae_ffhq_debg/',
+            args.output_dir + "/test_" + args.log_name + '_vqgan_ffhq_debg/',
+            args.output_dir + "/test_" + args.log_name + '_P2_ffhq_debg/',
+            args.output_dir + "/test_" + args.log_name + '_diffae_ffhq_debg/',]
         input_dirs = ["/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s1/s1p05_debg/",
                       "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s1/s1p1_debg/",
                       "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s2/s2p05_debg/",

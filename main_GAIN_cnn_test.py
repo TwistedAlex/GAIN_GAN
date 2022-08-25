@@ -273,9 +273,15 @@ def main(args):
         for path in heatmap_paths:
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
     elif args.model == 'debg':
-        heatmap_paths = [  # args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
+        heatmap_paths = [
+            args.output_dir + "/test_" + args.log_name + '_s1p05_debg/',
+            args.output_dir + "/test_" + args.log_name + '_s1p1_debg/',
+            args.output_dir + "/test_" + args.log_name + '_s2p05_debg/',
             args.output_dir + "/test_" + args.log_name + '_s2p1_debg/',
+            args.output_dir + "/test_" + args.log_name + '_nvae_ffhq_debg/',
+            args.output_dir + "/test_" + args.log_name + '_vqgan_ffhq_debg/',
             args.output_dir + "/test_" + args.log_name + '_P2_ffhq_debg/',
+            args.output_dir + "/test_" + args.log_name + '_diffae_ffhq_debg/',
         ]
         input_dirs = ["/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s1/s1p05_debg/",
                       "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/s1/s1p1_debg/",
