@@ -42,11 +42,16 @@ def load_func(path, file, all_files):
     mask_file = img_name+'m'+'.'+format
     if all_files is not None and label == 1 and mask_file in all_files:
         path_to_mask = os.path.join(path, mask_file)
+        if mask_file in os.listdir(os.path.join(path[:-13], 'bg')):
+            path_to_bg = os.path.join(os.path.join(path[:-13], 'bg'), mask_file)
+            p_bg = PIL.Image.open(path_to_bg).convert('RGB')
+            np_bg = np.asarray(p_bg)
+            tensor_bg = torch.tensor(np_bg)
         p_mask = PIL.Image.open(path_to_mask).convert('RGB')
         np_mask = np.asarray(p_mask)
         tensor_mask = torch.tensor(np_mask)
-        return tensor_image, tensor_mask, label, source, file
-    return tensor_image, torch.tensor(-1), label, source, file
+        return tensor_image, tensor_mask, label, source, file, tensor_bg
+    return tensor_image, torch.tensor(-1), label, source, file, torch.tensor(-1),
 
 
 def load_tuple_func(path, file, all_files):
@@ -152,10 +157,10 @@ class DeepfakeTrainData(data.Dataset):
                                              mean=self.mean, std=self.std)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
-                      [augmented_mask]+[True] + [res[2]] + [res[3]] + [res[4]]
+                      [augmented_mask]+[True] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
             else:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]] +\
-                      [augmented_mask]+[False] + [res[2]] + [res[3]] + [res[4]]
+                      [augmented_mask]+[False] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
         else:
             res = list(self.loader(self.neg_root_dir,
                                    self.all_cl_images[index], None))
@@ -164,7 +169,7 @@ class DeepfakeTrainData(data.Dataset):
                                          mask=self.dummy_mask.squeeze().permute([2, 0, 1]), train=True,
                                          mean=self.mean, std=self.std)
             res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + \
-                  [np.array(-1)] + [False] + [res[2]] + [res[3]] + [res[4]]
+                  [np.array(-1)] + [False] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
         res.append(index)
         return res
 
@@ -201,7 +206,7 @@ class DeepfakeValidationData(data.Dataset):
             self.transform(img=res[0].squeeze().numpy(),
                            train=False, mean=self.mean, std=self.std)
         res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + [np.array(-1)] +\
-              [False] + [res[2]] + [res[3]] + [res[4]]
+              [False] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
         res.append(index)
         return res
 
@@ -235,7 +240,7 @@ class DeepfakeTestData(data.Dataset):
             self.transform(img=res[0].squeeze().numpy(),
                            train=False, mean=self.mean, std=self.std)
         res = [res[0]] + [preprocessed] + [augmented] + [res[1]] + [np.array(-1)] +\
-              [False] + [res[2]] + [res[3]] + [res[4]]
+              [False] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
         res.append(index)
         return res
 

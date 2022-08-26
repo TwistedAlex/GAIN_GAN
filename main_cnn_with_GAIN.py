@@ -32,7 +32,7 @@ def adjust_learning_rate(optimizer, min_lr=1e-6):
 
 def my_collate(batch):
     orig_imgs, preprocessed_imgs, agumented_imgs, masks, preprocessed_masks, \
-    used_masks, labels, datasource, file, indices = zip(*batch)
+    used_masks, labels, datasource, file, background_mask, indices = zip(*batch)
     used_masks = [mask for mask, used in zip(preprocessed_masks, used_masks) if used == True]
     preprocessed_masks = [mask for mask in preprocessed_masks if mask.size > 1]
     res_dict = {'orig_images': orig_imgs,
@@ -40,7 +40,7 @@ def my_collate(batch):
                 'augmented_images': agumented_imgs, 'orig_masks': masks,
                 'preprocessed_masks': preprocessed_masks,
                 'used_masks': used_masks,
-                'labels': labels, 'source': datasource, 'filename': file, 'idx': indices}
+                'labels': labels, 'source': datasource, 'filename': file, 'bg_mask': background_mask, 'idx': indices}
     return res_dict
 
 
@@ -501,7 +501,7 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
     return total_loss, epoch_train_am_loss, am_count, iter_am_loss
 
 
-def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
+def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps,
                    writer, total_loss, cfg, logger, epoch_train_ex_loss, ex_mode, ex_count):
     ex_loss = 0
     iter_ex_loss = 0
@@ -510,9 +510,9 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
         # print("External Supervision started")
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
         augmented_masks = torch.cat(augmented_masks, dim=0)
-
+        # bg_masks: background is black 0, 0, 0
         if ex_mode:
-            # new logic: Image Max
+            # new logic 1: Image Max
             # external masks = Image_Max(heatmaps, pixel level masks)
             # Equation 7: L_e = (A - Image_Max(A, H))^2
             # idx_augmented = augmented_masks < heatmaps[used_mask_indices].squeeze()
@@ -525,6 +525,13 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
             # augmented_masks = heatmaps[used_mask_indices].squeeze() + augmented_masks
             # idx_augmented = augmented_masks > 255
             # augmented_masks[idx_augmented] = 255
+
+            # new logic 3: Image Max + reduce background attention to scale(0.1)
+            # r1, g1, b1 = 0, 0, 0  # black
+            # r2, g2, b2 = 255, 255, 255
+            # red, green, blue = bg_masks[:, :, 0], bg_masks[:, :, 1], bg_masks[:, :, 2]
+            # mask = (red == r1) & (green == g1) & (blue == b1)
+            # augmented_masks[mask] = augmented_masks[mask] / 10
         else:
             # e_loss calculation: equation 7
             # caculate (A^c - H^c) * (A^c - H^c): just a pixel-wise square error between the original mask and the returned from the model
@@ -594,6 +601,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         label_idx_list = sample['labels']
         augmented_batch = sample['augmented_images']
         augmented_masks = sample['used_masks']
+        bg_masks = sample['bg_mask']
         all_augmented_masks = sample['preprocessed_masks']
         datasource_list = sample['source']
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
@@ -643,7 +651,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in train_dataset.used_masks]
         total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss = handle_EX_loss(model, used_mask_indices,
-                                                                                 augmented_masks,
+                                                                                 augmented_masks, bg_masks,
                                                                                  heatmaps, writer, total_loss, cfg,
                                                                                  logger, epoch_train_ex_loss,
                                                                                  args.ex_mode, ex_count)
