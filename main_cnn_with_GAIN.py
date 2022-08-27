@@ -747,6 +747,7 @@ parser.add_argument('--am_weight', default=1, type=int, help='attention-mining l
 parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
 parser.add_argument('--ex_mode', '-e', action='store_true', help='use new external supervision logic')
 parser.add_argument('--debg_mode', '-d', action='store_true', help='use debg testing mode')
+parser.add_argument('--ex_debg_mode', 'b', action='store_true', help='use debg testing mode')
 parser.add_argument('--heatmap_output', '-o', action='store_true', help='not output heatmaps')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
 parser.add_argument('--customize_num_masks', action='store_true', help='resume from checkpoint')
