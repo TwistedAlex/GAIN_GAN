@@ -527,11 +527,11 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps
             # augmented_masks[idx_augmented] = 255
 
             # new logic 3: Image Max + reduce background attention to scale(0.1)
-            # r1, g1, b1 = 0, 0, 0  # black
+            r1, g1, b1 = 0, 0, 0  # black
             # r2, g2, b2 = 255, 255, 255
-            # red, green, blue = bg_masks[:, :, 0], bg_masks[:, :, 1], bg_masks[:, :, 2]
-            # mask = (red == r1) & (green == g1) & (blue == b1)
-            # augmented_masks[mask] = augmented_masks[mask] / 10
+            red, green, blue = bg_masks[:, :, 0], bg_masks[:, :, 1], bg_masks[:, :, 2]
+            mask = (red == r1) & (green == g1) & (blue == b1)
+            augmented_masks[mask] = augmented_masks[mask] / 10
         else:
             # e_loss calculation: equation 7
             # caculate (A^c - H^c) * (A^c - H^c): just a pixel-wise square error between the original mask and the returned from the model
