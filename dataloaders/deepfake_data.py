@@ -42,7 +42,7 @@ def load_func(path, file, all_files):
     mask_file = img_name+'m'+'.'+format
     if all_files is not None and label == 1 and mask_file in all_files:
         path_to_mask = os.path.join(path, mask_file)
-        if mask_file in os.listdir(os.path.join(path[:-13], 'bg')):
+        if 'debg' in path and mask_file in os.listdir(os.path.join(path[:-13], 'bg')):
             path_to_bg = os.path.join(os.path.join(path[:-13], 'bg'), mask_file)
             p_bg = PIL.Image.open(path_to_bg).convert('RGB')
             np_bg = np.asarray(p_bg)
