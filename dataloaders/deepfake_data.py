@@ -43,11 +43,11 @@ def load_func(path, file, all_files):
     if all_files is not None and label == 1 and mask_file in all_files:
         path_to_mask = os.path.join(path, mask_file)
         tensor_bg = torch.tensor(-1)
-        if 'stylegan_images/psi0.5' in path and mask_file in os.listdir(os.path.join(path[:-13], 'bg')):
-            path_to_bg = os.path.join(os.path.join(path[:-13], 'bg'), mask_file)
-            p_bg = PIL.Image.open(path_to_bg).convert('RGB')
-            np_bg = np.asarray(p_bg)
-            tensor_bg = torch.tensor(np_bg)
+        # if 'stylegan_images/psi0.5' in path and mask_file in os.listdir(os.path.join(path[:-13], 'bg')):
+        #     path_to_bg = os.path.join(os.path.join(path[:-13], 'bg'), mask_file)
+        #     p_bg = PIL.Image.open(path_to_bg).convert('RGB')
+        #     np_bg = np.asarray(p_bg)
+        #     tensor_bg = torch.tensor(np_bg)
         p_mask = PIL.Image.open(path_to_mask).convert('RGB')
         np_mask = np.asarray(p_mask)
         tensor_mask = torch.tensor(np_mask)
@@ -136,7 +136,7 @@ class DeepfakeTrainData(data.Dataset):
         self.std = std
         self.transform = transform
         self.dummy_mask = torch.tensor(np.zeros_like(np_image))
-
+        self.flag = 'stylegan_images/psi0.5' in self.pos_root_dir
 
     def __len__(self):
         return len(self.all_cl_images)

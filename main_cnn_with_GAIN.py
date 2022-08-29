@@ -531,7 +531,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps
                 print("ex_debg_mode loss")
                 r1, g1, b1 = 0, 0, 0  # black
                 # r2, g2, b2 = 255, 255, 255
-                print(len(bg_masks))
+                print(len(bg_masks)) # 20
                 print(bg_masks[0].shape)
                 exit(1)
                 red, green, blue = bg_masks[:, :, 0], bg_masks[:, :, 1], bg_masks[:, :, 2]
