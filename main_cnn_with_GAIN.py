@@ -717,6 +717,7 @@ parser.add_argument('--total_epochs', type=int, default=35, help='total number o
 parser.add_argument('--nepoch', type=int, default=6000, help='number of iterations per epoch')
 parser.add_argument('--nepoch_am', type=int, default=100, help='number of epochs to train without am loss')
 parser.add_argument('--nepoch_ex', type=int, default=1, help='number of epochs to train without ex loss')
+parser.add_argument('--ex_ratio', default=1.00, type=float, help='ratio of epochs that train with ex loss(starting 0)')
 parser.add_argument('--masks_to_use', type=float, default=0.1,
                     help='the relative number of masks to use in ex-supevision training')
 
@@ -919,7 +920,8 @@ def main(args):
                                 ex_pretraining_epochs=args.nepoch_ex,
                                 fill_color=fill_color,
                                 test_first_before_train=test_first_before_train,
-                                grad_magnitude=args.grad_magnitude)
+                                grad_magnitude=args.grad_magnitude,
+                                last_ex_epoch=int(args.ex_ratio * epochs))
     print('mode created')
     logger.warning('model created')
     chkpnt_epoch = 0

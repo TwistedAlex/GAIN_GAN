@@ -37,7 +37,7 @@ class FreezedBnModel(nn.Module):
 class batch_GAIN_Deepfake(nn.Module):
     def __init__(self, model, grad_layer, num_classes, fill_color,
                  am_pretraining_epochs=1, ex_pretraining_epochs=1,
-                 test_first_before_train=False, grad_magnitude=1):
+                 test_first_before_train=False, grad_magnitude=1, last_ex_epoch=500):
         super(batch_GAIN_Deepfake, self).__init__()
 
         self.model = model
@@ -67,6 +67,7 @@ class batch_GAIN_Deepfake(nn.Module):
 
         self.am_pretraining_epochs = am_pretraining_epochs
         self.ex_pretraining_epochs = ex_pretraining_epochs
+        self.last_ex_epoch = last_ex_epoch
         self.cur_epoch = 0
         if test_first_before_train == True:
             self.cur_epoch = -1
@@ -181,6 +182,8 @@ class batch_GAIN_Deepfake(nn.Module):
             self.enable_am = True
         if self.cur_epoch >= self.ex_pretraining_epochs:
             self.enable_ex = True
+        if self.cur_epoch >= self.last_ex_epoch:
+            self.enable_ex = False
 
     def AM_enabled(self):
         return self.enable_am
