@@ -189,7 +189,7 @@ class batch_GAIN_Deepfake(nn.Module):
             em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
             print("em_mask.shape")
             print(em_mask.shape)
-            em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + e_masks
+            em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + em_mask
             PIL.Image.fromarray(em_masked_image.cpu().numpy(), 'RGB').save('/home/shuoli/masked.png')
             print("em_masked_image.shape")
             print(em_masked_image.shape)
