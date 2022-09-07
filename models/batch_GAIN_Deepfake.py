@@ -113,7 +113,7 @@ class batch_GAIN_Deepfake(nn.Module):
 
         return ohe
 
-    def forward(self, images, labels): #TODO: no need for saving the hook results ; Put Nan
+    def forward(self, images, labels, train_flag=False, masks_batch=None, ): #TODO: no need for saving the hook results ; Put Nan
 
         # Remember, only do back-probagation during the training. During the validation, it will be affected by bachnorm
         # dropout, etc. It leads to unstable validation score. It is better to visualize attention maps at the testset
@@ -147,10 +147,13 @@ class batch_GAIN_Deepfake(nn.Module):
         fl = self.feed_forward_features  # BS x C x H x W
         weights = F.adaptive_avg_pool2d(backward_features, 1)
         Ac = torch.mul(fl, weights).sum(dim=1, keepdim=True)
+        print("Ac.shape")
+        print(Ac.shape)
         Ac = F.relu(Ac)
         # Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear', align_corners=False)
         Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear')
-
+        print("interpolate.shape")
+        print(Ac.shape)
         Ac_min, _ = Ac.view(len(images), -1).min(dim=1)
         Ac_max, _ = Ac.view(len(images), -1).max(dim=1)
         import sys
@@ -159,17 +162,42 @@ class batch_GAIN_Deepfake(nn.Module):
                     (Ac_max.view(-1, 1, 1, 1) - Ac_min.view(-1, 1, 1, 1)
                      + eps.view(1, 1, 1, 1))
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
-
+        print("mask.shape")
+        print(mask.shape)
         masked_image = images - images * mask + mask * self.fill_color
-
+        print("masked_image.shape")
+        print(masked_image.shape)
         #masked_image.register_hook(lambda grad: grad * self.grad_magnitude) #TODO: use this to control gradient magnitude
 
         #for param in self.model.parameters(): #TODO: use this to control set gradients on/off
         #    param.requires_grad = False
 
         logits_am = self.freezed_bn_model(masked_image)
-
-        #for param in self.model.parameters(): #TODO: use this to control set gradients on/off
+        print("logits_am.shape")
+        print(logits_am.shape)
+        logits_em = 0
+        if train_flag:
+            images_em = list()
+            image_with_masks = list()
+            for idx in range(len(masks_batch)):
+                if masks_batch[idx].numel() > 1:
+                    image_with_masks.append(masks_batch[idx])
+                    images_em.append(images[idx])
+            image_with_masks_batch = tuple(map(torch.stack, zip(image_with_masks)))
+            print("image_with_masks_batch.shape")
+            print(image_with_masks_batch.shape)
+            image_with_masks_batch = torch.stack(image_with_masks_batch, dim=0).squeeze().to(torch.device('cuda:' + str(0)))
+            print("image_with_masks_batch.shape")
+            print(image_with_masks_batch.shape)
+            em_mask = torch.sigmoid(self.omega * (image_with_masks_batch - self.sigma))
+            print("em_mask.shape")
+            print(em_mask.shape)
+            em_masked_image = (images_em - images_em * em_mask) * self.fill_color + images_em
+            print("em_masked_image.shape")
+            print(em_masked_image.shape)
+            logits_em = self.model(em_masked_image)
+            exit(0)
+            #for param in self.model.parameters(): #TODO: use this to control set gradients on/off
         #    param.requires_grad = True
 
         #logits_am.register_hook(lambda grad: grad / self.grad_magnitude) #TODO: use this to control gradient magnitude
