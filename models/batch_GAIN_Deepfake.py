@@ -163,9 +163,13 @@ class batch_GAIN_Deepfake(nn.Module):
         scaled_ac = (Ac - Ac_min.view(-1, 1, 1, 1)) / \
                     (Ac_max.view(-1, 1, 1, 1) - Ac_min.view(-1, 1, 1, 1)
                      + eps.view(1, 1, 1, 1))
+        print("scaled_ac.shape")
+        print(scaled_ac.shape)
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
         print("mask.shape")
         print(mask.shape)
+        print("images.shape")
+        print(images.shape)
         masked_image = images - images * mask + mask * self.fill_color
         print("masked_image.shape")
         print(masked_image.shape)

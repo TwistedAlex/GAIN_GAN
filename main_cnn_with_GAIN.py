@@ -677,6 +677,10 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         if has_mask_flag:
             image_with_masks = torch.stack(image_with_masks, dim=0).squeeze().to(device)
             e_masks = torch.stack(e_masks, dim=0).squeeze().to(device)
+            print("image_with_masks.shape")
+            print(image_with_masks.shape)
+            print("e_masks.shape")
+            print(e_masks.shape)
 
         # starting the forward, backward, optimzer.step process
         optimizer.zero_grad()
