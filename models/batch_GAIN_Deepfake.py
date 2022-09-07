@@ -198,8 +198,7 @@ class batch_GAIN_Deepfake(nn.Module):
             em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + em_mask
             print("em_masked_image.shape")
             print(em_masked_image.shape)
-            PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-            np.uint8), 'RGB').save('/home/shuoli/masked.png')
+            PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255), 'RGB').save('/home/shuoli/masked.png')
 
             logits_em = self.model(em_masked_image)
             print("logits_em.shape")
