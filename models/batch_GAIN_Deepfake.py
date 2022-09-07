@@ -195,17 +195,18 @@ class batch_GAIN_Deepfake(nn.Module):
             print(em_mask.shape) # 224,224
             print("image_with_masks.shape")
             print(image_with_masks.shape) # 3, 224, 224
-            em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + em_mask
+            # em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + em_mask
+            em_masked_image = image_with_masks - image_with_masks * em_mask +  em_mask * self.fill_color
             print("em_masked_image.shape")
             print(em_masked_image.shape)
-            PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-                np.uint8), 'RGB').save('/home/shuoli/image.png')
-            PIL.Image.fromarray(((image_with_masks * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
-                np.uint8), 'RGB').save('/home/shuoli/image_times_mask.png')
-            PIL.Image.fromarray(((self.fill_color * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
-                np.uint8), 'RGB').save('/home/shuoli/fill_times_mask.png')
-            PIL.Image.fromarray(((em_mask[0]).cpu().detach().numpy() * 255).round().astype(
-                np.uint8), 'RGB').save('/home/shuoli/em_mask.png')
+            # PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+            #     np.uint8), 'RGB').save('/home/shuoli/image.png')
+            # PIL.Image.fromarray(((image_with_masks * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
+            #     np.uint8), 'RGB').save('/home/shuoli/image_times_mask.png')
+            # PIL.Image.fromarray(((self.fill_color * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
+            #     np.uint8), 'RGB').save('/home/shuoli/fill_times_mask.png')
+            # PIL.Image.fromarray(((em_mask[0]).cpu().detach().numpy() * 255).round().astype(
+            #     np.uint8), 'RGB').save('/home/shuoli/em_mask.png')
             PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
             np.uint8), 'RGB').save('/home/shuoli/masked.png')
 
