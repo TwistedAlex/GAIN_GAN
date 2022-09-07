@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import PIL.Image
+
 
 def is_bn(m):
     return isinstance(m, nn.modules.batchnorm.BatchNorm2d) | isinstance(m, nn.modules.batchnorm.BatchNorm1d)
@@ -113,7 +115,7 @@ class batch_GAIN_Deepfake(nn.Module):
 
         return ohe
 
-    def forward(self, images, labels, train_flag=False, image_with_masks=None, images_em=None): #TODO: no need for saving the hook results ; Put Nan
+    def forward(self, images, labels, train_flag=False, image_with_masks=None, e_masks=None): #TODO: no need for saving the hook results ; Put Nan
 
         # Remember, only do back-probagation during the training. During the validation, it will be affected by bachnorm
         # dropout, etc. It leads to unstable validation score. It is better to visualize attention maps at the testset
@@ -177,17 +179,18 @@ class batch_GAIN_Deepfake(nn.Module):
         print(logits_am.shape)
         print(logits_am)
         logits_em = 0
-        if train_flag and len(image_with_masks) > 0:
-            image_with_masks_batch = tuple(map(torch.stack, zip(image_with_masks)))
-            print("image_with_masks_batch.shape")
-            print(len(image_with_masks_batch))
-            image_with_masks_batch = torch.stack(image_with_masks_batch, dim=0).squeeze().to(torch.device('cuda:' + str(0)))
-            print("image_with_masks_batch.shape")
-            print(image_with_masks_batch.shape)
-            em_mask = torch.sigmoid(self.omega * (image_with_masks_batch - self.sigma))
+        if train_flag and len(e_masks) > 0:
+            e_masks = tuple(map(torch.stack, zip(e_masks)))
+            print("e_masks.shape")
+            print(len(e_masks))
+            torch_masks = torch.stack(e_masks, dim=0).squeeze().to(torch.device('cuda:' + str(0)))
+            print("torch_masks.shape")
+            print(torch_masks.shape)
+            em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
             print("em_mask.shape")
             print(em_mask.shape)
-            em_masked_image = (images_em - images_em * em_mask) * self.fill_color + images_em
+            em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + e_masks
+            PIL.Image.fromarray(em_masked_image.cpu().numpy(), 'RGB').save('/home/shuoli/masked.png')
             print("em_masked_image.shape")
             print(em_masked_image.shape)
             logits_em = self.model(em_masked_image)
