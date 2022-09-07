@@ -666,14 +666,17 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
 
         images_em = list()
         image_with_masks = list()
+        has_mask_flag = False
         if model.EX_enabled():
             for idx in range(len(augmented_masks)):
                 mask_tensor = torch.tensor(augmented_masks[idx])
                 if mask_tensor.numel() > 1:
                     image_with_masks.append(mask_tensor)
                     images_em.append(sample['preprocessed_images'][idx])
-        image_with_masks = torch.stack(image_with_masks, dim=0).squeeze().to(device)
-        images_em = torch.stack(images_em, dim=0).squeeze().to(device)
+                    has_mask_flag = True
+        if has_mask_flag:
+            image_with_masks = torch.stack(image_with_masks, dim=0).squeeze().to(device)
+            images_em = torch.stack(images_em, dim=0).squeeze().to(device)
 
         # starting the forward, backward, optimzer.step process
         optimizer.zero_grad()
@@ -692,7 +695,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # model forward
         lbs = labels.unsqueeze(1).float()
         logits_cl, logits_am, heatmaps, masks, masked_images = \
-            model(batch, lbs, train_flag=args.train_with_em, image_with_masks=image_with_masks, images_em=images_em,)
+            model(batch, lbs, train_flag=(args.train_with_em and has_mask_flag), image_with_masks=image_with_masks, images_em=images_em,)
 
         # prediction result recording
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
