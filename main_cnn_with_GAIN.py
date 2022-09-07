@@ -669,7 +669,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         has_mask_flag = False
         if model.EX_enabled():
             for idx in range(len(augmented_masks)):
-                mask_tensor = torch.tensor(augmented_masks[idx])
+                mask_tensor = torch.tensor(augmented_masks[idx]).unsequzze(0)
+                print("mask_tensor.shape")
+                print(mask_tensor.shape)
                 if mask_tensor.numel() > 1:
                     e_masks.append(mask_tensor)
                     image_with_masks.append(sample['preprocessed_images'][idx])
