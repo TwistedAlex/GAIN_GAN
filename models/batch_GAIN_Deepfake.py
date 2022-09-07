@@ -190,6 +190,9 @@ class batch_GAIN_Deepfake(nn.Module):
             print("em_masked_image.shape")
             print(em_masked_image.shape)
             logits_em = self.model(em_masked_image)
+            print("logits_em.shape")
+            print(logits_em.shape)
+            print(logits_em)
             exit(0)
             #for param in self.model.parameters(): #TODO: use this to control set gradients on/off
         #    param.requires_grad = True
