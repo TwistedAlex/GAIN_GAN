@@ -175,6 +175,7 @@ class batch_GAIN_Deepfake(nn.Module):
         logits_am = self.freezed_bn_model(masked_image)
         print("logits_am.shape")
         print(logits_am.shape)
+        print(logits_am)
         logits_em = 0
         if train_flag and len(image_with_masks) > 0:
             image_with_masks_batch = tuple(map(torch.stack, zip(image_with_masks)))
