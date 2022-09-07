@@ -113,7 +113,7 @@ class batch_GAIN_Deepfake(nn.Module):
 
         return ohe
 
-    def forward(self, images, labels, train_flag=False, masks_batch=None, ): #TODO: no need for saving the hook results ; Put Nan
+    def forward(self, images, labels, train_flag=False, image_with_masks=None, images_em=None): #TODO: no need for saving the hook results ; Put Nan
 
         # Remember, only do back-probagation during the training. During the validation, it will be affected by bachnorm
         # dropout, etc. It leads to unstable validation score. It is better to visualize attention maps at the testset
@@ -176,13 +176,7 @@ class batch_GAIN_Deepfake(nn.Module):
         print("logits_am.shape")
         print(logits_am.shape)
         logits_em = 0
-        if train_flag:
-            images_em = list()
-            image_with_masks = list()
-            for idx in range(len(masks_batch)):
-                if masks_batch[idx].numel() > 1:
-                    image_with_masks.append(masks_batch[idx])
-                    images_em.append(images[idx])
+        if train_flag and len(image_with_masks) > 0:
             image_with_masks_batch = tuple(map(torch.stack, zip(image_with_masks)))
             print("image_with_masks_batch.shape")
             print(image_with_masks_batch.shape)

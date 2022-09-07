@@ -663,7 +663,15 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         datasource_list = sample['source']
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
         batch = batch.to(device)
+        images_em = list()
+        image_with_masks = list()
+        if model.EX_enabled():
+            for idx in range(len(augmented_masks)):
+                if augmented_masks[idx].numel() > 1:
+                    image_with_masks.append(masks_batch[idx])
+                    images_em.append(sample['preprocessed_images'][idx])
         masks_batch = torch.stack(sample['used_masks'], dim=0).squeeze().to(device)
+
         # starting the forward, backward, optimzer.step process
         optimizer.zero_grad()
         labels = torch.Tensor(label_idx_list).to(device).long()
@@ -681,7 +689,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # model forward
         lbs = labels.unsqueeze(1).float()
         logits_cl, logits_am, heatmaps, masks, masked_images = \
-            model(batch, lbs, train_flag=True, masks_batch=masks_batch)
+            model(batch, lbs, train_flag=True, image_with_masks=image_with_masks, images_em=images_em,)
 
         # prediction result recording
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
