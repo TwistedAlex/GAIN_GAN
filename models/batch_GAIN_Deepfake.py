@@ -200,11 +200,11 @@ class batch_GAIN_Deepfake(nn.Module):
             print(em_masked_image.shape)
             PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save('/home/shuoli/image.png')
-            PIL.Image.fromarray(((image_with_masks * em_mask).cpu().detach().numpy() * 255).round().astype(
+            PIL.Image.fromarray(((image_with_masks * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save('/home/shuoli/image_times_mask.png')
-            PIL.Image.fromarray(((self.fill_color * em_mask).cpu().detach().numpy() * 255).round().astype(
+            PIL.Image.fromarray(((self.fill_color * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save('/home/shuoli/fill_times_mask.png')
-            PIL.Image.fromarray(((em_mask).cpu().detach().numpy() * 255).round().astype(
+            PIL.Image.fromarray(((em_mask[0]).cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save('/home/shuoli/em_mask.png')
             PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
             np.uint8), 'RGB').save('/home/shuoli/masked.png')
