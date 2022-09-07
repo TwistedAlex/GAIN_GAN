@@ -179,7 +179,7 @@ class batch_GAIN_Deepfake(nn.Module):
         if train_flag and len(image_with_masks) > 0:
             image_with_masks_batch = tuple(map(torch.stack, zip(image_with_masks)))
             print("image_with_masks_batch.shape")
-            print(image_with_masks_batch.shape)
+            print(len(image_with_masks_batch))
             image_with_masks_batch = torch.stack(image_with_masks_batch, dim=0).squeeze().to(torch.device('cuda:' + str(0)))
             print("image_with_masks_batch.shape")
             print(image_with_masks_batch.shape)
