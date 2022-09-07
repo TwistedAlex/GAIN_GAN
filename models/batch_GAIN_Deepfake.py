@@ -196,7 +196,8 @@ class batch_GAIN_Deepfake(nn.Module):
             print("image_with_masks.shape")
             print(image_with_masks.shape) # 3, 224, 224
             # em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + em_mask
-            em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape) - em_mask) * self.fill_color
+            em_masked_image = image_with_masks * em_mask + \
+                              (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))- em_mask) * self.fill_color
             print("em_masked_image.shape")
             print(em_masked_image.shape)
             # PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
