@@ -689,7 +689,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # model forward
         lbs = labels.unsqueeze(1).float()
         logits_cl, logits_am, heatmaps, masks, masked_images = \
-            model(batch, lbs, train_flag=True, image_with_masks=image_with_masks, images_em=images_em,)
+            model(batch, lbs, train_flag=args.train_with_em, image_with_masks=image_with_masks, images_em=images_em,)
 
         # prediction result recording
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
@@ -781,7 +781,7 @@ parser.add_argument('--nepoch_ex', type=int, default=1, help='number of epochs t
 parser.add_argument('--ex_ratio', default=1.00, type=float, help='ratio of epochs that train with ex loss(starting 0)')
 parser.add_argument('--masks_to_use', type=float, default=0.1,
                     help='the relative number of masks to use in ex-supevision training')
-
+parser.add_argument('--train_with_em', action='store_true', help='number of epochs to train without ex loss')
 parser.add_argument('--lr', default=0.0001, type=float, help='initial learning rate')
 parser.add_argument('--manualSeed', default=cfg.RNG_SEED, type=int, help='manual seed')
 parser.add_argument('--net', dest='torchmodel', help='path to the pretrained weights file', default=None, type=str)
