@@ -167,9 +167,9 @@ class batch_GAIN_Deepfake(nn.Module):
         print(scaled_ac.shape)
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
         print("mask.shape")
-        print(mask.shape)
+        print(mask.shape) # 20, 1, 224, 224
         print("images.shape")
-        print(images.shape)
+        print(images.shape) # 20, 3, 224, 224
         masked_image = images - images * mask + mask * self.fill_color
         print("masked_image.shape")
         print(masked_image.shape)
@@ -187,18 +187,18 @@ class batch_GAIN_Deepfake(nn.Module):
             e_masks = tuple(map(torch.stack, zip(e_masks)))
             print("e_masks.shape")
             print(len(e_masks))
-            torch_masks = torch.stack(e_masks, dim=0).squeeze().to(torch.device('cuda:' + str(0)))
+            torch_masks = torch.stack(e_masks, dim=0).squeeze(1).to(torch.device('cuda:' + str(0)))
             print("torch_masks.shape")
             print(torch_masks.shape)
             em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
             print("em_mask.shape")
-            print(em_mask.shape)
+            print(em_mask.shape) # 224,224
             print("image_with_masks.shape")
-            print(image_with_masks.shape)
+            print(image_with_masks.shape) # 3, 224, 224
             em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + em_mask
             print("em_masked_image.shape")
             print(em_masked_image.shape)
-            PIL.Image.fromarray(em_masked_image[0].cpu().numpy(), 'RGB').save('/home/shuoli/masked.png')
+            PIL.Image.fromarray(em_masked_image[0].permute([2, 0, 1]).cpu().numpy(), 'RGB').save('/home/shuoli/masked.png')
 
             logits_em = self.model(em_masked_image)
             print("logits_em.shape")

@@ -677,8 +677,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                     image_with_masks.append(sample['preprocessed_images'][idx])
                     has_mask_flag = True
         if has_mask_flag:
-            image_with_masks = torch.stack(image_with_masks, dim=0).squeeze().to(device)
-            e_masks = torch.stack(e_masks, dim=0).squeeze().to(device)
+            image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
+            e_masks = torch.stack(e_masks, dim=0).squeeze(1).to(device)
             print("image_with_masks.shape")
             print(image_with_masks.shape)
             print("e_masks.shape")
