@@ -296,7 +296,7 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
 
 def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count,
                         ex_count, epoch_train_ex_loss,
-                        epoch_train_am_loss, epoch_train_cl_loss,
+                        epoch_train_am_loss, epoch_train_cl_loss, epoch_train_em_loss,
                         num_train_samples, epoch_train_total_loss,
                         batchsize, train_labels,
                         test_before_train, y_true, y_pred, logger):
@@ -312,6 +312,7 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
         f"psi 0.5 = {c_psi05} psi 1 = {c_psi1} ffhq = {c_ffhq}")
     writer.add_scalar('Loss/train/Epoch_total_loss', epoch_train_total_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_cl_total_loss', epoch_train_cl_loss, epoch)
+    writer.add_scalar('Loss/train/Epoch_em_total_loss', epoch_train_em_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_am_total_loss', epoch_train_am_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_ex_total_loss', epoch_train_ex_loss, epoch)
     writer.add_scalar('Loss/train/Epoch_ex_1weight_total_loss',
@@ -325,6 +326,9 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
         print('Average epoch train ex loss: {:.3f}'.format(0 if ex_count == 0 else (epoch_train_ex_loss / ex_count)))
         logger.warning(
             'Average epoch train ex loss: {:.3f}'.format(0 if ex_count == 0 else (epoch_train_ex_loss / ex_count)))
+        print('Average epoch train em loss: {:.3f}'.format(0 if ex_count == 0 else (epoch_train_em_loss / ex_count)))
+        logger.warning(
+            'Average epoch train em loss: {:.3f}'.format(0 if ex_count == 0 else (epoch_train_em_loss / ex_count)))
         print('Average epoch train cl loss: {:.3f}'.format(
             epoch_train_cl_loss / (num_train_samples * batchsize)))
         logger.warning('Average epoch train cl loss: {:.3f}'.format(
@@ -346,6 +350,10 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
             0 if ex_count == 0 else (epoch_train_ex_loss / ex_count)),
                           epoch
                           )
+        writer.add_scalar('Loss/train/Average_em_total_loss', (
+            0 if ex_count == 0 else (epoch_train_em_loss / ex_count)),
+                          epoch
+                          )
         writer.add_scalar('Accuracy/train/cl_accuracy',
                           acc, epoch)
         writer.add_scalar('Accuracy/train/ap',
@@ -360,7 +368,7 @@ def monitor_train_epoch(args, writer, count_pos, count_neg, c_psi1, c_psi05, c_f
         writer.add_scalar('ROC/train/AUC', auc, epoch)
 
 
-def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
+def monitor_train_iteration(sample, writer, logits_cl, em_loss, cl_loss,
                             cl_loss_fn, total_loss, epoch, args, cfg, labels,
                             train_total_pos_seen, train_total_pos_correct,
                             train_total_neg_correct, train_total_neg_seen):
@@ -381,7 +389,9 @@ def monitor_train_iteration(sample, writer, logits_cl, cl_loss,
             weighted_cl_pos = cl_loss_only_on_pos_samples * args.cl_weight
             writer.add_scalar('Loss/train/cl_loss_only_on_pos_samples',
                               weighted_cl_pos.detach().cpu().item(), cfg['am_i'])
-
+        writer.add_scalar('Loss/train/em_loss_per_iter',
+                          (em_loss * args.em_weight).detach().cpu().item(),
+                          cfg['i'])
         writer.add_scalar('Loss/train/cl_loss_per_iter',
                           (cl_loss * args.cl_weight).detach().cpu().item(),
                           cfg['i'])
@@ -590,7 +600,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     count_pos, count_neg, c_psi1, c_psi05, c_ffhq, dif_i, am_count, ex_count = 0, 0, 0, 0, 0, 0, 0, 0
     train_labels = np.zeros(args.epochsize)
 
-    epoch_train_cl_loss, epoch_train_am_loss, epoch_train_ex_loss = 0, 0, 0
+    epoch_train_cl_loss, epoch_train_am_loss, epoch_train_ex_loss, epoch_train_em_loss = 0, 0, 0, 0
     epoch_train_total_loss = 0
     y_true, y_pred = [], []
     train_total_pos_correct, train_total_pos_seen = 0, 0
@@ -657,6 +667,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         cl_loss = cl_loss_fn(logits_cl, lbs)
         # print(logits_cl.shape)
         total_loss = 0
+        em_loss = 0
         if iter_em_flag:
             em_lbs = labels_with_masks.unsqueeze(1).float()
             em_loss = cl_loss_fn(logits_em, em_lbs)
@@ -674,6 +685,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             epoch_train_am_loss, am_count, writer, cfg, args, labels)
         # monitoring cl_loss per epoch
         epoch_train_cl_loss += (cl_loss * args.cl_weight).detach().cpu().item()
+        epoch_train_em_loss += (em_loss * args.em_weight).detach().cpu().item()
         # saving logits difference for ROC monitoring
 
 
@@ -696,7 +708,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         train_total_pos_seen, train_total_pos_correct, \
         train_total_neg_correct, train_total_neg_seen = \
             monitor_train_iteration(
-                sample, writer, logits_cl, cl_loss, cl_loss_fn,
+                sample, writer, logits_cl, em_loss, cl_loss, cl_loss_fn,
                 total_loss, epoch, args, cfg, labels, train_total_pos_seen,
                 train_total_pos_correct, train_total_neg_correct,
                 train_total_neg_seen)
@@ -713,6 +725,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             img_idx.append(sample['filename'])
             iter_num_list.append(cfg['i'])
             writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, cfg['ex_i'] - 1)
+            writer.add_scalar('Loss/train/Exsup_cl_loss', em_loss * args.em_weight, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, cfg['ex_i'] - 1)
         else:
@@ -730,7 +743,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     monitor_train_epoch(
         args, writer, count_pos, count_neg, c_psi1, c_psi05, c_ffhq, epoch, am_count, ex_count,
-        epoch_train_ex_loss, epoch_train_am_loss, epoch_train_cl_loss, cfg['num_train_samples'],
+        epoch_train_ex_loss, epoch_train_am_loss, epoch_train_cl_loss, epoch_train_em_loss, cfg['num_train_samples'],
         epoch_train_total_loss, args.batchsize,
         train_labels, args.test_before_train, y_true, y_pred, logger)
 
