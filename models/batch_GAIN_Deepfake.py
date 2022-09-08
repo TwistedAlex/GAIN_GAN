@@ -1,9 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import PIL.Image
-import numpy as np
-from torchvision.transforms import Normalize
 
 
 def is_bn(m):
