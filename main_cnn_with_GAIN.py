@@ -137,7 +137,7 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
         labels = torch.Tensor(label_idx_list).to(device).float()  # a list of label idx
         # output of the model based on the input images and labels
 
-        logits_cl, logits_am, heatmaps, masks, masked_images = model(batch, labels)
+        logits_cl, logits_am, heatmaps, masks, masked_images, logits_em = model(batch, labels)
 
         # Single label evaluation
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
@@ -268,7 +268,7 @@ def train_validate(args, cfg, model, device, validation_loader, validation_datas
         batch = batch.to(device)
         labels = torch.Tensor(label_idx_list).to(device).float()
 
-        logits_cl, logits_am, heatmaps, masks, masked_images = model(batch, labels)
+        logits_cl, logits_am, heatmaps, masks, masked_images, logits_em = model(batch, labels)
 
         # Single label evaluation
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
