@@ -53,10 +53,10 @@ class batch_GAIN_Deepfake(nn.Module):
         self.grad_layer = grad_layer
 
         self.num_classes = num_classes
-        self.mean = [0.5, 0.5, 0.5]
+        self.mean = mean = [0.5, 0.5, 0.5]
         self.std = [0.5, 0.5, 0.5]
         self.norm = Normalize(mean=self.mean, std=self.std)
-        self.fill_color = self.norm(torch.tensor([0.000000001, 0.000000001, 0.000000001]).view(1, 3, 1, 1)).cuda() #fill_color
+        self.fill_color = fill_color
 
         # Feed-forward features
         self.feed_forward_features = None
