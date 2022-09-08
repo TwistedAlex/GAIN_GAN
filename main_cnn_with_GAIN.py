@@ -671,8 +671,6 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         if model.EX_enabled():
             for idx in range(len(augmented_masks)):
                 mask_tensor = torch.tensor(augmented_masks[idx]).unsqueeze(0)
-                print("mask_tensor.shape")
-                print(mask_tensor.shape)
                 if mask_tensor.numel() > 1:
                     e_masks.append(mask_tensor)
                     image_with_masks.append(sample['preprocessed_images'][idx])
@@ -681,10 +679,6 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         if has_mask_flag:
             image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
             e_masks = torch.stack(e_masks, dim=0).to(device)
-            print("image_with_masks.shape")
-            print(image_with_masks.shape)
-            print("e_masks.shape")
-            print(e_masks.shape)
         iter_em_flag = args.train_with_em and has_mask_flag
 
         # starting the forward, backward, optimzer, step process
@@ -704,9 +698,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
         # model forward
         lbs = labels.unsqueeze(1).float()
-        print("lbs")
-        print(lbs.shape)
-        print(lbs)
+
         logits_cl, logits_am, heatmaps, masks, masked_images, logits_em= \
             model(batch, lbs, train_flag=iter_em_flag, image_with_masks=image_with_masks, e_masks=e_masks,)
 
@@ -719,14 +711,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         total_loss = 0
         if iter_em_flag:
             em_lbs = labels_with_masks.unsqueeze(1).float()
-            print("em_lbs")
-            print(em_lbs.shape)
-            print(em_lbs)
-            print("logits_em")
-            print(logits_em.shape)
             em_loss = cl_loss_fn(logits_em, em_lbs)
-            total_loss += em_loss * args.ex_weight
-            exit(0)
+            total_loss += em_loss * args.em_weight
+
         total_loss += cl_loss * args.cl_weight
         # AM loss computation and monitoring
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
