@@ -179,27 +179,18 @@ class batch_GAIN_Deepfake(nn.Module):
         #    param.requires_grad = False
 
         logits_am = self.freezed_bn_model(masked_image)
-        print("logits_am.shape")
-        print(logits_am.shape)
-        print(logits_am)
+
         logits_em = 0
         if train_flag and len(e_masks) > 0:
             e_masks = tuple(map(torch.stack, zip(e_masks)))
-            print("e_masks.shape")
-            print(len(e_masks))
             torch_masks = torch.stack(e_masks, dim=0).squeeze(1).to(torch.device('cuda:' + str(0)))
-            print("torch_masks.shape")
-            print(torch_masks.shape)
+            # em_mask size [2, 1, 224, 224]
             em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
-            print("em_mask.shape")
-            print(em_mask.shape) # 224,224
-            print("image_with_masks.shape")
-            print(image_with_masks.shape) # 3, 224, 224
-            # em_masked_image = (image_with_masks - image_with_masks * em_mask) * self.fill_color + em_mask
+
+            # em_masked_image size [2, 3, 224, 224]
             em_masked_image = image_with_masks * em_mask + \
                               (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))- em_mask) * self.fill_color
-            print("em_masked_image.shape")
-            print(em_masked_image.shape)
+
             PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save('/home/shuoli/image.png')
             # PIL.Image.fromarray(((image_with_masks * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
@@ -208,20 +199,17 @@ class batch_GAIN_Deepfake(nn.Module):
             #     np.uint8), 'RGB').save('/home/shuoli/fill_times_mask.png')
             # PIL.Image.fromarray(((em_mask[0]).cpu().detach().numpy() * 255).round().astype(
             #     np.uint8), 'RGB').save('/home/shuoli/em_mask.png')
-            PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-            np.uint8), 'RGB').save('/home/shuoli/masked.png')
+            PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255)
+                                .round().astype(np.uint8), 'RGB').save('/home/shuoli/masked.png')
 
-            logits_em = self.model(em_masked_image)
-            print("logits_em.shape")
-            print(logits_em.shape)
-            print(logits_em)
-            exit(0)
+            logits_em = self.model(em_masked_image) #  [2, 1]
+
             #for param in self.model.parameters(): #TODO: use this to control set gradients on/off
         #    param.requires_grad = True
 
         #logits_am.register_hook(lambda grad: grad / self.grad_magnitude) #TODO: use this to control gradient magnitude
 
-        return logits_cl, logits_am, scaled_ac, mask, masked_image
+        return logits_cl, logits_am, scaled_ac, mask, masked_image, logits_em
 
     def increase_epoch_count(self):
         self.cur_epoch += 1
