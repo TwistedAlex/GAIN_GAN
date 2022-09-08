@@ -666,6 +666,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
 
         image_with_masks = list()
         e_masks = list()
+        label_with_masks_list = list()
         has_mask_flag = False
         if model.EX_enabled():
             for idx in range(len(augmented_masks)):
@@ -675,6 +676,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                 if mask_tensor.numel() > 1:
                     e_masks.append(mask_tensor)
                     image_with_masks.append(sample['preprocessed_images'][idx])
+                    label_with_masks_list.append(sample['labels'][idx])
                     has_mask_flag = True
         if has_mask_flag:
             image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
@@ -683,10 +685,12 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             print(image_with_masks.shape)
             print("e_masks.shape")
             print(e_masks.shape)
+        iter_em_flag = args.train_with_em and has_mask_flag
 
-        # starting the forward, backward, optimzer.step process
+        # starting the forward, backward, optimzer, step process
         optimizer.zero_grad()
         labels = torch.Tensor(label_idx_list).to(device).long()
+        labels_with_masks = torch.Tensor(label_with_masks_list).to(device).long()
         # sanity check for batch pos and neg distribution (for printing) #TODO: can be removed as it checked and it is ok
         count_pos += (labels == 1).int().sum()
         count_neg += (labels == 0).int().sum()
@@ -700,8 +704,11 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
         # model forward
         lbs = labels.unsqueeze(1).float()
-        logits_cl, logits_am, heatmaps, masks, masked_images = \
-            model(batch, lbs, train_flag=(args.train_with_em and has_mask_flag), image_with_masks=image_with_masks, e_masks=e_masks,)
+        print("lbs")
+        print(lbs.shape)
+        print(lbs)
+        logits_cl, logits_am, heatmaps, masks, masked_images, logits_em= \
+            model(batch, lbs, train_flag=iter_em_flag, image_with_masks=image_with_masks, e_masks=e_masks,)
 
         # prediction result recording
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
@@ -710,6 +717,16 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         cl_loss = cl_loss_fn(logits_cl, lbs)
         # print(logits_cl.shape)
         total_loss = 0
+        if iter_em_flag:
+            em_lbs = labels_with_masks.unsqueeze(1).float()
+            print("em_lbs")
+            print(em_lbs.shape)
+            print(em_lbs)
+            print("logits_em")
+            print(logits_em.shape)
+            em_loss = cl_loss_fn(logits_em, em_lbs)
+            total_loss += em_loss * args.ex_weight
+            exit(0)
         total_loss += cl_loss * args.cl_weight
         # AM loss computation and monitoring
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
@@ -823,6 +840,7 @@ parser.add_argument('--grad_layer', help='path to the input idr', type=str, defa
 parser.add_argument('--grad_magnitude', help='grad magnitude of second path', type=int, default=1)
 parser.add_argument('--cl_weight', default=1, type=int, help='classification loss weight')
 parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
+parser.add_argument('--em_weight', default=1, type=int, help='external supervision classification loss weight')
 parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
 parser.add_argument('--ex_mode', '-e', action='store_true', help='use new external supervision logic')
 parser.add_argument('--debg_mode', '-d', action='store_true', help='use debg testing mode')
