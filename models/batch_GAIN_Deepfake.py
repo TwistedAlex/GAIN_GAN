@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import PIL.Image
 import numpy as np
+from torchvision.transforms import Normalize
+
 
 def is_bn(m):
     return isinstance(m, nn.modules.batchnorm.BatchNorm2d) | isinstance(m, nn.modules.batchnorm.BatchNorm1d)
@@ -51,8 +53,10 @@ class batch_GAIN_Deepfake(nn.Module):
         self.grad_layer = grad_layer
 
         self.num_classes = num_classes
-
-        self.fill_color = fill_color
+        self.mean = [0.485, 0.456, 0.406]
+        self.std = [0.229, 0.224, 0.225]
+        self.norm = Normalize(mean=self.mean, std=self.std)
+        self.fill_color = self.norm(torch.tensor([0, 0, 0]).view(1, 3, 1, 1)).cuda() #fill_color
 
         # Feed-forward features
         self.feed_forward_features = None
