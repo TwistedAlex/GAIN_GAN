@@ -1005,6 +1005,7 @@ def main(args):
         print("!>1")
         writer = SummaryWriter(args.output_dir + args.log_name + '_' +
                                datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+        print("writer")
 
     print("after writer loading")
     pos_to_write = args.pos_to_write_train
