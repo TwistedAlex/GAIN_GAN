@@ -578,58 +578,6 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps
     return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
 
 
-def handle_EM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
-                   epoch_train_am_loss, am_count, writer, cfg, args, labels):
-    iter_am_loss = 0
-    if not args.am_on_all and cur_pos_num > 1:
-        am_labels_scores = am_scores[pos_indices]
-        # print(am_labels_scores.shape) # torch.size [14]
-        # # print(am_labels_scores) #tensor [1, 2, 3....]grad_fn=IndexBackward
-        # print(am_labels_scores.size(0)) # 14
-        # print(am_labels_scores.sum())
-        # exit(0)
-        am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
-        # print(am_loss.shape)
-        # print(am_loss)
-        # exit(0)
-        iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
-        if model.AM_enabled():
-            total_loss += (am_loss * args.am_weight)
-        epoch_train_am_loss += iter_am_loss
-        am_count += 1
-        if cfg['i'] % 100 == 0:
-            writer.add_scalar('Loss/train/am_loss',
-                              iter_am_loss,
-                              cfg['am_i'])
-        cfg['am_i'] += 1
-        return total_loss, epoch_train_am_loss, am_count, iter_am_loss
-    if args.am_on_all:
-        am_labels_scores = am_scores[list(range(args.batchsize)), labels]
-        am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
-        iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
-        if model.AM_enabled():
-            total_loss += am_loss * args.am_weight
-        if cfg['i'] % 100 == 0:
-            writer.add_scalar('Loss/train/am_loss',
-                              iter_am_loss,
-                              cfg['am_i'])
-        epoch_train_am_loss += iter_am_loss
-        cfg['am_i'] += 1
-        am_count += 1
-    else:
-        am_labels_scores = am_scores[pos_indices]
-        am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
-        iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
-        epoch_train_am_loss += iter_am_loss
-        am_count += 1
-        if cfg['i'] % 100 == 0:
-            writer.add_scalar('Loss/train/am_loss',
-                              iter_am_loss,
-                              cfg['am_i'])
-        cfg['am_i'] += 1
-    return total_loss, epoch_train_am_loss, am_count, iter_am_loss
-
-
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
           writer, epoch, logger, y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img,
           img_idx, iter_num_list, noex_y_cl_loss_exsup_img, noex_y_am_loss_exsup_img, noex_y_ex_loss_exsup_img,

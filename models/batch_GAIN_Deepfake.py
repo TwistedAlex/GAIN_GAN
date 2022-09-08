@@ -149,13 +149,13 @@ class batch_GAIN_Deepfake(nn.Module):
         fl = self.feed_forward_features  # BS x C x H x W
         weights = F.adaptive_avg_pool2d(backward_features, 1)
         Ac = torch.mul(fl, weights).sum(dim=1, keepdim=True)
-        print("Ac.shape")
-        print(Ac.shape)
+        # print("Ac.shape")
+        # print(Ac.shape)
         Ac = F.relu(Ac)
         # Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear', align_corners=False)
         Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear')
-        print("interpolate.shape")
-        print(Ac.shape)
+        # print("interpolate.shape")
+        # print(Ac.shape)
         Ac_min, _ = Ac.view(len(images), -1).min(dim=1)
         Ac_max, _ = Ac.view(len(images), -1).max(dim=1)
         import sys
@@ -163,16 +163,16 @@ class batch_GAIN_Deepfake(nn.Module):
         scaled_ac = (Ac - Ac_min.view(-1, 1, 1, 1)) / \
                     (Ac_max.view(-1, 1, 1, 1) - Ac_min.view(-1, 1, 1, 1)
                      + eps.view(1, 1, 1, 1))
-        print("scaled_ac.shape")
-        print(scaled_ac.shape)
+        # print("scaled_ac.shape")
+        # print(scaled_ac.shape)
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
-        print("mask.shape")
-        print(mask.shape) # 20, 1, 224, 224
-        print("images.shape")
-        print(images.shape) # 20, 3, 224, 224
+        # print("mask.shape")
+        # print(mask.shape) # 20, 1, 224, 224
+        # print("images.shape")
+        # print(images.shape) # 20, 3, 224, 224
         masked_image = images - images * mask + mask * self.fill_color
-        print("masked_image.shape")
-        print(masked_image.shape)
+        # print("masked_image.shape")
+        # print(masked_image.shape)
         #masked_image.register_hook(lambda grad: grad * self.grad_magnitude) #TODO: use this to control gradient magnitude
 
         #for param in self.model.parameters(): #TODO: use this to control set gradients on/off
