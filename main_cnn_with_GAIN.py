@@ -1011,7 +1011,7 @@ def main(args):
     neg_idx = list(range(pos_count, pos_count + neg_to_write))
     idx = pos_idx + neg_idx
     counter = dict({x: 0 for x in idx})
-
+    print("loaded pretrain model")
     cfg = {'categories': categories, 'i': i, 'num_train_samples': num_train_samples,
            'am_i': am_i, 'ex_i': ex_i, 'total_i': total_i,
            'IOU_i': IOU_i, 'counter': counter}
@@ -1032,6 +1032,7 @@ def main(args):
     best_score = 0.0
     patience = 5
     patience_count = 0
+
     for epoch in range(chkpnt_epoch, epochs):
         if not test_first_before_train or \
                 (test_first_before_train and epoch != 0):
