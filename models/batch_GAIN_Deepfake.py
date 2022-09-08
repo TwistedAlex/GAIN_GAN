@@ -9,17 +9,18 @@ from torchvision.transforms import Normalize
 def is_bn(m):
     return isinstance(m, nn.modules.batchnorm.BatchNorm2d) | isinstance(m, nn.modules.batchnorm.BatchNorm1d)
 
+
 def take_bn_layers(model):
     for m in model.modules():
         if is_bn(m):
             yield m
+
 
 class FreezedBnModel(nn.Module):
     def __init__(self, model, is_train=True):
         super(FreezedBnModel, self).__init__()
         self.model = model
         self.bn_layers = list(take_bn_layers(self.model))
-
 
     def forward(self, x):
         is_train = self.bn_layers[0].training
@@ -34,7 +35,7 @@ class FreezedBnModel(nn.Module):
     def set_bn_train_status(self, is_train: bool):
         for layer in self.bn_layers:
             layer.train(mode=is_train)
-            layer.weight.requires_grad = is_train #TODO: layer.requires_grad = is_train - check is its OK
+            layer.weight.requires_grad = is_train  # TODO: layer.requires_grad = is_train - check is its OK
             layer.bias.requires_grad = is_train
 
 
@@ -46,7 +47,7 @@ class batch_GAIN_Deepfake(nn.Module):
 
         self.model = model
 
-        #using freezed BN model configuration on the second path in AM training to not influence the statistics
+        # using freezed BN model configuration on the second path in AM training to not influence the statistics
         self.freezed_bn_model = FreezedBnModel(model)
 
         # print(self.model)
@@ -54,7 +55,10 @@ class batch_GAIN_Deepfake(nn.Module):
 
         self.num_classes = num_classes
         self.fill_color = fill_color
-
+        mean = [0.5, 0.5, 0.5]
+        std = [0.5, 0.5, 0.5]
+        norm = Normalize(mean=mean, std=std)
+        self.em_fill_color = norm(torch.tensor([0.0, 0.0, 0.0]).view(1, 3, 1, 1)).cuda()
         # Feed-forward features
         self.feed_forward_features = None
         # Backward features
@@ -116,7 +120,8 @@ class batch_GAIN_Deepfake(nn.Module):
 
         return ohe
 
-    def forward(self, images, labels, train_flag=False, image_with_masks=None, e_masks=None): #TODO: no need for saving the hook results ; Put Nan
+    def forward(self, images, labels, train_flag=False, image_with_masks=None,
+                e_masks=None):  # TODO: no need for saving the hook results ; Put Nan
 
         # Remember, only do back-probagation during the training. During the validation, it will be affected by bachnorm
         # dropout, etc. It leads to unstable validation score. It is better to visualize attention maps at the testset
@@ -174,9 +179,10 @@ class batch_GAIN_Deepfake(nn.Module):
         masked_image = images - images * mask + mask * self.fill_color
         # print("masked_image.shape")
         # print(masked_image.shape)
-        #masked_image.register_hook(lambda grad: grad * self.grad_magnitude) #TODO: use this to control gradient magnitude
+        # masked_image.register_hook(lambda grad: grad * self.grad_magnitude)
+        # #TODO: use this to control gradient magnitude
 
-        #for param in self.model.parameters(): #TODO: use this to control set gradients on/off
+        # for param in self.model.parameters(): #TODO: use this to control set gradients on/off
         #    param.requires_grad = False
 
         logits_am = self.freezed_bn_model(masked_image)
@@ -189,8 +195,8 @@ class batch_GAIN_Deepfake(nn.Module):
             em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
 
             # em_masked_image size [2, 3, 224, 224]
-            em_masked_image = image_with_masks * em_mask + \
-                              (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))- em_mask) * self.fill_color
+            em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))
+                                                            - em_mask) * self.em_fill_color
 
             PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save('/home/shuoli/image.png')
@@ -203,12 +209,12 @@ class batch_GAIN_Deepfake(nn.Module):
             PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255)
                                 .round().astype(np.uint8), 'RGB').save('/home/shuoli/masked.png')
 
-            logits_em = self.model(em_masked_image) #  [2, 1]
+            logits_em = self.model(em_masked_image)  # [2, 1]
 
-            #for param in self.model.parameters(): #TODO: use this to control set gradients on/off
+            # for param in self.model.parameters(): #TODO: use this to control set gradients on/off
         #    param.requires_grad = True
 
-        #logits_am.register_hook(lambda grad: grad / self.grad_magnitude) #TODO: use this to control gradient magnitude
+        # logits_am.register_hook(lambda grad: grad / self.grad_magnitude) #TODO: use this to control gradient magnitude
 
         return logits_cl, logits_am, scaled_ac, mask, masked_image, logits_em
 
