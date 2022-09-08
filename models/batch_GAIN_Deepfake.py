@@ -55,9 +55,11 @@ class batch_GAIN_Deepfake(nn.Module):
 
         self.num_classes = num_classes
         self.fill_color = fill_color
+        print("before norm")
         mean = [0.5, 0.5, 0.5]
         std = [0.5, 0.5, 0.5]
         norm = Normalize(mean=mean, std=std)
+        print("before em fill")
         self.em_fill_color = norm(torch.tensor([0.0, 0.0, 0.0]).view(1, 3, 1, 1)).cuda()
         # Feed-forward features
         self.feed_forward_features = None
@@ -154,8 +156,8 @@ class batch_GAIN_Deepfake(nn.Module):
         fl = self.feed_forward_features  # BS x C x H x W
         weights = F.adaptive_avg_pool2d(backward_features, 1)
         Ac = torch.mul(fl, weights).sum(dim=1, keepdim=True)
-        # print("Ac.shape")
-        # print(Ac.shape)
+        print("Ac.shape")
+        print(Ac.shape)
         Ac = F.relu(Ac)
         # Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear', align_corners=False)
         Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear')
