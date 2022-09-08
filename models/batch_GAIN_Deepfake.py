@@ -53,9 +53,6 @@ class batch_GAIN_Deepfake(nn.Module):
         self.grad_layer = grad_layer
 
         self.num_classes = num_classes
-        self.mean = mean = [0.5, 0.5, 0.5]
-        self.std = [0.5, 0.5, 0.5]
-        self.norm = Normalize(mean=self.mean, std=self.std)
         self.fill_color = fill_color
 
         # Feed-forward features
