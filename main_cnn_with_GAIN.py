@@ -998,6 +998,8 @@ def main(args):
         else:
             num_train_samples = 1
     print("read pretrain")
+    writer = SummaryWriter(args.output_dir + args.log_name + '_' +
+                           datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     if len(args.writer_file_load) > 1:
         print(">1")
         writer = SummaryWriter(args.output_dir + args.writer_file_load)
