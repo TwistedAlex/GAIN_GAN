@@ -667,7 +667,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         cl_loss = cl_loss_fn(logits_cl, lbs)
         # print(logits_cl.shape)
         total_loss = 0
-        em_loss = 0
+        em_loss = torch.tensor(0.0)
         if iter_em_flag:
             em_lbs = labels_with_masks.unsqueeze(1).float()
             em_loss = cl_loss_fn(logits_em, em_lbs)
