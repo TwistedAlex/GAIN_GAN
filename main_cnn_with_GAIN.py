@@ -1003,6 +1003,8 @@ def main(args):
         writer = SummaryWriter(args.output_dir + args.writer_file_load)
     else:
         print("!>1")
+        print(args.output_dir + args.log_name + '_' +
+                               datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         writer = SummaryWriter(args.output_dir + args.log_name + '_' +
                                datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         print("writer")
