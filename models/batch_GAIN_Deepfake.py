@@ -57,7 +57,7 @@ class batch_GAIN_Deepfake(nn.Module):
         std = [0.5, 0.5, 0.5]
         norm = Normalize(mean=mean, std=std)
         print("before em fill")
-        self.em_fill_color = norm(torch.tensor([0.0, 0.0, 0.0]).view(1, 3, 1, 1)).cuda()
+        self.em_fill_color = norm(torch.tensor([228.0/255.0, 249.0/255.0, 52.0/255.0]).view(1, 3, 1, 1)).cuda()
         # Feed-forward features
         self.feed_forward_features = None
         # Backward features
