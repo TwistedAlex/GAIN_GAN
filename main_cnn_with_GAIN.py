@@ -722,7 +722,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             img_idx.append(sample['filename'])
             iter_num_list.append(cfg['i'])
             writer.add_scalar('Loss/train/Exsup_cl_loss', cl_loss * args.cl_weight, cfg['ex_i'] - 1)
-            writer.add_scalar('Loss/train/Exsup_cl_loss', em_loss * args.em_weight, cfg['ex_i'] - 1)
+            writer.add_scalar('Loss/train/Exsup_em_loss', em_loss * args.em_weight, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_am_loss', iter_am_loss, cfg['ex_i'] - 1)
             writer.add_scalar('Loss/train/Exsup_ex_loss', iter_ex_loss, cfg['ex_i'] - 1)
         else:
@@ -997,13 +997,14 @@ def main(args):
             num_train_samples = checkpoint['num_train_samples']
         else:
             num_train_samples = 1
+    print("read pretrain")
     if len(args.writer_file_load) > 1:
         writer = SummaryWriter(args.output_dir + args.writer_file_load)
     else:
         writer = SummaryWriter(args.output_dir + args.log_name + '_' +
                                datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
-
+    print("after writer loading")
     pos_to_write = args.pos_to_write_train
     neg_to_write = args.neg_to_write_train
     pos_idx = list(range(pos_to_write))
