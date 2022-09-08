@@ -108,7 +108,6 @@ class batch_GAIN_Deepfake(nn.Module):
                 print("Register backward hook !")
                 gradient_layer_found = True
                 # break
-        # exit(0)
         # for our own sanity, confirm its existence
         if not gradient_layer_found:
             raise AttributeError('Gradient layer %s not found in the internal model' % grad_layer)

@@ -468,11 +468,9 @@ def handle_AM_loss(cur_pos_num, am_scores, pos_indices, model, total_loss,
         # # print(am_labels_scores) #tensor [1, 2, 3....]grad_fn=IndexBackward
         # print(am_labels_scores.size(0)) # 14
         # print(am_labels_scores.sum())
-        # exit(0)
         am_loss = am_labels_scores.sum() / am_labels_scores.size(0)
         # print(am_loss.shape)
         # print(am_loss)
-        # exit(0)
         iter_am_loss = (am_loss * args.am_weight).detach().cpu().item()
         if model.AM_enabled():
             total_loss += (am_loss * args.am_weight)
@@ -543,7 +541,6 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps
                 # r2, g2, b2 = 255, 255, 255
                 print(len(bg_masks)) # 20
                 print(bg_masks[0].shape)
-                exit(1)
                 red, green, blue = bg_masks[:, :, 0], bg_masks[:, :, 1], bg_masks[:, :, 2]
                 mask = (red == r1) & (green == g1) & (blue == b1)
                 augmented_masks[mask] = augmented_masks[mask] / 10
