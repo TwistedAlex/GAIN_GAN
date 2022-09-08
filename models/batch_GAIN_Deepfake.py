@@ -52,11 +52,11 @@ class batch_GAIN_Deepfake(nn.Module):
 
         self.num_classes = num_classes
         self.fill_color = fill_color
-        print("before norm")
+        # print("before norm")
         mean = [0.5, 0.5, 0.5]
         std = [0.5, 0.5, 0.5]
         norm = Normalize(mean=mean, std=std)
-        print("before em fill")
+        # print("before em fill")
         self.em_fill_color = torch.tensor([228.0/255.0, 249.0/255.0, 52.0/255.0]).view(1, 3, 1, 1).cuda()
         # Feed-forward features
         self.feed_forward_features = None
@@ -197,17 +197,17 @@ class batch_GAIN_Deepfake(nn.Module):
                                                             - em_mask) * self.em_fill_color
             import PIL.Image
             import numpy as np
-            PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-                np.uint8), 'RGB').save('/home/shuoli/image.png')
+            # PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+            #     np.uint8), 'RGB').save('/home/shuoli/image.png')
             # PIL.Image.fromarray(((image_with_masks * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
             #     np.uint8), 'RGB').save('/home/shuoli/image_times_mask.png')
             # PIL.Image.fromarray(((self.fill_color * em_mask)[0].cpu().detach().numpy() * 255).round().astype(
             #     np.uint8), 'RGB').save('/home/shuoli/fill_times_mask.png')
             # PIL.Image.fromarray(((em_mask[0]).cpu().detach().numpy() * 255).round().astype(
             #     np.uint8), 'RGB').save('/home/shuoli/em_mask.png')
-            PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255)
-                                .round().astype(np.uint8), 'RGB').save('/home/shuoli/masked.png')
-            exit(1)
+            # PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255)
+            #                     .round().astype(np.uint8), 'RGB').save('/home/shuoli/masked.png')
+            # exit(1)
             logits_em = self.model(em_masked_image)  # [2, 1]
 
             # for param in self.model.parameters(): #TODO: use this to control set gradients on/off

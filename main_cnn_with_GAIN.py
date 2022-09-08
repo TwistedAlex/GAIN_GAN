@@ -652,7 +652,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # lbs = torch.cat((lb2, lb1), dim=0).transpose(0, 1).float()
         # model forward
         lbs = labels.unsqueeze(1).float()
-        print("before feed to model")
+        # print("before feed to model")
         logits_cl, logits_am, heatmaps, masks, masked_images, logits_em= \
             model(batch, lbs, train_flag=iter_em_flag, image_with_masks=image_with_masks, e_masks=e_masks,)
 
@@ -661,14 +661,14 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         y_true.extend(label_idx_list)
         # cl_loss and total loss computation
         cl_loss = cl_loss_fn(logits_cl, lbs)
-        print("logits_cl.shape")
+        # print("logits_cl.shape")
         total_loss = 0
         em_loss = torch.tensor(0.0)
         if iter_em_flag:
             em_lbs = labels_with_masks.unsqueeze(1).float()
             em_loss = cl_loss_fn(logits_em, em_lbs)
             total_loss += em_loss * args.em_weight
-            print("add em loss to total")
+            # print("add em loss to total")
         total_loss += cl_loss * args.cl_weight
         # AM loss computation and monitoring
         pos_indices = [idx for idx, x in enumerate(sample['labels']) if x == 1]
