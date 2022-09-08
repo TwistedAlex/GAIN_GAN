@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from torchvision.transforms import Normalize
 
 def is_bn(m):
     return isinstance(m, nn.modules.batchnorm.BatchNorm2d) | isinstance(m, nn.modules.batchnorm.BatchNorm1d)
@@ -52,12 +52,12 @@ class batch_GAIN_Deepfake(nn.Module):
 
         self.num_classes = num_classes
         self.fill_color = fill_color
-        # print("before norm")
-        # mean = [0.5, 0.5, 0.5]
-        # std = [0.5, 0.5, 0.5]
-        # norm = Normalize(mean=mean, std=std)
-        # print("before em fill")
-        # self.em_fill_color = norm(torch.tensor([0.0, 0.0, 0.0]).view(1, 3, 1, 1)).cuda()
+        print("before norm")
+        mean = [0.5, 0.5, 0.5]
+        std = [0.5, 0.5, 0.5]
+        norm = Normalize(mean=mean, std=std)
+        print("before em fill")
+        self.em_fill_color = norm(torch.tensor([0.0, 0.0, 0.0]).view(1, 3, 1, 1)).cuda()
         # Feed-forward features
         self.feed_forward_features = None
         # Backward features
@@ -153,8 +153,8 @@ class batch_GAIN_Deepfake(nn.Module):
         fl = self.feed_forward_features  # BS x C x H x W
         weights = F.adaptive_avg_pool2d(backward_features, 1)
         Ac = torch.mul(fl, weights).sum(dim=1, keepdim=True)
-        print("Ac.shape")
-        print(Ac.shape)
+        # print("Ac.shape")
+        # print(Ac.shape)
         Ac = F.relu(Ac)
         # Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear', align_corners=False)
         Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear')
@@ -194,7 +194,7 @@ class batch_GAIN_Deepfake(nn.Module):
 
             # em_masked_image size [2, 3, 224, 224]
             em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))
-                                                            - em_mask) * self.fill_color
+                                                            - em_mask) * self.em_fill_color
 
             # PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
             #     np.uint8), 'RGB').save('/home/shuoli/image.png')

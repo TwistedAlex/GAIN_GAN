@@ -996,21 +996,12 @@ def main(args):
             num_train_samples = checkpoint['num_train_samples']
         else:
             num_train_samples = 1
-    print("read pretrain")
-    writer = SummaryWriter(args.output_dir + args.log_name + '_' +
-                           datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     if len(args.writer_file_load) > 1:
-        print(">1")
         writer = SummaryWriter(args.output_dir + args.writer_file_load)
     else:
-        print("!>1")
-        print(args.output_dir + args.log_name + '_' +
-                               datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
         writer = SummaryWriter(args.output_dir + args.log_name + '_' +
                                datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-        print("writer")
 
-    print("after writer loading")
     pos_to_write = args.pos_to_write_train
     neg_to_write = args.neg_to_write_train
     pos_idx = list(range(pos_to_write))
@@ -1018,7 +1009,6 @@ def main(args):
     neg_idx = list(range(pos_count, pos_count + neg_to_write))
     idx = pos_idx + neg_idx
     counter = dict({x: 0 for x in idx})
-    print("loaded pretrain model")
     cfg = {'categories': categories, 'i': i, 'num_train_samples': num_train_samples,
            'am_i': am_i, 'ex_i': ex_i, 'total_i': total_i,
            'IOU_i': IOU_i, 'counter': counter}
