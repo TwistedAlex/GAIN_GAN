@@ -120,7 +120,7 @@ class batch_GAIN_Deepfake(nn.Module):
         return ohe
 
     def forward(self, images, labels, train_flag=False, image_with_masks=None,
-                e_masks=None):  # TODO: no need for saving the hook results ; Put Nan
+                e_masks=None, has_mask_indexes=None):  # TODO: no need for saving the hook results ; Put Nan
 
         # Remember, only do back-probagation during the training. During the validation, it will be affected by bachnorm
         # dropout, etc. It leads to unstable validation score. It is better to visualize attention maps at the testset
@@ -192,12 +192,12 @@ class batch_GAIN_Deepfake(nn.Module):
             torch_masks = torch.stack(e_masks, dim=0).squeeze(1).to(torch.device('cuda:' + str(0)))
             # em_mask size [2, 1, 224, 224]
             em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
-            merged_mask = em_mask + mask
+            merged_mask = em_mask + mask[has_mask_indexes, :, :, :]
             # em_masked_image size [2, 3, 224, 224]
             # em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))
             #                                                 - em_mask) * self.em_fill_color
             em_masked_image = image_with_masks * merged_mask + (torch.ones(merged_mask.shape).to(
-                                  torch.device('cuda:' + str(0))) - merged_mask) * self.em_fill_color
+                torch.device('cuda:' + str(0))) - merged_mask) * self.em_fill_color
             import PIL.Image
             import numpy as np
             # PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
