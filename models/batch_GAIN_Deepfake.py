@@ -192,7 +192,7 @@ class batch_GAIN_Deepfake(nn.Module):
             torch_masks = torch.stack(e_masks, dim=0).squeeze(1).to(torch.device('cuda:' + str(0)))
             # em_mask size [2, 1, 224, 224]
             em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
-            merged_mask = em_mask + mask[has_mask_indexes, :, :, :]
+            merged_mask = torch.maximum(em_mask, mask[has_mask_indexes, :, :, :])
             # em_masked_image size [2, 3, 224, 224]
             em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))
                                                             - em_mask) * self.em_fill_color
