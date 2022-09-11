@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms import Normalize
 
+
 def is_bn(m):
     return isinstance(m, nn.modules.batchnorm.BatchNorm2d) | isinstance(m, nn.modules.batchnorm.BatchNorm1d)
 
@@ -57,7 +58,7 @@ class batch_GAIN_Deepfake(nn.Module):
         std = [0.5, 0.5, 0.5]
         norm = Normalize(mean=mean, std=std)
         # print("before em fill")
-        self.em_fill_color = torch.tensor([228.0/255.0, 249.0/255.0, 52.0/255.0]).view(1, 3, 1, 1).cuda()
+        self.em_fill_color = torch.tensor([228.0 / 255.0, 249.0 / 255.0, 52.0 / 255.0]).view(1, 3, 1, 1).cuda()
         # Feed-forward features
         self.feed_forward_features = None
         # Backward features
@@ -191,10 +192,12 @@ class batch_GAIN_Deepfake(nn.Module):
             torch_masks = torch.stack(e_masks, dim=0).squeeze(1).to(torch.device('cuda:' + str(0)))
             # em_mask size [2, 1, 224, 224]
             em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
-
+            merged_mask = em_mask + mask
             # em_masked_image size [2, 3, 224, 224]
-            em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))
-                                                            - em_mask) * self.em_fill_color
+            # em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))
+            #                                                 - em_mask) * self.em_fill_color
+            em_masked_image = image_with_masks * merged_mask + (torch.ones(merged_mask.shape).to(
+                                  torch.device('cuda:' + str(0))) - merged_mask) * self.em_fill_color
             import PIL.Image
             import numpy as np
             # PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
