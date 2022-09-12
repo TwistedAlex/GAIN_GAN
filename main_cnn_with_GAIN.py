@@ -66,6 +66,12 @@ def monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
 
     fpr, tpr, auc, threshold = roc_curve(y_true, y_pred)
     writer.add_scalar('ROC/Test/AUC', auc, epoch)
+    logger.warning(mode + ': AP: {:2.2f}, AUC: {:2.2f}, Acc: {:2.2f}, Acc (real): {:2.2f}, Acc (fake): {:2.2f}'.format(
+                ap * 100.,
+                auc * 100,
+                acc * 100.,
+                r_acc * 100.,
+                f_acc * 100.))
     with open(path + f'/{mode}test_res.txt', 'w') as f:
         f.write(
             mode + ': AP: {:2.2f}, AUC: {:2.2f}, Acc: {:2.2f}, Acc (real): {:2.2f}, Acc (fake): {:2.2f}'.format(
@@ -785,10 +791,10 @@ parser.add_argument('--fill_color', type=list, help='fill color of masked area i
                     default=[0.4948, 0.3301, 0.16])
 parser.add_argument('--grad_layer', help='path to the input idr', type=str, default='features')
 parser.add_argument('--grad_magnitude', help='grad magnitude of second path', type=int, default=1)
-parser.add_argument('--cl_weight', default=1, type=int, help='classification loss weight')
-parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
-parser.add_argument('--em_weight', default=1, type=int, help='external supervision classification loss weight')
-parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
+parser.add_argument('--cl_weight', default=1.0, type=float, help='classification loss weight')
+parser.add_argument('--am_weight', default=1.0, type=float, help='attention-mining loss weight')
+parser.add_argument('--em_weight', default=1.0, type=float, help='external supervision classification loss weight')
+parser.add_argument('--ex_weight', default=1.0, type=float, help='extra-supervision loss weight')
 parser.add_argument('--ex_mode', '-e', action='store_true', help='use new external supervision logic')
 parser.add_argument('--debg_mode', '-d', action='store_true', help='use debg testing mode')
 parser.add_argument('--ex_debg_mode', '-b', action='store_true', help='use debg testing mode')
