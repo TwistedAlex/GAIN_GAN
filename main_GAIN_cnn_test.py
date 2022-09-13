@@ -60,11 +60,11 @@ def monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
     with open(path + f'/{mode}test_res.txt', 'w') as f:
         f.write(
             mode + ': AP: {:2.2f}, AUC: {:2.2f}, Acc: {:2.2f}, Acc (real): {:2.2f}, Acc (fake): {:2.2f}'.format(
-                                                                                                ap * 100.,
-                                                                                                auc * 100,
-                                                                                                  acc * 100.,
-                                                                                                  r_acc * 100.,
-                                                                                                  f_acc * 100.))
+                ap * 100.,
+                auc * 100,
+                acc * 100.,
+                r_acc * 100.,
+                f_acc * 100.))
     save_roc_curve(y_true, y_pred, epoch, path)
     save_roc_curve_with_threshold(y_true, y_pred, epoch, path)
 
@@ -176,10 +176,11 @@ def select_clo_far_heatmaps(heatmap_home_dir, input_path_heatmap, log_name, mode
     for file in neg_heatmaps[0:50]:
         command = 'cp ' + input_path_heatmap_neg + file + ' ' + output_path_heatmap_neg_cl
         os.system(command)
-    command = 'rm -rf ' + input_path_heatmap_pos
-    os.system(command)
-    command = 'rm -rf ' + input_path_heatmap_neg
-    os.system(command)
+    if not args.save_all_heatmap:
+        command = 'rm -rf ' + input_path_heatmap_pos
+        os.system(command)
+        command = 'rm -rf ' + input_path_heatmap_neg
+        os.system(command)
 
 
 parser = argparse.ArgumentParser(description='PyTorch GAIN Training')
@@ -222,6 +223,7 @@ parser.add_argument('--am_weight', default=1, type=int, help='attention-mining l
 parser.add_argument('--ex_weight', default=1, type=int, help='extra-supervision loss weight')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
 parser.add_argument('--heatmap_output', '-o', action='store_true', help='not output heatmaps')
+parser.add_argument('--save_all_heatmap', '-s', action='store_true', help='not output heatmaps')
 parser.add_argument('--input_dir', help='path to the input idr', type=str)
 parser.add_argument('--output_dir', help='path to the outputdir', type=str)
 parser.add_argument('--checkpoint_file_path_load', help='checkpoint name', type=str)
@@ -241,33 +243,57 @@ def main(args):
     heatmap_paths, input_dirs, modes = [], [], []
 
     heatmap_home_dir = "/server_data/image-research/"
+    all_test_path = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/"
     if args.model == 's':
-        psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_0.5/"#'_ffhq' # "_PSI_0.5/"
-        psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_1/"#'_CeleAHQ' # "_PSI_1/"
-        psi_1_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/"# "/home/shuoli/GAIN_GAN/deepfake_data/test_VQGAN/celeahq/" # "/home/shuoli/deepfake_test_data/s2f_psi_1/"
-        psi_05_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/"#"/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/P2_weighting/" # "deepfake_data/data_s2_20kT/"
+        psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_0.5/"  # '_ffhq' # "_PSI_0.5/"
+        psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_1/"  # '_CeleAHQ' # "_PSI_1/"
+        psi_1_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/"  # "/home/shuoli/GAIN_GAN/deepfake_data/test_VQGAN/celeahq/" # "/home/shuoli/deepfake_test_data/s2f_psi_1/"
+        psi_05_input_dir = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi05/"  # "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/P2_weighting/" # "deepfake_data/data_s2_20kT/"
     elif args.model == 's2':
         psi_05_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_0.5/"
         psi_1_heatmap_path = args.output_dir + "/test_" + args.log_name + f'_{args.model}' + "_PSI_1/"
         psi_1_input_dir = "/home/shuoli/deepfake_test_data/s2f_psi_1/"
         psi_05_input_dir = "deepfake_data/data_s2_20kT/"
     elif args.model == 'new':
-        all_test_path = "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/test/"
-        heatmap_paths = [# args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
-                         args.output_dir + "/test_" + args.log_name + '_NVAE_ffhq/',
-                         # args.output_dir + "/test_" + args.log_name + '_P2_celebahq/',
-                         args.output_dir + "/test_" + args.log_name + '_P2_ffhq/',
-                         # args.output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
-                         args.output_dir + "/test_" + args.log_name + '_VQGAN_ffhq/',
-                         args.output_dir + "/test_" + args.log_name + '_diffae_ffhq/',]
-        input_dirs = [# all_test_path + "NVAE_celebahq/",
-                      all_test_path + "NVAE_ffhq/",
-                      # all_test_path + "P2_celebahq/",
-                      all_test_path + "P2_ffhq/",
-                      # all_test_path + "VQGAN_celebahq/",
-                      all_test_path + "VQGAN_ffhq/",
-                      all_test_path + "diffae_ffhq/",]
+        heatmap_paths = [  # args.output_dir + "/test_" + args.log_name + '_NVAE_celebahq/',
+            args.output_dir + "/test_" + args.log_name + '_NVAE_ffhq/',
+            # args.output_dir + "/test_" + args.log_name + '_P2_celebahq/',
+            args.output_dir + "/test_" + args.log_name + '_P2_ffhq/',
+            # args.output_dir + "/test_" + args.log_name + '_VQGAN_celebahq/',
+            args.output_dir + "/test_" + args.log_name + '_VQGAN_ffhq/',
+            args.output_dir + "/test_" + args.log_name + '_diffae_ffhq/', ]
+        input_dirs = [  # all_test_path + "NVAE_celebahq/",
+            all_test_path + "NVAE_ffhq/",
+            # all_test_path + "P2_celebahq/",
+            all_test_path + "P2_ffhq/",
+            # all_test_path + "VQGAN_celebahq/",
+            all_test_path + "VQGAN_ffhq/",
+            all_test_path + "diffae_ffhq/", ]
         modes = ["NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
+        for mydir in input_dirs:
+            pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
+        for path in heatmap_paths:
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    elif args.model == 's3':
+        heatmap_paths = [args.output_dir + "/test_" + args.log_name + '_s3/', ]
+        input_dirs = [all_test_path + "s3/", ]
+        modes = ["s3", ]
+        for mydir in input_dirs:
+            pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
+        for path in heatmap_paths:
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    elif args.model == '300s1p0.5ex':
+        heatmap_paths = [args.output_dir + "/test_" + args.log_name + '_300s1p0.5ex/', ]
+        input_dirs = [all_test_path + "300s1p0.5ex/", ]
+        modes = ["300s1p0.5ex", ]
+        for mydir in input_dirs:
+            pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
+        for path in heatmap_paths:
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    elif args.model == '500s2p1ex':
+        heatmap_paths = [args.output_dir + "/test_" + args.log_name + '_500s2p1ex/', ]
+        input_dirs = [all_test_path + "500s2p1ex/", ]
+        modes = ["500s2p1ex", ]
         for mydir in input_dirs:
             pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
         for path in heatmap_paths:
@@ -328,12 +354,12 @@ def main(args):
     writer = SummaryWriter(args.output_dir + args.log_name +
                            datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
-
     norm = Normalize(mean=mean, std=std)
     fill_color = norm(torch.tensor(args.fill_color).view(1, 3, 1, 1)).cuda()
     grad_layer = ["layer4"]
     if len(args.checkpoint_file_path_load) > 0:
-        checkpoint = torch.load('/home/shuoli/attention_env/CNNDetection/weights/blur_jpg_prob0.5.pth', map_location='cpu')
+        checkpoint = torch.load('/home/shuoli/attention_env/CNNDetection/weights/blur_jpg_prob0.5.pth',
+                                map_location='cpu')
         model.load_state_dict(checkpoint['model'], strict=False)
         optimizer.load_state_dict(checkpoint['optimizer'])
         chkpnt_epoch = checkpoint['total_steps'] + 1
@@ -359,7 +385,7 @@ def main(args):
             chkpnt_epoch = checkpoint['total_steps'] + 1
             model.cur_epoch = chkpnt_epoch
 
-    epoch=chkpnt_epoch
+    epoch = chkpnt_epoch
 
     if args.model == 'new':
         print("begin")
@@ -414,6 +440,7 @@ def main(args):
             if not args.heatmap_output:
                 select_clo_far_heatmaps(heatmap_home_dir, heatmap_paths[idx] + "/test_heatmap/", args.log_name,
                                         args.model + modes[idx])
+
 
 if __name__ == '__main__':
     args = parser.parse_args()

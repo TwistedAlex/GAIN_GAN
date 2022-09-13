@@ -830,6 +830,7 @@ def main(args):
             test_output_dir + "/test_" + args.log_name + "_s1_PSI_1/",
             test_output_dir + "/test_" + args.log_name + "_s2_PSI_0.5/",
             test_output_dir+ "/test_" + args.log_name + "_s2_PSI_1/",
+            test_output_dir + "/test_" + args.log_name + "_s3/",
             test_output_dir + "/test_" + args.log_name + '_NVAE_ffhq/',
             # test_output_dir + "/test_" + args.log_name + '_P2_celebahq/',
             test_output_dir + "/test_" + args.log_name + '_P2_ffhq/',
@@ -841,13 +842,14 @@ def main(args):
             "/home/shuoli/attention_env/GAIN_GAN/deepfake_data/s_psi1/",
             "deepfake_data/data_s2_20kT/",
             "/home/shuoli/deepfake_test_data/s2f_psi_1/",
+            all_test_path + "s3/",
             all_test_path + "NVAE_ffhq/",
             # all_test_path + "P2_celebahq/",
             all_test_path + "P2_ffhq/",
             # all_test_path + "VQGAN_celebahq/",
             all_test_path + "VQGAN_ffhq/",
             all_test_path + "diffae_ffhq/", ]
-        modes = ["s1_psi_0.5", "s1_psi_1", "s2_psi_0.5", "s2_psi_1", "NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
+        modes = ["s1_psi_0.5", "s1_psi_1", "s2_psi_0.5", "s2_psi_1", "s3", "NVAE_ffhq", "P2_ffhq", "VQGAN_ffhq", "diffae_ffhq"]
     else:
         heatmap_paths = [
             test_output_dir + "/test_" + args.log_name + '_s1p05_debg/',
