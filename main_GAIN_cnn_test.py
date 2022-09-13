@@ -384,7 +384,7 @@ def main(args):
 
     epoch = chkpnt_epoch
 
-    if args.model == 'new':
+    if args.model == 'new' or args.model == 's3' or args.model == '300s1p0.5ex' or args.model == '500s2p1ex':
         print("begin")
         for idx in range(len(modes)):
             print(idx)
