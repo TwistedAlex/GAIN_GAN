@@ -1,19 +1,16 @@
+from torch.utils.tensorboard import SummaryWriter
 from configs.MDTconfig import cfg
-from dataloaders.deepfake_data import DeepfakeLoader
 from dataloaders.deepfake_data import DeepfakeTestingOnlyLoader
 from datetime import datetime
-from metrics.metrics import calc_sensitivity, save_roc_curve, save_roc_curve_with_threshold, roc_curve
+from metrics.metrics import save_roc_curve, save_roc_curve_with_threshold, roc_curve
 from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
 from sklearn.metrics import accuracy_score, average_precision_score
-from torch import nn
-from torch.utils.tensorboard import SummaryWriter
 from models.resnet import resnet50
 from torchvision.transforms import Resize, Normalize, ToTensor
 from utils.image import show_cam_on_image, denorm, Deepfake_CVPR_preprocess_image, Deepfake_preprocess_image
 import PIL.Image
 import argparse
 import logging
-import math
 import numpy as np
 import os
 import pathlib
