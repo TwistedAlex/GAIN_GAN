@@ -446,7 +446,7 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
 
         ])
         gaussian_blur = Compose([
-            GaussianBlur(1, sigma=(0.0, 3.0)),
+            GaussianBlur(1, sigma=(0.1, 3.0)),
 
         ])
         normilize = Normalize(mean=mean, std=std)
