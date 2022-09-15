@@ -436,8 +436,8 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
 
     if train == True:
         augment = Compose([
-            RandomResizedCrop(size=224, scale=(0.9, 1.0), ratio=(0.9, 1.1)),
-            RandomRotation(degrees=(-180, 180))
+            RandomResizedCrop(224, scale=(0.9, 1.0), ratio=(0.9, 1.1)),
+            RandomRotation((-180, 180))
 
         ])
         normilize_augment = Compose([
@@ -446,7 +446,7 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
 
         ])
         gaussian_blur = Compose([
-            GaussianBlur(kernel_size=1, sigma=(0.0, 3.0)),
+            GaussianBlur(1, sigma=(0.0, 3.0)),
 
         ])
         normilize = Normalize(mean=mean, std=std)
