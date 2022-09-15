@@ -11,12 +11,12 @@ import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
 from torchvision.transforms import Compose, Normalize, ToTensor, \
     AutoAugmentPolicy, RandomHorizontalFlip, RandomRotation, RandomVerticalFlip, RandomPerspective, RandomResizedCrop, \
-    Resize
+    Resize, GaussianBlur
 from albumentations import (
     RandomBrightness,
     RandomContrast,
     RandomScale,
-    GaussianBlur
+    #GaussianBlur
 )
 
 class RandomRot90:
