@@ -8,7 +8,7 @@ from models.batch_GAIN_Deepfake import batch_GAIN_Deepfake
 from sklearn.metrics import accuracy_score, average_precision_score
 from models.resnet import resnet50
 from torchvision.transforms import Resize, Normalize, ToTensor
-from utils.image import show_cam_on_image, denorm, Deepfake_CVPR_preprocess_image, Deepfake_preprocess_image
+from utils.image import show_cam_on_image, denorm, Deepfake_CVPR_preprocess_image, deepfake_preprocess_imagev2
 import PIL.Image
 import argparse
 import logging
@@ -61,7 +61,7 @@ def monitor_test_epoch(writer, test_dataset, pos_count, y_pred, y_true, epoch,
                     global_step=epoch)
     writer.add_scalar('Test/' + mode + '/Accuracy/cl_accuracy', acc, epoch)
     writer.add_scalar('Test/' + mode + '/Accuracy/ap', ap, epoch)
-    writer.add_text('Test/' + mode + '/Accuracy/ap', 'AP: {:.3f}'.format(ap),
+    writer.add_text('Test/' + mode + '/Accuracy/ap', 'Deepfake_preprocess_image: {:.3f}'.format(ap),
                     global_step=epoch)
 
     fpr, tpr, auc, threshold = roc_curve(y_true, y_pred)
@@ -903,7 +903,7 @@ def main(args):
     deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                      batch_size=batch_size, steps_per_epoch=epoch_size,
                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
-                                     transform=Deepfake_CVPR_preprocess_image,
+                                     transform=deepfake_preprocess_imagev2,
                                      collate_fn=my_collate, customize_num_masks=args.customize_num_masks,
                                      num_masks=args.num_masks)
     print('loader created')
@@ -1072,7 +1072,7 @@ def main(args):
                 deepfake_psi0_loader = DeepfakeTestingOnlyLoader(input_dirs[idx],
                                                                  batch_size=test_psi05_batchsize,
                                                                  mean=mean, std=std,
-                                                                 transform=Deepfake_preprocess_image,
+                                                                 transform=Deepfake_CVPR_preprocess_image,
                                                                  collate_fn=my_collate)
                 test(cfg, model, device, deepfake_psi0_loader.datasets['test'],
                      deepfake_psi0_loader.test_dataset, writer, epoch, heatmap_paths[idx], test_psi05_batchsize,
@@ -1109,7 +1109,7 @@ def main(args):
             deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
                                              batch_size=batch_size, steps_per_epoch=epoch_size,
                                              masks_to_use=args.masks_to_use, mean=mean, std=std,
-                                             transform=Deepfake_CVPR_preprocess_image,
+                                             transform=deepfake_preprocess_imagev2,
                                              collate_fn=my_collate, customize_num_masks=args.customize_num_masks,
                                              num_masks=args.num_masks)
 

@@ -1,6 +1,6 @@
 from PIL import Image
 from collections import OrderedDict
-from random import choice
+from random import random, choice
 import PIL, PIL.ImageOps, PIL.ImageEnhance, PIL.ImageDraw
 import cv2
 import numpy as np
@@ -408,6 +408,64 @@ def Deepfake_preprocess_image(img , train , mask=-1, mean=None, std=None) -> tor
         normilized_and_augmented = normilize_augment(np.array(augmented_image))
         preprocced = normilize(normilized_and_augmented).unsqueeze(0)
         #aug = normilized_and_augmented.clone()
+        #mn = aug.min()
+        #mx = aug.max()
+        #aug -= mn.view(1,1,1)
+        #aug /= mx.view(1,1,1)
+        #aug = (aug*255).ceil().int().permute([1,2,0])
+
+        return preprocced, augmented_image, augmented_mask
+
+    preprocessing = Compose([
+        Image.fromarray,
+        Resize(size=224),
+        ToTensor(),
+        Normalize(mean=mean, std=std)
+    ])
+
+    return preprocessing(img).unsqueeze(0), None, augmented_mask
+
+
+def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> torch.Tensor:
+    if std is None:
+        std = [0.5, 0.5, 0.5]
+    if mean is None:
+        mean = [0.5, 0.5, 0.5]
+
+    augmented_mask = np.zeros(1)+(-1)
+
+    if train == True:
+        augment = Compose([
+            RandomResizedCrop(size=224, scale=(0.9, 1.0), ratio=(0.9, 1.1)),
+            RandomRotation(degrees=(-180, 180))
+
+        ])
+        normilize_augment = Compose([
+            ToTensor(),
+            AddGaussianNoise(),
+
+        ])
+        gaussian_blur = Compose([
+            GaussianBlur(kernel_size=1, sigma=(0.0, 3.0)),
+
+        ])
+        normilize = Normalize(mean=mean, std=std)
+
+        img_mask = img
+        if mask.numel() > 1:
+            img_mask = torch.cat((img, mask), dim=0)
+        augmented_image_mask = augment(img_mask)
+        augmented_image = augmented_image_mask
+        if mask.numel() > 1:
+            augmented_image = augmented_image_mask[0:3, :, :]
+            augmented_mask = np.array(augmented_image_mask.permute([1,2,0]))[:, :, 3]
+
+        augmented_image = augmented_image.permute([1,2,0])
+        normalized_and_augmented = normilize_augment(np.array(augmented_image))
+        if random() > 0.5:
+            normalized_and_augmented = gaussian_blur(normalized_and_augmented)
+        preprocced = normilize(normalized_and_augmented).unsqueeze(0)
+        #aug = normalized_and_augmented.clone()
         #mn = aug.min()
         #mx = aug.max()
         #aug -= mn.view(1,1,1)
