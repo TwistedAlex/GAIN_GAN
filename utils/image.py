@@ -1,6 +1,6 @@
 from PIL import Image
 from collections import OrderedDict
-from random import random, choice
+from random import choice
 import PIL, PIL.ImageOps, PIL.ImageEnhance, PIL.ImageDraw
 import cv2
 import numpy as np
@@ -462,7 +462,7 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
 
         augmented_image = augmented_image.permute([1,2,0])
         normalized_and_augmented = normilize_augment(np.array(augmented_image))
-        if random() > 0.5:
+        if random.random() > 0.5:
             normalized_and_augmented = gaussian_blur(normalized_and_augmented)
         preprocced = normilize(normalized_and_augmented).unsqueeze(0)
         #aug = normalized_and_augmented.clone()
