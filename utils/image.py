@@ -450,10 +450,7 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
                 GaussianBlur(1, sigma=(0.1, 3.0)),
             ], p=0.5)
         ])
-        gaussian_blur = Compose([
-            GaussianBlur(1, sigma=(0.1, 3.0)),
 
-        ])
         normilize = Normalize(mean=mean, std=std)
 
         img_mask = img
@@ -467,15 +464,8 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
 
         augmented_image = augmented_image.permute([1,2,0])
         normalized_and_augmented = normilize_augment(np.array(augmented_image))
-        if random.random() > 0.5:
-            normalized_and_augmented = gaussian_blur(normalized_and_augmented)
+
         preprocced = normilize(normalized_and_augmented).unsqueeze(0)
-        #aug = normalized_and_augmented.clone()
-        #mn = aug.min()
-        #mx = aug.max()
-        #aug -= mn.view(1,1,1)
-        #aug /= mx.view(1,1,1)
-        #aug = (aug*255).ceil().int().permute([1,2,0])
 
         return preprocced, augmented_image, augmented_mask
 
