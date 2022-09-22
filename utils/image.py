@@ -436,12 +436,10 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
 
     if train == True:
         augment = Compose([
-            RandomResizedCrop(224, scale=(0.9, 1.0), ratio=(0.9, 1.1)),
+            RandomResizedCrop(224, scale=(0.6, 1.0), ratio=(0.9, 1.1)),
             transforms.RandomApply([
-
                 RandomRotation((-180, 180)),
-            ], p=0.5)
-
+            ], p=0.5),
         ])
         normilize_augment = Compose([
             ToTensor(),
