@@ -303,7 +303,7 @@ def main(args):
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
     elif args.model == '100man':
         heatmap_paths = [args.output_dir + "/test_" + args.log_name + '_100man/', ]
-        input_dirs = ["/server_data/image-research/20220925_test_img/testing/", ]
+        input_dirs = ["/server_data/image-research/20220925_test_img/", ]
         modes = ["100man", ]
         for mydir in input_dirs:
             pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
