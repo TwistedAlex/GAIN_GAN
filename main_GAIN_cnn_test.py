@@ -301,6 +301,14 @@ def main(args):
             pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
         for path in heatmap_paths:
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
+    elif args.model == '100man':
+        heatmap_paths = [args.output_dir + "/test_" + args.log_name + '_500s2p1ex/', ]
+        input_dirs = ["/server_data/image-research/20220925_test_img/testing/", ]
+        modes = ["100man", ]
+        for mydir in input_dirs:
+            pathlib.Path(mydir).mkdir(parents=True, exist_ok=True)
+        for path in heatmap_paths:
+            pathlib.Path(path).mkdir(parents=True, exist_ok=True)
     elif args.model == 'debg':
         heatmap_paths = [
             args.output_dir + "/test_" + args.log_name + '_s1p05_debg/',
@@ -390,7 +398,7 @@ def main(args):
 
     epoch = chkpnt_epoch
 
-    if args.model == 'new' or args.model == 's3' or args.model == '300s1p0.5ex' or args.model == '500s2p1ex':
+    if args.model == 'new' or args.model == 's3' or args.model == '300s1p0.5ex' or args.model == '500s2p1ex' or args.model == '100man':
         print("begin")
         for idx in range(len(modes)):
             print(idx)
