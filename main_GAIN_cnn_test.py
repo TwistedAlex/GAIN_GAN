@@ -302,7 +302,7 @@ def main(args):
         for path in heatmap_paths:
             pathlib.Path(path).mkdir(parents=True, exist_ok=True)
     elif args.model == '100man':
-        heatmap_paths = [args.output_dir + "/test_" + args.log_name + '_500s2p1ex/', ]
+        heatmap_paths = [args.output_dir + "/test_" + args.log_name + '_100man/', ]
         input_dirs = ["/server_data/image-research/20220925_test_img/testing/", ]
         modes = ["100man", ]
         for mydir in input_dirs:
