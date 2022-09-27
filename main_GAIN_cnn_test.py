@@ -132,6 +132,11 @@ def test(cfg, model, device, test_loader, test_dataset, writer, epoch, output_pa
 
         logits_cl, logits_am, heatmaps, masks, masked_images, logits_em = model(batch, labels)
 
+        print(logits_cl)
+        print(labels)
+        print(logits_cl.shape)
+        print(labels.shape)
+        exit(1)
         # Single label evaluation
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
         y_true.extend(label_idx_list)
