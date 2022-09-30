@@ -140,6 +140,7 @@ class batch_GAIN_Deepfake(nn.Module):
                 pred = F.softmax(logits_cl).argmax(dim=1)
                 print("pred")
                 print(pred)
+                print(F.softmax(logits_cl))
                 labels_ohe = self._to_ohe_multibatch(pred).cuda()
                 print("labels_ohe")
                 print(labels_ohe)
