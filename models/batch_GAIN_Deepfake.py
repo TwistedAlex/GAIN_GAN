@@ -138,7 +138,11 @@ class batch_GAIN_Deepfake(nn.Module):
 
             if not is_train:
                 pred = F.softmax(logits_cl).argmax(dim=1)
+                print("pred")
+                print(pred)
                 labels_ohe = self._to_ohe_multibatch(pred).cuda()
+                print("labels_ohe")
+                print(labels_ohe)
             else:
                 if type(labels) is tuple:
                     labels_ohe = torch.stack(labels)
@@ -146,7 +150,14 @@ class batch_GAIN_Deepfake(nn.Module):
                     labels_ohe = labels
 
             # gradient = logits * labels_ohe
-            grad_logits = (logits_cl * labels_ohe).sum(dim=1)  # BS x num_classes
+            # old version: grad_logits = (logits_cl * labels_ohe).sum(dim=1)  # BS x num_classes
+            print("old grad_logits")
+            print((logits_cl * labels_ohe).sum(dim=1))
+            # new version:
+            grad_logits = logits_cl.sum(dim=1)  # BS x num_classes
+            print("new grad_logits")
+            print(grad_logits)
+            exit(1)
             grad_logits.backward(retain_graph=True, gradient=torch.ones_like(grad_logits))
             self.model.zero_grad()
 
