@@ -819,6 +819,7 @@ parser.add_argument('--grad_magnitude', help='grad magnitude of second path', ty
 parser.add_argument('--cl_weight', default=1, type=int, help='classification loss weight')
 parser.add_argument('--am_weight', default=1, type=int, help='attention-mining loss weight')
 parser.add_argument('--ex_weight', default=1, type=float, help='extra-supervision loss weight')
+parser.add_argument('--exacc_weight', default=1, type=float, help='extra-supervision loss weight')
 parser.add_argument('--ex_mode', '-e', action='store_true', help='use new external supervision logic')
 parser.add_argument('--heatmap_output', '-o', action='store_true', help='not output heatmaps')
 parser.add_argument('--am_on_all', default=0, type=int, help='train am on positives and negatives')
