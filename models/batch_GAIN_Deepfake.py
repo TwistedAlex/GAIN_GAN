@@ -193,7 +193,7 @@ class batch_GAIN_Deepfake(nn.Module):
         # print(images.shape) # 20, 3, 224, 224
         masked_image = images - images * mask + mask * self.fill_color
         PIL.Image.fromarray(
-            (masked_image.cpu().detach().numpy() * 255).round().astype(
+            (masked_image[0].cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save("masked_em3.png")
         exit(1)
         # print("masked_image.shape")
