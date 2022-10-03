@@ -621,21 +621,6 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, heatmaps,
     epoch_train_ex_loss += args.ex_weight * ex_loss
     return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
 
-def handle_EXACC_loss(model, batch, lbs, used_mask_indices, augmented_masks, heatmaps,
-                   writer, total_loss, cfg, logger, epoch_train_ex_loss, ex_mode, ex_count):
-    ex_loss = 0
-    iter_ex_loss = 0
-    if model.EX_enabled() and len(used_mask_indices) > 0 and args.exacc_mode:
-        # print("External Supervision started")
-        augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
-        augmented_masks = torch.cat(augmented_masks, dim=0)
-
-        logits_cl, logits_am, heatmaps, masks, masked_images = \
-            model(batch, lbs)
-
-
-    return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
-
 def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
           writer, epoch, logger, y_cl_loss_exsup_img, y_am_loss_exsup_img, y_ex_loss_exsup_img, x_epoch_exsup_img,
           img_idx, iter_num_list, noex_y_cl_loss_exsup_img, noex_y_am_loss_exsup_img, noex_y_ex_loss_exsup_img, noex_x_epoch_exsup_img, noex_img_idx, noex_iter_num_list):
