@@ -668,7 +668,6 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         datasource_list = sample['source']
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
         batch = batch.to(device)
-        print(batch.shape)
         #starting the forward, backward, optimzer.step process
         optimizer.zero_grad()
         labels = torch.Tensor(label_idx_list).to(device).long()
@@ -686,8 +685,6 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         #model forward
         logits_cl, logits_am, heatmaps, masks, masked_images = \
             model(batch, lbs)
-        print(heatmaps.shape)
-        exit(1)
         # print(logits_am)
         # print(logits_am.shape) # [20,2]
         #cl_loss and total loss computation

@@ -623,7 +623,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         datasource_list = sample['source']
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
         batch = batch.to(device)
-
+        print(batch.shape)
         image_with_masks = list()
         e_masks = list()
         label_with_masks_list = list()
@@ -664,7 +664,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         logits_cl, logits_am, heatmaps, masks, masked_images, logits_em= \
             model(batch, lbs, train_flag=iter_em_flag, image_with_masks=image_with_masks, e_masks=e_masks,
                   has_mask_indexes=has_mask_indexes)
-
+        print(heatmaps.shape)
+        exit(1)
         # prediction result recording
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
         y_true.extend(label_idx_list)
