@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms import Normalize
-
+import numpy as np
+import PIL.Image
 
 def is_bn(m):
     return isinstance(m, nn.modules.batchnorm.BatchNorm2d) | isinstance(m, nn.modules.batchnorm.BatchNorm1d)
@@ -185,12 +186,16 @@ class batch_GAIN_Deepfake(nn.Module):
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
         torch.set_printoptions(linewidth=200)
         print(torch.unique(mask))
-        exit(1)
+
         # print("mask.shape")
         # print(mask.shape) # 20, 1, 224, 224
         # print("images.shape")
         # print(images.shape) # 20, 3, 224, 224
         masked_image = images - images * mask + mask * self.fill_color
+        PIL.Image.fromarray(
+            (masked_image.cpu().detach().numpy() * 255).round().astype(
+                np.uint8), 'RGB').save("masked_em3.png")
+        exit(1)
         # print("masked_image.shape")
         # print(masked_image.shape)
         # masked_image.register_hook(lambda grad: grad * self.grad_magnitude)
