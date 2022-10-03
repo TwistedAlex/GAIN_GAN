@@ -183,6 +183,7 @@ class batch_GAIN_Deepfake(nn.Module):
         # print("scaled_ac.shape")
         # print(scaled_ac.shape)
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
+        torch.set_printoptions(linewidth=200)
         print(torch.unique(mask))
         exit(1)
         # print("mask.shape")
