@@ -211,6 +211,7 @@ class batch_GAIN_Deepfake(nn.Module):
         logits_em = 0
         if train_flag and len(e_masks) > 0:
             e_masks = tuple(map(torch.stack, zip(e_masks)))
+            print(torch.unique(e_masks))
             torch_masks = torch.stack(e_masks, dim=0).squeeze(1).to(torch.device('cuda:' + str(0)))
             # em_mask size [2, 1, 224, 224]
             em_mask = torch.sigmoid(self.omega * (torch_masks - self.sigma))
