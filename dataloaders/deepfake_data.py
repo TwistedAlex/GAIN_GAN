@@ -160,7 +160,7 @@ class DeepfakeTrainData(data.Dataset):
                 print(self.all_cl_images[i])
             print("*********************************")
             for i in range(20):
-                print(self.all_pos_files[i])
+                print(all_pos_files[i])
             exit(1)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
