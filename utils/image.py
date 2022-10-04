@@ -464,7 +464,6 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
         normalized_and_augmented = normilize_augment(np.array(augmented_image))
 
         preprocced = normilize(normalized_and_augmented).unsqueeze(0)
-
         return preprocced, augmented_image, augmented_mask
 
     preprocessing = Compose([
