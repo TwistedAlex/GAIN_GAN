@@ -199,7 +199,6 @@ class batch_GAIN_Deepfake(nn.Module):
         PIL.Image.fromarray(
             (masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save("masked_em3.png")
-        exit(1)
         # print("masked_image.shape")
         # print(masked_image.shape)
         # masked_image.register_hook(lambda grad: grad * self.grad_magnitude)
@@ -219,15 +218,19 @@ class batch_GAIN_Deepfake(nn.Module):
             # Option 1: use only H
             merged_mask = em_mask
             # Option 2: merge A and H:
-            merged_mask = torch.maximum(em_mask, mask[has_mask_indexes, :, :, :])
+            # merged_mask = torch.maximum(em_mask, mask[has_mask_indexes, :, :, :])
             # merged_mask2 = em_mask + mask[has_mask_indexes, :, :, :]
 
             # em_masked_image size [2, 3, 224, 224]
             # em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))
             #                                                 - em_mask) * self.em_fill_color
             # 1: white 0: black. external supervision : 1(>sigma) attention region
-            em_masked_image = image_with_masks * merged_mask + (torch.ones(merged_mask.shape).to(
-                torch.device('cuda:' + str(0))) - merged_mask) * self.em_fill_color
+            em_masked_image = image_with_masks * merged_mask
+            print(em_masked_image.shape)
+            PIL.Image.fromarray(
+                (em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+                    np.uint8), 'RGB').save("masked_em3.png")
+            exit(1)
             # import PIL.Image
             # import numpy as np
             # PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
