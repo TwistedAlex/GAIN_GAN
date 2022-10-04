@@ -162,7 +162,7 @@ class DeepfakeTrainData(data.Dataset):
                       [augmented_mask]+[True] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
             else:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]] +\
-                      [augmented_mask]+[False] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
+                      [np.array(-1)]+[False] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
         else:
             res = list(self.loader(self.neg_root_dir,
                                    self.all_cl_images[index], None))
