@@ -157,7 +157,13 @@ class DeepfakeTrainData(data.Dataset):
                                              mask=self.dummy_mask.squeeze().permute([2, 0, 1]), train=True,
                                              mean=self.mean, std=self.std)
             print(self.used_masks)
-            print(self.all_cl_images[self.used_masks])
+            print(len(self.used_masks))
+            print(self.all_cl_images[57])
+            print(self.all_cl_images[114])
+            print(self.all_cl_images[274])
+            print(self.all_cl_images[344])
+            print(self.all_cl_images[9684])
+            print(self.all_cl_images[10036])
             exit(1)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
