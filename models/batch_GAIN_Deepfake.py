@@ -195,9 +195,6 @@ class batch_GAIN_Deepfake(nn.Module):
         # print(self.fill_color.shape)
         masked_image = images - images * mask + mask * self.fill_color
         # print(masked_image.shape)
-        PIL.Image.fromarray(
-            (masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-                np.uint8), 'RGB').save("masked_em3.png")
         # print("masked_image.shape")
         # print(masked_image.shape)
         # masked_image.register_hook(lambda grad: grad * self.grad_magnitude)
@@ -227,10 +224,10 @@ class batch_GAIN_Deepfake(nn.Module):
             # 1: white 0: black. external supervision : 1(>sigma) attention region
             em_masked_image = image_with_masks * merged_mask
             # print(em_masked_image.shape)
-            # PIL.Image.fromarray(
-            #     (em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-            #         np.uint8), 'RGB').save("masked_em3.png")
-            # exit(1)
+            PIL.Image.fromarray(
+                (em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+                    np.uint8), 'RGB').save("masked_em3.png")
+            exit(1)
             # import PIL.Image
             # import numpy as np
             # PIL.Image.fromarray((image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
