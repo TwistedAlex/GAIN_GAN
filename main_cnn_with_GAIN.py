@@ -571,7 +571,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps
         ex_count += 1
         epoch_train_ex_loss += args.ex_weight * ex_loss
         return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
-    if len(used_mask_indices) > 0 and False:
+    if len(used_mask_indices) > 0:
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
         augmented_masks = torch.cat(augmented_masks, dim=0)
         augmented_masks = torch.maximum(augmented_masks, heatmaps[used_mask_indices].squeeze())
@@ -649,7 +649,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         has_mask_indexes = list()
 
         if model.EX_enabled() or args.train_with_em:
-            print(len(augmented_masks))
+            # print(len(augmented_masks))
             for idx in range(len(used_masks_boolean)):
                 mask_tensor = torch.tensor(sample['all_masks'][idx]).unsqueeze(0)
                 if used_masks_boolean[idx]:
