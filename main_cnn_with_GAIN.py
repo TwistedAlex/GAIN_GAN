@@ -647,6 +647,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         print(sample['filename'])
         print("filename with mask: ")
         if model.EX_enabled() or args.train_with_em:
+            print(len(augmented_masks))
             for idx in range(len(augmented_masks)):
                 mask_tensor = torch.tensor(augmented_masks[idx]).unsqueeze(0)
                 print(torch.unique(mask_tensor))
