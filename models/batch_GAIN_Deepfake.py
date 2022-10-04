@@ -186,11 +186,14 @@ class batch_GAIN_Deepfake(nn.Module):
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
         torch.set_printoptions(linewidth=200)
         print(torch.unique(mask))
-
+        for valuet in torch.unique(mask):
+            print(valuet)
         # print("mask.shape")
         # print(mask.shape) # 20, 1, 224, 224
         # print("images.shape")
         # print(images.shape) # 20, 3, 224, 224
+        # print("fill_color")
+        # print(self.fill_color.shape)
         masked_image = images - images * mask + mask * self.fill_color
         print(masked_image.shape)
         PIL.Image.fromarray(
@@ -222,6 +225,7 @@ class batch_GAIN_Deepfake(nn.Module):
             # em_masked_image size [2, 3, 224, 224]
             # em_masked_image = image_with_masks * em_mask + (torch.ones(em_mask.shape).to(torch.device('cuda:' + str(0)))
             #                                                 - em_mask) * self.em_fill_color
+            # 1: white 0: black. external supervision : 1(>sigma) attention region
             em_masked_image = image_with_masks * merged_mask + (torch.ones(merged_mask.shape).to(
                 torch.device('cuda:' + str(0))) - merged_mask) * self.em_fill_color
             # import PIL.Image
