@@ -128,6 +128,7 @@ class DeepfakeTrainData(data.Dataset):
         self.masks_indices = [idx for idx,pos in enumerate(pos_cl_images) if pos.split('.')[0]+'m'+'.png' in all_pos_files]
         self.all_files = all_pos_files + all_neg_files
         self.all_cl_images = pos_cl_images+all_neg_files
+        self.all_cl_images.sort()
         self.pos_num_of_samples = len(pos_cl_images)
         self.loader = loader
         mask_max_idx = int(self.pos_num_of_samples * masks_to_use) # maximum num of masks ready to use, masks_to_use is the ratio of masked image to use over all pos cl images
