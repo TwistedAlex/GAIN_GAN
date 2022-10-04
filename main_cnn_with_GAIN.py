@@ -662,7 +662,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                     np.uint8), 'RGB').save("masked_em3.png")
             PIL.Image.fromarray(
                 (e_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-                    np.uint8), 'RGB').save("masked_em3.png")
+                    np.uint8), 'L').save("masked_em3.png")
             exit(0)
         iter_em_flag = args.train_with_em and has_mask_flag
 
