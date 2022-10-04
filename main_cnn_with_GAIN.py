@@ -637,6 +637,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         datasource_list = sample['source']
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
         batch = batch.to(device)
+        print(batch.shape)
         image_with_masks = list()
         e_masks = list()
         label_with_masks_list = list()
@@ -646,9 +647,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             for idx in range(len(augmented_masks)):
                 mask_tensor = torch.tensor(augmented_masks[idx]).unsqueeze(0)
                 print(torch.unique(mask_tensor))
-                print(used_masks_boolean[idx])
-                print(used_masks_boolean[idx].size)
-                if used_masks_boolean[idx]:
+                if mask_tensor.numel() > 1:
                     e_masks.append(mask_tensor)
                     image_with_masks.append(sample['preprocessed_images'][idx])
                     label_with_masks_list.append(sample['labels'][idx])
@@ -666,7 +665,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             PIL.Image.fromarray(
                 (e_masks[0][0].cpu().detach().numpy() * 255).round().astype(
                     np.uint8), 'L').save("masked_em.png")
-            exit(0)
+            # exit(0)
         iter_em_flag = args.train_with_em and has_mask_flag
 
         # starting the forward, backward, optimzer, step process

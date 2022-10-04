@@ -226,7 +226,7 @@ class batch_GAIN_Deepfake(nn.Module):
             # print(em_masked_image.shape)
             PIL.Image.fromarray(
                 (em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-                    np.uint8), 'RGB').save("masked_em3.png")
+                    np.uint8), 'RGB').save("em_masked_img.png")
             exit(1)
             # import PIL.Image
             # import numpy as np
