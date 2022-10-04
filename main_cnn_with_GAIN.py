@@ -519,7 +519,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps
     ex_loss = 0
     iter_ex_loss = 0
 
-    if model.EX_enabled() and len(used_mask_indices) > 0:
+    if model.EX_enabled() and len(used_mask_indices) > 0 and False:
         # print("External Supervision started")
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
         augmented_masks = torch.cat(augmented_masks, dim=0)
@@ -571,7 +571,7 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps
         ex_count += 1
         epoch_train_ex_loss += args.ex_weight * ex_loss
         return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
-    if len(used_mask_indices) > 0:
+    if len(used_mask_indices) > 0 and False:
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
         augmented_masks = torch.cat(augmented_masks, dim=0)
         augmented_masks = torch.maximum(augmented_masks, heatmaps[used_mask_indices].squeeze())
@@ -643,6 +643,9 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         label_with_masks_list = list()
         has_mask_flag = False
         has_mask_indexes = list()
+        print("filename list: ")
+        print(sample['filename'])
+        print("filename with mask: ")
         if model.EX_enabled() or args.train_with_em:
             for idx in range(len(augmented_masks)):
                 mask_tensor = torch.tensor(augmented_masks[idx]).unsqueeze(0)
@@ -654,6 +657,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                     has_mask_flag = True
                     has_mask_indexes += [idx]
                     print(sample['filename'][idx])
+        exit(1)
         if has_mask_flag:
             image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
             e_masks = torch.stack(e_masks, dim=0).to(device)
@@ -1127,15 +1131,15 @@ def main(args):
             'total_i': cfg['total_i'],
             'IOU_i': cfg['IOU_i'],
         }, chkpt_path + args.checkpoint_name + datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-        if args.customize_num_masks:
-            print('*****customize_num_masks*****')
-            logger.warning('*****customize_num_masks*****')
-            deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
-                                             batch_size=batch_size, steps_per_epoch=epoch_size,
-                                             masks_to_use=args.masks_to_use, mean=mean, std=std,
-                                             transform=deepfake_preprocess_imagev2,
-                                             collate_fn=my_collate, customize_num_masks=args.customize_num_masks,
-                                             num_masks=args.num_masks)
+        # if args.customize_num_masks:
+        #     print('*****customize_num_masks*****')
+        #     logger.warning('*****customize_num_masks*****')
+        #     deepfake_loader = DeepfakeLoader(args.input_dir, [1 - args.batch_pos_dist, args.batch_pos_dist],
+        #                                      batch_size=batch_size, steps_per_epoch=epoch_size,
+        #                                      masks_to_use=args.masks_to_use, mean=mean, std=std,
+        #                                      transform=deepfake_preprocess_imagev2,
+        #                                      collate_fn=my_collate, customize_num_masks=args.customize_num_masks,
+        #                                      num_masks=args.num_masks)
 
     # output losses for exsup images
     heatmap_home_dir = heatmap_home_dir + f"{datetime.now().strftime('%Y%m%d')}_heatmap_output_" + args.log_name + "/"
