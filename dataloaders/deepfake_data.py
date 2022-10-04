@@ -105,19 +105,19 @@ class DeepfakeTrainData(data.Dataset):
         # target_weight[1] -> positive ratio
 
         # if customize the num of masks to be picked in each epoch
-        if customize_num_masks:
-            mask_images = [(file[:-5] + '.png') for file in all_pos_files if 'm' in file]
-            pos_cl_images_without_masks = [file for file in pos_cl_images if file not in mask_images]
-            total_num_images = batch_size * steps_per_epoch
-            total_num_masks = len(mask_images)
-            total_num_pos_cl = (int)(total_num_images * target_weight[1])
-            total_num_neg_files = total_num_images - total_num_pos_cl
-            picked_mask_images = random.sample(mask_images, num_masks)
-            all_pos_files = random.sample(pos_cl_images_without_masks, total_num_pos_cl - num_masks)
-            all_neg_files = random.sample(all_neg_files, total_num_neg_files)
-            pos_cl_images = picked_mask_images + all_pos_files
-            picked_cl_with_masks = [(file[:-4] + 'm.png') for file in picked_mask_images]
-            all_pos_files = pos_cl_images + picked_cl_with_masks
+        # if customize_num_masks:
+        #     mask_images = [(file[:-5] + '.png') for file in all_pos_files if 'm' in file]
+        #     pos_cl_images_without_masks = [file for file in pos_cl_images if file not in mask_images]
+        #     total_num_images = batch_size * steps_per_epoch
+        #     total_num_masks = len(mask_images)
+        #     total_num_pos_cl = (int)(total_num_images * target_weight[1])
+        #     total_num_neg_files = total_num_images - total_num_pos_cl
+        #     picked_mask_images = random.sample(mask_images, num_masks)
+        #     all_pos_files = random.sample(pos_cl_images_without_masks, total_num_pos_cl - num_masks)
+        #     all_neg_files = random.sample(all_neg_files, total_num_neg_files)
+        #     pos_cl_images = picked_mask_images + all_pos_files
+        #     picked_cl_with_masks = [(file[:-4] + 'm.png') for file in picked_mask_images]
+        #     all_pos_files = pos_cl_images + picked_cl_with_masks
 
         # dummy masks creation:
         path_to_file = os.path.join(self.pos_root_dir, pos_cl_images[0])
@@ -156,7 +156,11 @@ class DeepfakeTrainData(data.Dataset):
                     self.transform(img=res[0].squeeze().permute([2, 0, 1]),
                                              mask=self.dummy_mask.squeeze().permute([2, 0, 1]), train=True,
                                              mean=self.mean, std=self.std)
-
+            print(self.used_masks)
+            for i in range(10):
+                print(self.all_cl_images[self.used_masks[i]])
+            print("Top used masks filename")
+            exit(1)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
                       [augmented_mask]+[True] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
