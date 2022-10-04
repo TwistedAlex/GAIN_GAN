@@ -651,7 +651,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         if model.EX_enabled() or args.train_with_em:
             print(len(augmented_masks))
             for idx in range(len(used_masks_boolean)):
-                mask_tensor = torch.tensor(augmented_masks[idx]).unsqueeze(0)
+                mask_tensor = torch.tensor(sample['all_masks'][idx]).unsqueeze(0)
                 print(torch.unique(mask_tensor))
                 if used_masks_boolean[idx]:
                     e_masks.append(mask_tensor)
