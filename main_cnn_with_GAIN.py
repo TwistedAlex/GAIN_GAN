@@ -657,9 +657,10 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                     has_mask_flag = True
                     has_mask_indexes += [idx]
                     print(sample['filename'][idx])
-                    exit(1)
+
 
         if has_mask_flag:
+            exit(1)
             image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
             e_masks = torch.stack(e_masks, dim=0).to(device)
             print(image_with_masks[0].shape)
