@@ -655,7 +655,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                 if used_masks_boolean[idx]:
                     print(torch.unique(mask_tensor))
                     e_masks.append(mask_tensor)
-                    image_with_masks.append(sample['all_masks'][idx])
+                    image_with_masks.append(sample['preprocessed_images'][idx])
                     label_with_masks_list.append(sample['labels'][idx])
                     has_mask_flag = True
                     has_mask_indexes += [idx]
@@ -663,9 +663,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
 
 
         if has_mask_flag:
-            print(image_with_masks[0].shape)
-            print(e_masks[0].shape)
-            image_with_masks = torch.stack(image_with_masks, dim=0).to(device)
+            image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
             e_masks = torch.stack(e_masks, dim=0).to(device)
             print(image_with_masks[0].shape)
             print(e_masks[0].shape)
