@@ -94,13 +94,13 @@ class DeepfakeTrainData(data.Dataset):
     def __init__(self, masks_to_use, mean, std, transform, batch_size, steps_per_epoch, target_weight, customize_num_masks, num_masks, root_dir='train', loader=load_func):
         self.pos_root_dir = root_dir+'Pos/'
         self.neg_root_dir = root_dir + 'Neg/'
-        all_neg_files = os.listdir(self.neg_root_dir)
-        all_pos_files = os.listdir(self.pos_root_dir)
+        self.all_neg_files = os.listdir(self.neg_root_dir)
+        self.all_pos_files = os.listdir(self.pos_root_dir)
 
         # all_neg_files_tupes, all_neg_files = get_files_under_folder(self.neg_root_dir)
         # all_pos_files_tupes, all_pos_files = get_files_under_folder(self.pos_root_dir)
 
-        pos_cl_images = [file for file in all_pos_files if 'm' not in file]
+        pos_cl_images = [file for file in self.all_pos_files if 'm' not in file]
 
         # target_weight[1] -> positive ratio
 
@@ -125,9 +125,9 @@ class DeepfakeTrainData(data.Dataset):
         np_image = np.asarray(p_image)
 
         tensor_image = torch.tensor(np_image)
-        self.masks_indices = [idx for idx,pos in enumerate(pos_cl_images) if pos.split('.')[0]+'m'+'.png' in all_pos_files]
-        self.all_files = all_pos_files + all_neg_files
-        self.all_cl_images = pos_cl_images+all_neg_files
+        self.masks_indices = [idx for idx,pos in enumerate(pos_cl_images) if pos.split('.')[0]+'m'+'.png' in self.all_pos_files]
+        self.all_files = self.all_pos_files + self.all_neg_files
+        self.all_cl_images = pos_cl_images + self.all_neg_files
         self.pos_num_of_samples = len(pos_cl_images)
         self.loader = loader
         mask_max_idx = int(self.pos_num_of_samples * masks_to_use) # maximum num of masks ready to use, masks_to_use is the ratio of masked image to use over all pos cl images
@@ -160,7 +160,12 @@ class DeepfakeTrainData(data.Dataset):
                 print(self.all_cl_images[i])
             print("*********************************")
             for i in range(20):
-                print(all_pos_files[i])
+                print(self.all_pos_files[i])
+            print("*********************************")
+            d_files = [file for file in self.all_pos_files if 'd' in file]
+            e_files = [file for file in self.all_pos_files if 'e' in file]
+            print(len(d_files))
+            print(len(e_files))
             exit(1)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
