@@ -455,6 +455,7 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
         if mask.numel() > 1:
             img_mask = torch.cat((img, mask), dim=0)
             flag = True
+            print("img_mask.shape")
             print(img_mask.shape)
         augmented_image_mask = augment(img_mask)
         print(augmented_image_mask.shape)
