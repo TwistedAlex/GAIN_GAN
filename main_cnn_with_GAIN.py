@@ -32,14 +32,14 @@ def adjust_learning_rate(optimizer, min_lr=1e-6):
 def my_collate(batch):
     orig_imgs, preprocessed_imgs, agumented_imgs, masks, preprocessed_masks, \
     used_masks, labels, datasource, file, background_mask, indices = zip(*batch)
-    used_masks = [mask for mask, used in zip(preprocessed_masks, used_masks) if used == True]
-    preprocessed_masks = [mask for mask in preprocessed_masks if mask.size > 1]
+    masks_only = [mask for mask in preprocessed_masks if mask.size > 1]
     res_dict = {'orig_images': orig_imgs,
                 'preprocessed_images': preprocessed_imgs,
                 'augmented_images': agumented_imgs, 'orig_masks': masks,
-                'preprocessed_masks': preprocessed_masks,
+                'preprocessed_masks': masks_only,
                 'used_masks': used_masks,
-                'labels': labels, 'source': datasource, 'filename': file, 'bg_mask': background_mask, 'idx': indices}
+                'labels': labels, 'source': datasource, 'filename': file,
+                'bg_mask': background_mask, 'idx': indices, 'all_masks': preprocessed_masks, }
     return res_dict
 
 
@@ -638,6 +638,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
         batch = batch.to(device)
         print(batch.shape)
+        used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
+                             if x in train_dataset.used_masks]
         image_with_masks = list()
         e_masks = list()
         label_with_masks_list = list()
@@ -648,12 +650,12 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         print("filename with mask: ")
         if model.EX_enabled() or args.train_with_em:
             print(len(augmented_masks))
-            for idx in range(len(augmented_masks)):
+            for idx in range(len(used_masks_boolean)):
                 mask_tensor = torch.tensor(augmented_masks[idx]).unsqueeze(0)
                 print(torch.unique(mask_tensor))
-                if mask_tensor.numel() > 1:
+                if used_masks_boolean[idx]:
                     e_masks.append(mask_tensor)
-                    image_with_masks.append(sample['preprocessed_images'][idx])
+                    image_with_masks.append(sample['all_masks'][idx])
                     label_with_masks_list.append(sample['labels'][idx])
                     has_mask_flag = True
                     has_mask_indexes += [idx]
@@ -727,8 +729,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
 
 
         # Ex loss computation and monitoring
-        used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
-                             if x in train_dataset.used_masks]
+
         total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss = handle_EX_loss(model, used_mask_indices,
                                                                                  augmented_masks, bg_masks,
                                                                                  heatmaps, writer, total_loss, cfg,
