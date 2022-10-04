@@ -440,14 +440,13 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
             transforms.RandomApply([
                 RandomRotation((-180, 180)),
             ], p=0.5),
-            ToTensor(),
         ])
         normilize_augment = Compose([
-
+            ToTensor(),
             transforms.RandomApply([
                 AddGaussianNoise(),
                 GaussianBlur(1, sigma=(0.1, 3.0)),
-            ], p=0.5),
+            ], p=0.5)
         ])
 
         normilize = Normalize(mean=mean, std=std)
