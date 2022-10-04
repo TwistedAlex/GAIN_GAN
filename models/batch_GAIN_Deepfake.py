@@ -186,8 +186,7 @@ class batch_GAIN_Deepfake(nn.Module):
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
         torch.set_printoptions(linewidth=200)
         print(torch.unique(mask))
-        for valuet in torch.unique(mask):
-            print(valuet)
+
         # print("mask.shape")
         # print(mask.shape) # 20, 1, 224, 224
         # print("images.shape")
