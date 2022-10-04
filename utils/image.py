@@ -465,15 +465,18 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
 
         augmented_image = augmented_image_mask
         if mask.numel() > 1:
+            print("augmented_image_mask.shape")
             print(augmented_image_mask.shape)
             augmented_image = augmented_image_mask[0:3, :, :]
+            print("augmented_image.shape")
             print(augmented_image.shape)
             augmented_mask = np.array(augmented_image_mask.permute([1,2,0]))[:, :, 3]
+            print("augmented_mask.shape")
             print(augmented_mask.shape)
         augmented_image = augmented_image.permute([1,2,0])
         normalized_and_augmented = normilize_augment(np.array(augmented_image))
-        if flag:
-            exit(1)
+        # if flag:
+            # exit(1)
         preprocced = normilize(normalized_and_augmented).unsqueeze(0)
         return preprocced, augmented_image, augmented_mask
 
