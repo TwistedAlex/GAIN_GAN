@@ -637,7 +637,6 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         datasource_list = sample['source']
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
         batch = batch.to(device)
-        print(batch.shape)
         image_with_masks = list()
         e_masks = list()
         label_with_masks_list = list()
@@ -647,6 +646,8 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             for idx in range(len(augmented_masks)):
                 mask_tensor = torch.tensor(augmented_masks[idx]).unsqueeze(0)
                 print(torch.unique(mask_tensor))
+                print(used_masks_boolean[idx])
+                print(used_masks_boolean[idx].size)
                 if used_masks_boolean[idx]:
                     e_masks.append(mask_tensor)
                     image_with_masks.append(sample['preprocessed_images'][idx])
