@@ -648,6 +648,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         print("filename list: ")
         print(sample['filename'])
         print("filename with mask: ")
+        index_target = 0
         if model.EX_enabled() or args.train_with_em:
             print(len(augmented_masks))
             for idx in range(len(used_masks_boolean)):
@@ -660,6 +661,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
                     has_mask_flag = True
                     has_mask_indexes += [idx]
                     print(sample['filename'][idx])
+                    index_target = idx
 
 
         if has_mask_flag:
@@ -675,7 +677,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             PIL.Image.fromarray(
                 (e_masks[0][0].cpu().detach().numpy()).round().astype(
                     np.uint8), 'L').save("masked_em.png")
-            exit(1)
+
         iter_em_flag = args.train_with_em and has_mask_flag
 
         # starting the forward, backward, optimzer, step process
@@ -699,6 +701,10 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         logits_cl, logits_am, heatmaps, masks, masked_images, logits_em= \
             model(batch, lbs, train_flag=iter_em_flag, image_with_masks=image_with_masks, e_masks=e_masks,
                   has_mask_indexes=has_mask_indexes)
+        if has_mask_flag:
+            print("heatmap")
+            print(torch.unique(heatmaps[index_target]))
+            exit(1)
         # prediction result recording
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
         y_true.extend(label_idx_list)
