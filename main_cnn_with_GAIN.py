@@ -665,7 +665,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         if has_mask_flag:
             print(image_with_masks.shape)
             print(e_masks.shape)
-            image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
+            image_with_masks = torch.stack(image_with_masks, dim=0).to(device)
             e_masks = torch.stack(e_masks, dim=0).to(device)
             print(image_with_masks[0].shape)
             print(e_masks[0].shape)
