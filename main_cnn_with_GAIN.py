@@ -637,7 +637,6 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         datasource_list = sample['source']
         batch = torch.stack(sample['preprocessed_images'], dim=0).squeeze()
         batch = batch.to(device)
-        print(batch.shape)
         used_mask_indices = [sample['idx'].index(x) for x in sample['idx']
                              if x in train_dataset.used_masks]
         image_with_masks = list()
@@ -645,38 +644,21 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         label_with_masks_list = list()
         has_mask_flag = False
         has_mask_indexes = list()
-        print("filename list: ")
-        print(sample['filename'])
-        print("filename with mask: ")
-        index_target = 0
+
         if model.EX_enabled() or args.train_with_em:
             print(len(augmented_masks))
             for idx in range(len(used_masks_boolean)):
                 mask_tensor = torch.tensor(sample['all_masks'][idx]).unsqueeze(0)
                 if used_masks_boolean[idx]:
-                    print(torch.unique(mask_tensor))
                     e_masks.append(mask_tensor)
                     image_with_masks.append(sample['preprocessed_images'][idx])
                     label_with_masks_list.append(sample['labels'][idx])
                     has_mask_flag = True
                     has_mask_indexes += [idx]
-                    print(sample['filename'][idx])
-                    index_target = idx
-
 
         if has_mask_flag:
             image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
             e_masks = torch.stack(e_masks, dim=0).to(device)
-            print(image_with_masks[0].shape)
-            print(e_masks[0].shape)
-
-            PIL.Image.fromarray(
-                (image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
-                    np.uint8), 'RGB').save("masked.png")
-            print(torch.unique(e_masks[0][0]))
-            PIL.Image.fromarray(
-                (e_masks[0][0].cpu().detach().numpy()).round().astype(
-                    np.uint8), 'L').save("masked_em.png")
 
         iter_em_flag = args.train_with_em and has_mask_flag
 
@@ -698,14 +680,12 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # model forward
         lbs = labels.unsqueeze(1).float()
         # print("before feed to model")
-        print("type")
+
         logits_cl, logits_am, heatmaps, masks, masked_images, logits_em= \
             model(batch, lbs, train_flag=iter_em_flag, image_with_masks=image_with_masks, e_masks=e_masks,
                   has_mask_indexes=has_mask_indexes)
-        if has_mask_flag:
-            print("heatmap")
-            print(torch.unique(heatmaps[index_target]))
-            exit(1)
+        # values in heatmap [0, 1]
+        # values in e_masks [0, 255]
         # prediction result recording
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
         y_true.extend(label_idx_list)

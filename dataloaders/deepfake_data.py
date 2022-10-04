@@ -41,11 +41,7 @@ def load_func(path, file, all_files):
     img_name, format = str(file).split('.')
     mask_file = img_name+'m'+'.'+format
     if all_files is not None and label == 1 and mask_file in all_files:
-
         path_to_mask = os.path.join(path, mask_file)
-        print("************  load func *************")
-        print(path_to_mask)
-        print(path_to_file)
         tensor_bg = torch.tensor(-1)
         # if 'stylegan_images/psi0.5' in path and mask_file in os.listdir(os.path.join(path[:-13], 'bg')):
         #     path_to_bg = os.path.join(os.path.join(path[:-13], 'bg'), mask_file)
