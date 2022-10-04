@@ -452,15 +452,20 @@ def deepfake_preprocess_imagev2(img , train , mask=-1, mean=None, std=None) -> t
         normilize = Normalize(mean=mean, std=std)
         flag = False
         img_mask = img
+        print("img.shape")
+        print(img.shape)
+        print("mask.shape")
+        print(mask.shape)
         if mask.numel() > 1:
             img_mask = torch.cat((img, mask), dim=0)
             flag = True
             print("img_mask.shape")
             print(img_mask.shape)
         augmented_image_mask = augment(img_mask)
-        print(augmented_image_mask.shape)
+
         augmented_image = augmented_image_mask
         if mask.numel() > 1:
+            print(augmented_image_mask.shape)
             augmented_image = augmented_image_mask[0:3, :, :]
             print(augmented_image.shape)
             augmented_mask = np.array(augmented_image_mask.permute([1,2,0]))[:, :, 3]
