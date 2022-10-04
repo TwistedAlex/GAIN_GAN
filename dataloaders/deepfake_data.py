@@ -156,6 +156,7 @@ class DeepfakeTrainData(data.Dataset):
                     self.transform(img=res[0].squeeze().permute([2, 0, 1]),
                                              mask=self.dummy_mask.squeeze().permute([2, 0, 1]), train=True,
                                              mean=self.mean, std=self.std)
+            print(self.pos_num_of_samples)
             print(self.used_masks)
             print(len(self.used_masks))
             for i in range(20):
