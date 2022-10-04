@@ -678,7 +678,6 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         logits_cl, logits_am, heatmaps, masks, masked_images, logits_em= \
             model(batch, lbs, train_flag=iter_em_flag, image_with_masks=image_with_masks, e_masks=e_masks,
                   has_mask_indexes=has_mask_indexes)
-        print(heatmaps.shape)
         # prediction result recording
         y_pred.extend(logits_cl.sigmoid().flatten().tolist())
         y_true.extend(label_idx_list)
