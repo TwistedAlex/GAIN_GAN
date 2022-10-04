@@ -571,14 +571,11 @@ def handle_EX_loss(model, used_mask_indices, augmented_masks, bg_masks, heatmaps
         ex_count += 1
         epoch_train_ex_loss += args.ex_weight * ex_loss
         return total_loss, epoch_train_ex_loss, ex_count, iter_ex_loss
-    if len(used_mask_indices) > 0:
+    if len(used_mask_indices) > 0 and False:
         augmented_masks = [ToTensor()(x).cuda() for x in augmented_masks]
         augmented_masks = torch.cat(augmented_masks, dim=0)
         augmented_masks = torch.maximum(augmented_masks, heatmaps[used_mask_indices].squeeze())
         squared_diff = torch.pow(heatmaps[used_mask_indices].squeeze() - augmented_masks, 2)
-        print(torch.unique(heatmaps[used_mask_indices]))
-        print(torch.unique(augmented_masks))
-        exit(1)
         flattened_squared_diff = squared_diff.view(len(used_mask_indices), -1)
         flattned_sum = flattened_squared_diff.sum(dim=1)
         flatten_size = flattened_squared_diff.size(1)
