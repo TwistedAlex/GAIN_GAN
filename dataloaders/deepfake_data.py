@@ -160,24 +160,24 @@ class DeepfakeTrainData(data.Dataset):
                     self.transform(img=res[0].squeeze().permute([2, 0, 1]),
                                              mask=self.dummy_mask.squeeze().permute([2, 0, 1]), train=True,
                                              mean=self.mean, std=self.std)
-            print(self.pos_num_of_samples)
-            print(self.used_masks)
-            print(len(self.used_masks))
-            for i in range(20):
-                print(self.all_cl_images[i])
-            print("*********************************")
-            for i in range(20):
-                print(self.all_pos_files[i])
-            print("*********************************")
-            d_files = [file for file in self.all_cl_images if 'd' in file]
-            e_files = [file for file in self.all_cl_images if 'e' in file]
-            print(len(d_files))
-            print(len(e_files))
-            d_files = [file for file in self.all_cl_images[:self.pos_num_of_samples] if 'd' in file]
-            e_files = [file for file in self.all_cl_images[:self.pos_num_of_samples] if 'e' in file]
-            print(len(d_files))
-            print(len(e_files))
-            exit(1)
+            # print(self.pos_num_of_samples)
+            # print(self.used_masks)
+            # print(len(self.used_masks))
+            # for i in range(20):
+            #     print(self.all_cl_images[i])
+            # print("*********************************")
+            # for i in range(20):
+            #     print(self.all_pos_files[i])
+            # print("*********************************")
+            # d_files = [file for file in self.all_cl_images if 'd' in file]
+            # e_files = [file for file in self.all_cl_images if 'e' in file]
+            # print(len(d_files))
+            # print(len(e_files))
+            # d_files = [file for file in self.all_cl_images[:self.pos_num_of_samples] if 'd' in file]
+            # e_files = [file for file in self.all_cl_images[:self.pos_num_of_samples] if 'e' in file]
+            # print(len(d_files))
+            # print(len(e_files))
+            # exit(1)
             if index in self.used_masks:
                 res = [res[0]] + [preprocessed] + [augmented] + [res[1]]+ \
                       [augmented_mask]+[True] + [res[2]] + [res[3]] + [res[4]] + [res[5]]
