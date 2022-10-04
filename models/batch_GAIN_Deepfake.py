@@ -243,7 +243,6 @@ class batch_GAIN_Deepfake(nn.Module):
             #                     .round().astype(np.uint8), 'RGB').save('/home/shuoli/maskedNew.png')
             # PIL.Image.fromarray((em_masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255)
             #                     .round().astype(np.uint8), 'RGB').save('/home/shuoli/maskedOld.png')
-            exit(0)
             logits_em = self.model(em_masked_image)  # [2, 1]
 
             # for param in self.model.parameters(): #TODO: use this to control set gradients on/off
