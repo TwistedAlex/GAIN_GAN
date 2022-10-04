@@ -643,7 +643,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         label_with_masks_list = list()
         has_mask_flag = False
         has_mask_indexes = list()
-        if model.EX_enabled():
+        if model.EX_enabled() or args.train_with_em:
             for idx in range(len(augmented_masks)):
                 mask_tensor = torch.tensor(augmented_masks[idx]).unsqueeze(0)
                 if mask_tensor.numel() > 1:

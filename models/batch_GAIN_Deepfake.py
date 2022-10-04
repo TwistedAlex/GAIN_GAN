@@ -185,7 +185,7 @@ class batch_GAIN_Deepfake(nn.Module):
         # print(scaled_ac.shape)
         mask = torch.sigmoid(self.omega * (scaled_ac - self.sigma))
         torch.set_printoptions(linewidth=200)
-        print(torch.unique(mask))
+        # print(torch.unique(mask))
 
         # print("mask.shape")
         # print(mask.shape) # 20, 1, 224, 224
@@ -194,7 +194,7 @@ class batch_GAIN_Deepfake(nn.Module):
         # print("fill_color")
         # print(self.fill_color.shape)
         masked_image = images - images * mask + mask * self.fill_color
-        print(masked_image.shape)
+        # print(masked_image.shape)
         PIL.Image.fromarray(
             (masked_image[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
                 np.uint8), 'RGB').save("masked_em3.png")
@@ -207,7 +207,7 @@ class batch_GAIN_Deepfake(nn.Module):
         #    param.requires_grad = False
 
         logits_am = self.freezed_bn_model(masked_image)
-
+        print(train_flag)
         logits_em = 0
         if train_flag and len(e_masks) > 0:
             e_masks = tuple(map(torch.stack, zip(e_masks)))
