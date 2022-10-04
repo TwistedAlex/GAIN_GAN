@@ -698,6 +698,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # model forward
         lbs = labels.unsqueeze(1).float()
         # print("before feed to model")
+        print("type")
         logits_cl, logits_am, heatmaps, masks, masked_images, logits_em= \
             model(batch, lbs, train_flag=iter_em_flag, image_with_masks=image_with_masks, e_masks=e_masks,
                   has_mask_indexes=has_mask_indexes)
