@@ -667,14 +667,14 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
             e_masks = torch.stack(e_masks, dim=0).to(device)
             print(image_with_masks[0].shape)
             print(e_masks[0].shape)
-            exit(1)
+
             PIL.Image.fromarray(
                 (image_with_masks[0].permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
                     np.uint8), 'RGB').save("masked.png")
             PIL.Image.fromarray(
                 (e_masks[0][0].cpu().detach().numpy() * 255).round().astype(
                     np.uint8), 'L').save("masked_em.png")
-            # exit(0)
+            exit(0)
         iter_em_flag = args.train_with_em and has_mask_flag
 
         # starting the forward, backward, optimzer, step process
