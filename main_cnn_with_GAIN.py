@@ -631,7 +631,7 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         # preparing all required data
         label_idx_list = sample['labels']
         augmented_batch = sample['augmented_images']
-        augmented_masks = sample['used_masks']
+        augmented_masks = sample['preprocessed_masks']
         bg_masks = sample['bg_mask']
         all_augmented_masks = sample['preprocessed_masks']
         datasource_list = sample['source']
