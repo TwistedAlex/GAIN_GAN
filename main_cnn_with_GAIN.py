@@ -655,6 +655,15 @@ def train(args, cfg, model, device, train_loader, train_dataset, optimizer,
         if has_mask_flag:
             image_with_masks = torch.stack(image_with_masks, dim=0).squeeze(1).to(device)
             e_masks = torch.stack(e_masks, dim=0).to(device)
+        print(image_with_masks.shape)
+        print(e_masks.shape)
+        PIL.Image.fromarray(
+            (image_with_masks.permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+                np.uint8), 'RGB').save("masked_em3.png")
+        PIL.Image.fromarray(
+            (e_masks.permute([1, 2, 0]).cpu().detach().numpy() * 255).round().astype(
+                np.uint8), 'RGB').save("masked_em3.png")
+        exit(0)
         iter_em_flag = args.train_with_em and has_mask_flag
 
         # starting the forward, backward, optimzer, step process
