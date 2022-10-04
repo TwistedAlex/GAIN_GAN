@@ -100,7 +100,7 @@ class DeepfakeTrainData(data.Dataset):
         # all_neg_files_tupes, all_neg_files = get_files_under_folder(self.neg_root_dir)
         # all_pos_files_tupes, all_pos_files = get_files_under_folder(self.pos_root_dir)
 
-        pos_cl_images = [file for file in self.all_pos_files if 'm' not in file]
+        self.pos_cl_images = [file for file in self.all_pos_files if 'm' not in file]
 
         # target_weight[1] -> positive ratio
 
@@ -120,15 +120,15 @@ class DeepfakeTrainData(data.Dataset):
         #     all_pos_files = pos_cl_images + picked_cl_with_masks
 
         # dummy masks creation:
-        path_to_file = os.path.join(self.pos_root_dir, pos_cl_images[0])
+        path_to_file = os.path.join(self.pos_root_dir, self.pos_cl_images[0])
         p_image = PIL.Image.open(path_to_file)
         np_image = np.asarray(p_image)
 
         tensor_image = torch.tensor(np_image)
-        self.masks_indices = [idx for idx,pos in enumerate(pos_cl_images) if pos.split('.')[0]+'m'+'.png' in self.all_pos_files]
+        self.masks_indices = [idx for idx,pos in enumerate(self.pos_cl_images) if pos.split('.')[0]+'m'+'.png' in self.all_pos_files]
         self.all_files = self.all_pos_files + self.all_neg_files
-        self.all_cl_images = pos_cl_images + self.all_neg_files
-        self.pos_num_of_samples = len(pos_cl_images)
+        self.all_cl_images = self.pos_cl_images + self.all_neg_files
+        self.pos_num_of_samples = len(self.pos_cl_images)
         self.loader = loader
         mask_max_idx = int(self.pos_num_of_samples * masks_to_use) # maximum num of masks ready to use, masks_to_use is the ratio of masked image to use over all pos cl images
         self.used_masks = self.masks_indices[:mask_max_idx]
@@ -162,8 +162,12 @@ class DeepfakeTrainData(data.Dataset):
             for i in range(20):
                 print(self.all_pos_files[i])
             print("*********************************")
-            d_files = [file for file in self.all_pos_files if 'd' in file]
-            e_files = [file for file in self.all_pos_files if 'e' in file]
+            d_files = [file for file in self.all_cl_images if 'd' in file]
+            e_files = [file for file in self.all_cl_images if 'e' in file]
+            print(len(d_files))
+            print(len(e_files))
+            d_files = [file for file in self.all_cl_images[:self.pos_num_of_samples] if 'd' in file]
+            e_files = [file for file in self.all_cl_images[:self.pos_num_of_samples] if 'e' in file]
             print(len(d_files))
             print(len(e_files))
             exit(1)
