@@ -3,6 +3,7 @@ from datetime import datetime
 import numpy as np
 import os
 import sklearn.metrics as metrics
+from matplotlib import pyplot as plt
 from sklearn.metrics import accuracy_score, average_precision_score
 
 def roc_curve(labels, preds, thresholds_count=10000):
@@ -59,16 +60,18 @@ def output_multiple_roc(stats_path_list, title_list, lim_offset, save_dir, mode=
 
     if mode :
         file_suffix = "\\roc_curve_with_threshold_"
-        plt.title('PSI 1 Receiver Operating Characteristic')
+        plt.title('Test on s2p1')
+        lim_offset = lim_offset
     else:
         file_suffix = "\\roc_curve_"
-        plt.title('PSI 0.5 Receiver Operating Characteristic')
+        plt.title('Test on s2p1')
+        lim_offset = 1
     for i in range(len(stats_path_list)):
         labels = np.load(stats_path_list[i] + "\\labels.npy")  # psi 1
         predictions = np.load(stats_path_list[i] + "\\predictions.npy")
         fpr, tpr, auc, threshold = roc_curve(labels, predictions)
         roc_auc = metrics.auc(fpr, tpr)
-        plt.plot(fpr, tpr, label=f'{title_list[i]} = %0.2f' % roc_auc)
+        plt.plot(fpr, tpr, label=f'{title_list[i]} = %0.4f' % roc_auc)
         plt.legend(loc='lower right')
         # plt.plot([0, 1], [0, 1], 'r--')
         plt.xlim([0, lim_offset])
@@ -178,8 +181,8 @@ psi_1_list = [
 #                "E:\\workplace\\GAIN-pytorch-main\\logs_deepfake\\ex_500_exweight_1.5\\test_ex_500_exweight_1.5_ffhq_s2_PSI_0_5\\",
 #                "E:\\ResearchData\\heatmap_output\\\ex_1k_exweight_1.5_PSI_0.5\\"]
 psi_05_list = [
-               "E:\\ResearchData\\heatmap_output\\test_pretrain_no_ex_sampling_epoch_50_PSI_0.5\\",
-                "E:\\ResearchData\\heatmap_output\\test_pretrain_no_ex_no_am_orig_sampling_epoch150_PSI_0.5\\",
+               "E:\\ResearchData\\heatmap_output\\cvpr_s2p1_e120\\test_cvpr_s2p1_e120_s2_PSI_1\\",
+                "E:\\ResearchData\\heatmap_output\\cvpr_s2p1_e120\\test_cvpr_s2p1_e120_s2p1_debg\\",
                ]
 
 
@@ -194,16 +197,16 @@ def main():
         #               "with_500_ex_0.2_exweight_origSampling_AUC",
         #               "pretrain_with_500_ex_0.2_exweight_origSampling_newEx_AUC",
         #               ]
-        title_list = ["E-g: pretrain_no_ex_AUC",
-                      "E-m-2: pretrain_no_am_no_ex_150epoch_AUC",
+        title_list = ["EC-H on orig",
+                      "EC-H on debg",
                      ]
         save_dir = "E:/ResearchData/heatmap_output/"
 
         # psi_05_list = ["E:\\ResearchData\\heatmap_output\\\ex_1k_exweight_1.5_PSI_0.5\\"]
 
-        # output_single_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
         output_multiple_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=True)
-        output_multiple_roc(psi_1_list, title_list, lim_offset=1, save_dir=save_dir)
+        output_multiple_roc(psi_05_list, title_list, lim_offset=0.1, save_dir=save_dir, mode=False)
+        # output_multiple_roc(psi_1_list, title_list, lim_offset=1, save_dir=save_dir)
     else:
         losses_list = ["E:\\ResearchData\\heatmap_output\\20220617_heatmap_output_pretrain_ex_500_exweight_0.2_orig_sampling_newex_v4\\y_cl_loss_exsup_img.npy",
                        "E:\\ResearchData\\heatmap_output\\20220617_heatmap_output_pretrain_ex_500_exweight_0.2_orig_sampling_newex_v4\\y_am_loss_exsup_img.npy",
@@ -226,13 +229,13 @@ def main():
 
 if __name__ == '__main__':
 
-    y_true = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_0.5\\labels.npy")
-    y_pred = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_0.5\\predictions.npy")
-    ap = average_precision_score(y_true, y_pred)
-    print(ap)
-    y_true = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_1\\labels.npy")
-    y_pred = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_1\\predictions.npy")
-    ap = average_precision_score(y_true, y_pred)
-    print(ap)
-    exit(0)
+    # y_true = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_0.5\\labels.npy")
+    # y_pred = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_0.5\\predictions.npy")
+    # ap = average_precision_score(y_true, y_pred)
+    # print(ap)
+    # y_true = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_1\\labels.npy")
+    # y_pred = np.load("E:\\ResearchData\\heatmap_output\\20220716_heatmap_output_cvpr_e100\\psi_1\\predictions.npy")
+    # ap = average_precision_score(y_true, y_pred)
+    # print(ap)
+    # exit(0)
     main()
